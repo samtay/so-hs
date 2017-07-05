@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import StackOverflow
 
 main :: IO ()
-main = someFunc
+main = undefined
