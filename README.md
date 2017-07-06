@@ -27,10 +27,10 @@ and we parse out any known URLs from google search and perform multiple stack ex
 to each site ??? (this is a nice to have and results in possibly too many API requests)
 3. allow --print-sites to print all available sites and exit
 10.  allow --count or some other limiter in google search
-3. allow -l|--lucky to just straight print top voted answer
+3. allow -l|--lucky to just straight print top voted answer, then space to show full results
 4. xdga config to set defaults, i.e. deault --no-google, default --lucky, etc.
 2. brick, haskeline, both, or either?
 3. whats the layout resulting from (2)? 3 columns like ranger?
 4. vim bindings hjkl for traversing content
 5. optional buffer viewer in configuration, e.g.: native, vim, emacs, less, more;
-  quitting brings you back into so
+  quitting brings you back into so (apparently this can be done easily within brick)

@@ -4,9 +4,10 @@ module StackOverflow.Google
   ( google
   ) where
 
-import Data.ByteString.Lazy (ByteString)
+import Data.Text (Text)
 
-google :: ByteString  -- ^ Site
-       -> ByteString  -- ^ Query
-       -> IO [String] -- ^ Resulting question IDs
+google
+  :: Text  -- ^ Site
+  -> Text  -- ^ Query
+  -> IO [String] -- ^ Resulting question IDs
 google = undefined

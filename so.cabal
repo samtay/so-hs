@@ -19,9 +19,13 @@ library
   other-modules:       StackOverflow.Types
                      , StackOverflow.Google
   build-depends:       base >= 4.7 && < 5
+                     , aeson
                      , bytestring
                      , lens
+                     , raw-strings-qq
+                     , text
                      , wreq
+                     , yaml
   default-language:    Haskell2010
 
 executable so-exe
