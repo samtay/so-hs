@@ -1,0 +1,836 @@
+{
+  "items": [
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 19670802,
+          "body_markdown": "If you need to delete the relationship for one instance between 2 models you can do that by accessing the Manager of the relationship table. The m2m relationship table can be accessed via `MyModel.relations.through` so for deleting the relationships:\r\n\r\n    B.As.through.objects.filter(a=a_instance).delete()\r\n\r\nreference:\r\n\r\nhttps://docs.djangoproject.com/en/dev/ref/models/fields/#django.db.models.ManyToManyField.through\r\n\r\nCredit : https://stackoverflow.com/questions/7230276"
+        },
+        {
+          "is_accepted": true,
+          "score": 0,
+          "answer_id": 19671788,
+          "body_markdown": "Django requires to have id field in many-to-many relationship table."
+        }
+      ],
+      "is_answered": true,
+      "view_count": 410,
+      "accepted_answer_id": 19671788,
+      "answer_count": 2,
+      "score": 0,
+      "last_activity_date": 1383093581,
+      "question_id": 19670722,
+      "body_markdown": "I have two models A and B where \r\n\r\n\r\n    class B(Model):\r\n       As = models.ManyToManyField(A)\r\n\r\nThen I do the following \r\n\r\n    a_instance.b_set.clear()\r\n\r\nin order to remove all references from a_instance to any b_instances. But then I&#39;ve got the following error:\r\n\r\n    Database Error: column a_b/id doesn not exists\r\n    Line 1:  SELECT &quot;a_b&quot;.&quot;id&quot;,\r\n\r\nAnd this is true, my intermediate table a_b in many-to-many relationship (between A and B) doesn&#39;t have field named id. It has two other fields instead a_id and b_id.\r\n\r\nSo does anyone knows how can I force Django to use a_id and b_id instead of just id?\r\n\r\n",
+      "link": "https://stackoverflow.com/questions/19670722/django-many-to-many-relationship",
+      "title": "Django Many-to-Many relationship"
+    },
+    {
+      "tags": [
+        "django"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 33322518,
+          "body_markdown": "You can do like:\r\n\r\n    article = Article.objects.get(id=article-id)\r\n    article_images = article.images.all()\r\n    render(request, &#39;sampletemplate.html&#39;, {&#39;images&#39;:article_images})"
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 33372857,
+          "body_markdown": "I figured it out. Simply do that in the template *.html\r\n\r\n    {% for i in var %}\r\n    {% for img in i.images.all %}{{ img }}, {% endfor %}\r\n    {% endfor %} "
+        }
+      ],
+      "is_answered": false,
+      "view_count": 50,
+      "answer_count": 2,
+      "score": 0,
+      "last_activity_date": 1445961889,
+      "question_id": 33322436,
+      "body_markdown": "    class Image(models.Model):\r\n      upload = models.FileField(upload_to=&#39;homepage/pic_folder/&#39;)\r\n    class Article(models.Model):\r\n      images = models.ManyToManyField(Image)\r\n\r\nThese are my models of articles having several pictures. How can I do a Many-to-Many-query within my views.py, so that I can use it later in html?\r\n\r\n",
+      "link": "https://stackoverflow.com/questions/33322436/django-many-to-many-query",
+      "title": "Django: Many-to-Many-query"
+    },
+    {
+      "tags": [
+        "django",
+        "django-models",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 1,
+          "answer_id": 18801489,
+          "body_markdown": "ManyToManyField items can&#39;t be added to a model until after it&#39;s been saved.\r\n\r\nYour code doesn&#39;t show where your creating the model from, so it&#39;s not clear where the best place to put the counter in is.\r\n\r\nBasically you need to modify what ever method adds the tags, not the method which saves the post which is run before tags are added.\r\n\r\nEdit: One simple option would be to explicitly define the through model for the ManyToMany relationship, then you could modify it&#39;s save method and do the incrementing there: https://docs.djangoproject.com/en/1.5/topics/db/models/#many-to-many-relationships"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 4832,
+      "answer_count": 1,
+      "score": 2,
+      "last_activity_date": 1379159695,
+      "question_id": 18801378,
+      "body_markdown": "I&#39;m writing a news page for a website, and have two models with a Many-To-Many relationship: Tags and Posts.\r\nNow, I want to display the most popular tags on each page, and to avoid counting the amount of Many-To-Many relationship links each time a user visits a page, I store a counter for each Tag. My idea was to modify the &quot;save&quot; method for Post to increase that counter.\r\nHere&#39;s the code for these two models:\r\n\r\n    class Tag(models.Model):\r\n        tag_text = models.CharField(max_length=100, verbose_name=&#39;Tag&#39;)\r\n        amount = models.IntegerField(blank=True, null=True, default=0)\r\n    \r\n        def __unicode__(self):\r\n            return self.tag_text\r\n\r\n    class Post(models.Model):\r\n    \r\n        IS_DRAFT = ((&quot;Y&quot;, &quot;Draft post&quot;), (&quot;N&quot;, &quot;Finished post&quot;),)\r\n    \r\n        title = models.CharField(max_length=100)\r\n        slug = models.CharField(max_length=60, unique=True, blank=True)\r\n        text = RichTextField()\r\n        created_on = models.DateTimeField(auto_now_add=True, verbose_name=&#39;Created on&#39;)\r\n        last_edited_on = models.DateTimeField(auto_now=True, verbose_name=&#39;Last edited on&#39;, db_index=True)\r\n        draft = models.CharField(choices=IS_DRAFT, max_length=1, verbose_name=&#39;Is a post draft&#39;)\r\n        tag = models.ManyToManyField(Tag)\r\n    \r\n        class Meta:\r\n            ordering = [&#39;created_on&#39;]\r\n    \r\n        def save(self, *args, **kwargs):\r\n            if not self.id:\r\n                date = datetime.now()\r\n                tr_title = unicode(unidecode(self.title))\r\n                self.slug = &#39;%i/%i/%i/%s&#39; % (\r\n                    date.year, date.month, date.day, slugify(tr_title)\r\n                )\r\n            super(Post, self).save(*args, **kwargs)\r\n            print &#39;count&#39;, self.tag.count()\r\n            for t in self.tag.all():\r\n                print &#39;tag amount&#39;, t.amount\r\n                t.amount += 1\r\n                t.save()\r\n    \r\n        def __unicode__(self):\r\n            return self.title\r\n\r\nI added the prints in the save method for testing purposes, because, for some reason, the line\r\n\r\n    print &#39;count&#39;, self.tag.count()\r\n\r\noutputs 0 (as if no tags are assigned to this model instance).\r\nHowever, printing out any other field during the save method works fine. For example:\r\n\r\n    print &#39;title&#39;, self.title\r\n\r\noutputs the title, so it&#39;s not a problem with accessing the model fields.\r\nIs there something I can do about this? Or will I have to resort to doing the stuff I want to with the help of signals?\r\n",
+      "link": "https://stackoverflow.com/questions/18801378/django-many-to-many-save",
+      "title": "Django many-to-many save"
+    },
+    {
+      "tags": [
+        "django"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 39984350,
+          "body_markdown": "I think I see what you are trying to do. Your model looks fine - I don&#39;t see any reason why a `PreDefinedSet` would have related data added on creation (if you are not doing anything funny there).\r\n\r\n    class Equipment(models.Model):\r\n        name = models.CharField(max_length = 50)\r\n    \r\n    class PreDefinedSet(models.Model):\r\n        name = models.CharField(max_length = 100)\r\n        equipments = models.ManyToManyField(Equipment, related_name=&#39;sets&#39;)\r\n\r\nNow if you want to manipulate with the data:\r\n\r\n    eq = Equipment.objects.get(name=&#39;something&#39;)\r\n    user_set = PreDefinedSet.objects.create(name=&#39;first_set&#39;)\r\n\r\n    user_set.equipments.add(eq)\r\n\r\n    user_set.equipments.all()  # will return a QuerySet with one Equipment\r\n    \r\nAdditionally notice the `related_name` thanks to which you can reverse query, like this:\r\n\r\n    eq.sets.all()  # will return a QuerySet of the sets that tool is in\r\n\r\nMore about how to manipulate M2M fields: https://docs.djangoproject.com/en/dev/topics/db/models/#many-to-many-relationships"
+        }
+      ],
+      "is_answered": false,
+      "view_count": 30,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1476211016,
+      "last_edit_date": 1476206873,
+      "question_id": 39983064,
+      "body_markdown": "Whenever I create a new `PreDefinedSet` it grabs all the equipment that I&#39;ve added in my database.\r\n\r\nQuestion is how do I make it blank and is it possible to edit what&#39;s inside a many to many field?\r\n\r\nMy goal is to make a class where in it is a list of equipment which can be predefined by the users.\r\n\r\nHere are my models:\r\n\r\n    class Equipment(models.Model):\r\n    \r\n        name = models.CharField(max_length = 50)\r\n    \r\n    class PreDefinedSet(models.Model):\r\n    \r\n        name = models.CharField(max_length = 100)\r\n        Equipments = models.ManyToManyField(Equipment)\r\n\r\n",
+      "link": "https://stackoverflow.com/questions/39983064/django-many-to-many-field",
+      "title": "Django Many to Many Field"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-rest-framework"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 1,
+          "answer_id": 42533386,
+          "body_markdown": "There are several ways to do it. The common one is create serializer for user and use it instead of defaults fields:  \r\n    \r\n    class UserSerializer(serializers.ModelSerializer):\r\n        \r\n        class Meta:\r\n            model = User\r\n            fields = ...\r\n   \r\n    class AppointmentSerializer(serializers.ModelSerializer):\r\n        coach = UserSerializer()\r\n        coachee = UserSerializer()\r\n\r\n        class Meta:\r\n            model = Appointment\r\n            fields = (&#39;id&#39;, &#39;schedule_date&#39;, &#39;due_date&#39;, &#39;coach&#39;, &#39;coachee&#39;, &#39;summary&#39;, &#39;condition&#39;)\r\nBut there will be a problem if you want to use `AppointmentSerializer` for creating an instance. You will not be able to pass an id&#39;s of users to that fields. In that case you could use default fields and override `to_representation` method.  \r\n\r\n    class AppointmentSerializer(serializers.ModelSerializer):\r\n\r\n        class Meta:\r\n            model = Appointment\r\n            fields = (&#39;id&#39;, &#39;schedule_date&#39;, &#39;due_date&#39;, &#39;coach&#39;, &#39;coachee&#39;, &#39;summary&#39;, &#39;condition&#39;)\r\n\r\n        def to_representation(self, instance):\r\n            representation = super(AppointmentSerializer, self).to_representation(instance)\r\n            representation[&#39;coach&#39;] = UserSerializer(instance.coach).data\r\n            representation[&#39;coachee&#39;] = UserSerializer(instance.coachee).data\r\n            return representation\r\n"
+        },
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 42533504,
+          "body_markdown": "Try setting the `depth` option on the `Meta` class.\r\n\r\n    class AppointmentSerializer(serializers.HyperlinkedModelSerializer):\r\n        &quot;&quot;&quot;docstring for AppointmentSerializer&quot;&quot;&quot;\r\n        class Meta:\r\n            model = Appointment\r\n            fields = (&#39;id&#39;, &#39;schedule_date&#39;, &#39;due_date&#39;, &#39;coach&#39;, &#39;coachee&#39;, &#39;summary&#39;, &#39;condition&#39;)\r\n            depth = 1\r\n\r\nThis will generate nested representations.\r\n\r\nAlternatively, you can explicitly specify serializers if you need more control.\r\n\r\n    class AppointmentSerializer(serializers.HyperlinkedModelSerializer):\r\n        coach = CoachSerializer()\r\n        coachee = CoacheeSerializer()\r\n\r\n        class Meta:\r\n            model = Appointment\r\n            fields = (&#39;id&#39;, &#39;schedule_date&#39;, &#39;due_date&#39;, &#39;coach&#39;, &#39;coachee&#39;, &#39;summary&#39;, &#39;condition&#39;)\r\n\r\nYou can also add single fields from your related models:\r\n\r\n    class AppointmentSerializer(serializers.HyperlinkedModelSerializer):\r\n        &quot;&quot;&quot;docstring for AppointmentSerializer&quot;&quot;&quot;\r\n        coach_name = serializers.CharField(source=&#39;coach.name&#39;)\r\n\r\n        class Meta:\r\n            model = Appointment\r\n            fields = (&#39;id&#39;, &#39;schedule_date&#39;, &#39;due_date&#39;, &#39;coach&#39;, &#39;coachee&#39;, &#39;summary&#39;, &#39;condition&#39;)\r\n"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 63,
+      "accepted_answer_id": 42533504,
+      "answer_count": 2,
+      "score": 2,
+      "last_activity_date": 1488376850,
+      "last_edit_date": 1488375530,
+      "question_id": 42533256,
+      "body_markdown": "I&#39;m trying to implement a coaching system and I&#39;m a little lost about serialization in django.I have a many to many through model to control the appointments and I want to get all data about the coach/coachee involved in the relationship.\r\n\r\n    class Appointment(models.Model):\r\n        &quot;&quot;&quot;docstring for Appointment&quot;&quot;&quot;\r\n        coach = models.ForeignKey(User, related_name=&#39;coaches&#39;, on_delete=models.CASCADE)\r\n        coachee = models.ForeignKey(User, related_name=&#39;coachees&#39;, on_delete=models.CASCADE)\r\n        schedule_date = models.DateField(auto_now=False, auto_now_add=True, blank=True)\r\n        due_date = models.DateField()\r\n        summary = models.TextField(max_length=200)\r\nUsing the following serializer I can get the primary keys involved but I&#39;d really like to get the coach and coachee details in one request.\r\n\r\n    #return appointment data\r\n    class AppointmentSerializer(serializers.HyperlinkedModelSerializer):\r\n        &quot;&quot;&quot;docstring for AppointmentSerializer&quot;&quot;&quot;\r\n        class Meta:\r\n            model = Appointment\r\n            fields = (&#39;id&#39;, &#39;schedule_date&#39;, &#39;due_date&#39;, &#39;coach&#39;, &#39;coachee&#39;, &#39;summary&#39;, &#39;condition&#39;)\r\n\r\n",
+      "link": "https://stackoverflow.com/questions/42533256/django-many-to-many-through",
+      "title": "django many to many through"
+    },
+    {
+      "tags": [
+        "django",
+        "django-models",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 4916946,
+          "body_markdown": "For #1, this should work:\r\n\r\n    from django.db.models import Count\r\n\r\n    WorkflowActivity.objects.annotate(users=Count(&#39;participation__user&#39;)).filter(users=0)\r\n\r\nUnfortunately, there isn&#39;t a good way to do #2 using only built-ins in Django&#39;s ORM.  You could try extending the `Count` type, as suggested in [Ticket 11305][1].\r\n\r\n\r\n  [1]: http://code.djangoproject.com/ticket/11305\r\n\r\n**Edit:**\r\n\r\nIf you are interested in finding all `WorkflowActivities` that have at least one active `User`, you can do:\r\n\r\n    WorkflowActivity.objects.filter(participation__current=True)"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 711,
+      "accepted_answer_id": 4916946,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1297061671,
+      "last_edit_date": 1297061671,
+      "question_id": 4915617,
+      "body_markdown": "I have the following Model:\r\n\r\n    class Participation(models.Model):\r\n        workflow_activity = models.ForeignKey(&#39;WorkflowActivity&#39;)\r\n        user = models.ForeignKey(User)\r\n        role = models.ForeignKey(Role)\r\n        current = models.BooleanField()\r\n\r\nThis is the many-to-many &#39;through&#39; table.\r\nI want to filter instances of `workflow_activity` that have either one of these conditions:\r\n\r\n 1. No users assigned, ie, no entries for that workflow_activity in the Participation table\r\n 2. No current active users, ie, where all the rows for workflow_activity in the Participation table have `current==False`\r\n\r\nHelp with building the query would be much appreciated!\r\n\r\n**EDIT:**\r\n\r\nHey everyone, thanks for the responses. I guess im probably approaching this thing wrong. My requirement is that im building a sort of ticketing system that has an auto assign function which assigns users to the tickets based on some selection logic. Im running the assign function as a periodic task (using celery), but for that i need to select tickets that are currently unassigned for the current state of the ticket. The current boolean is used to mark if that particular user is assigned to the current state of the ticket.\r\n\r\nAny ideas/thoughts on implementing this? \r\n\r\n**Edit2**\r\n\r\nHeres one i thought of:\r\n\r\n    class WorkflowActivity(models.Model):\r\n        ...\r\n        ...\r\n        assigned_to = models.ManytoManyField(&#39;Participation&#39;) # older table without the current field\r\n        current = models.ManytoManyField(&#39;Current&#39;)\r\n\r\n    class Current(models.Model):\r\n        participant = models.ForeignKey(&#39;Participation&#39;)\r\n\r\nCringe-worthy I know, but its what i could come up with, any other options?",
+      "link": "https://stackoverflow.com/questions/4915617/django-many-to-many-query",
+      "title": "Django many-to-many query"
+    },
+    {
+      "tags": [
+        "django",
+        "django-models",
+        "uml",
+        "class-diagram"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 1,
+          "answer_id": 15604803,
+          "body_markdown": "What django does is an implementation detail. This is valid UML:\r\n\r\n![enter image description here][1]\r\n\r\n\r\n  [1]: http://i.stack.imgur.com/Vokb7.png"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 139,
+      "answer_count": 1,
+      "score": 2,
+      "last_activity_date": 1364164077,
+      "question_id": 15604749,
+      "body_markdown": "In my project i have a many to many relation. as django can handle a many to many relationship, i did like that:\r\n\r\n    class Groups (models.Model):\r\n            name=models.CharField(max_length=50)\r\n            groups_to_users=models.ManyToManyField(User,related_name=&#39;handler&#39;)\r\n\r\n \r\nI have to make umls diagrams, so unless i&#39;m wrong django create the relation table between the both. for the database i did explicitely apear this one.\r\nbut in the class diagram how can i handle that ? can class have many to many in uml ?\r\nI guess no, so humm ????   :)",
+      "link": "https://stackoverflow.com/questions/15604749/django-many-to-many-uml-confusing",
+      "title": "django many to many uml confusing"
+    },
+    {
+      "tags": [
+        "django",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 12,
+          "answer_id": 1880954,
+          "body_markdown": "Django doesn&#39;t guarantee to preserve the order of many-to-many relationships. If you need this, you should use a [`through`](http://docs.djangoproject.com/en/dev/topics/db/models/#intermediary-manytomany) table with an explicit &#39;order&#39; field."
+        }
+      ],
+      "is_answered": true,
+      "view_count": 4232,
+      "accepted_answer_id": 1880954,
+      "answer_count": 1,
+      "score": 9,
+      "last_activity_date": 1260451634,
+      "question_id": 1880530,
+      "body_markdown": "We have been struggling with this for a few days and have done lots of searches on the web.\r\n\r\nWe are trying to figure out how entries are saved in Django forms for many to many fields.\r\n\r\nFor example we have a news model that has a many to many relationship with images. When we add images to a news article e.g. images with id 10,2,14 we can see the post values are the following when saving a news article form:\r\n\r\n - photos 10 \r\n - photos 2 \r\n - photos 14\r\n\r\nWhen we look in the many to many intersection table the order has not been preserved. We can see no logic in the order the photos are inserted.\r\n\r\nHopefully that makes sense!\r\n\r\nMany thanks for your answers in advance.\r\n\r\nArif",
+      "link": "https://stackoverflow.com/questions/1880530/django-many-to-many-insert-ordering",
+      "title": "Django Many To Many Insert Ordering"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 10,
+          "answer_id": 19822118,
+          "body_markdown": "Your approach is exactly the right way to do it given your existing tables. While there&#39;s nothing official ([this discussion][1], involving a core developer in 2007, appears not to have gone anywhere), I did find this [blog post][2] which takes the same approach (and offers it in a third-party library), and there&#39;s also a popular answer [here][3] which is similar, except only one side of the relationship is generic. \r\n\r\nI&#39;d say the reason this functionality has never made it into django&#39;s trunk is that while it&#39;s a rare requirement, it&#39;s fairly easy to implement using the existing tools. Also, the chance of wanting a custom &quot;through&quot; table is probably quite high so most end-user implementations are going to involve a bit of custom code anyway.\r\n\r\nThe only other potentially simpler approach would be to have base Participant and Reward models, with the ManyToMany relationship between those, and then use [multi-table inheritance][4] to extend these models as Member/Friend etc. \r\n\r\nUltimately, you&#39;ll just need to weigh up the complexity of a generic relation versus that of having your object&#39;s data spread across two models.\r\n\r\n\r\n  [1]: http://python.6.x6.nabble.com/Generic-ManyToMany-Functionality-td476651.html\r\n  [2]: http://charlesleifer.com/blog/connecting-anything-to-anything-with-django/\r\n  [3]: https://stackoverflow.com/questions/933092/generic-many-to-many-relationships#answer-937385\r\n  [4]: https://docs.djangoproject.com/en/dev/topics/db/models/#multi-table-inheritance"
+        },
+        {
+          "is_accepted": false,
+          "score": 7,
+          "answer_id": 26267107,
+          "body_markdown": "Late reply, but I found this conversation when looking for a way to implement generic m2m relations and felt my 2 cents would be helpful for future googlers.\r\n\r\nAs Greg says, the approach you chose is a good way to do it.\r\n\r\nHowever, I would not qualify generic many to many as &#39;easy to implement using existing tools&#39; when you want to use features such as reverse relations or prefetching.\r\n\r\nThe 3rd party app django-genericm2m is nice but has several shortcomings in my opinion (the fact that the &#39;through&#39; objects are all in the same database table by default and that you don&#39;t have &#39;add&#39; / &#39;remove&#39; methods - and therefore bulk add/remove).\r\n\r\nWith that in view, because I needed something to implement generic many-to-many relations &#39;the django way&#39; and also because I wanted to learn a little bit about django internals, I recently released [django-gm2m][1]. It has a very similar API to django&#39;s built-in GenericForeignKey and ManyToManyField (with prefetching, through models ...) and adds deletion behavior customisation. The only thing it lacks for the moment is a suitable django admin interface.\r\n\r\n\r\n  [1]: https://pypi.python.org/pypi/django-gm2m"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 3389,
+      "accepted_answer_id": 19822118,
+      "answer_count": 2,
+      "score": 9,
+      "last_activity_date": 1414804657,
+      "last_edit_date": 1383767599,
+      "question_id": 19772800,
+      "body_markdown": "I think I need to create a &#39;many-to-many generic relationship&#39;. \r\n\r\nI have two types of Participants:\r\n\r\n\r\n    class MemberParticipant(AbstractParticipant):\r\n        class Meta:\r\n            app_label = &#39;participants&#39;\r\n    \r\n    \r\n    class FriendParticipant(AbstractParticipant):\r\n        &quot;&quot;&quot;\r\n        Abstract participant common information shared for all rewards.\r\n        &quot;&quot;&quot;\r\n        pass\r\n\r\n\r\nThese Participants can have 1 or more rewards of 2 different kinds (rewards model is from another app):\r\n\r\n    class SingleVoucherReward(AbstractReward):\r\n        &quot;&quot;&quot;\r\n        Single-use coupons are coupon codes that can only be used once\r\n        &quot;&quot;&quot;\r\n        pass\r\n    \r\n    class MultiVoucherReward(AbstractReward):\r\n        &quot;&quot;&quot;\r\n        A multi-use coupon code is a coupon code that can be used unlimited times.\r\n        &quot;&quot;&quot;\r\n\r\nSo now I need to link these all up. This is how I was thinking of creating the relationship (see below) would this work, any issues you see?\r\n\r\n\r\n**Proposed linking model below:**\r\n\r\n    class ParticipantReward(models.Model):\r\n    \r\n    \r\n        participant_content_type = models.ForeignKey(ContentType, editable=False,\r\n                                                            related_name=&#39;%(app_label)s_%(class)s_as_participant&#39;,\r\n                                                            )\r\n        participant_object_id = models.PositiveIntegerField()\r\n        participant = generic.GenericForeignKey(&#39;participant_content_type&#39;, &#39;participant_object_id&#39;)\r\n    \r\n    \r\n        reward_content_type = models.ForeignKey(ContentType, editable=False,\r\n                                                            related_name=&#39;%(app_label)s_%(class)s_as_reward&#39;,\r\n                                                            )\r\n        reward_object_id = models.PositiveIntegerField()\r\n        reward = generic.GenericForeignKey(&#39;reward_content_type&#39;, &#39;reward_object_id&#39;)\r\n\r\n\r\n**Note: I&#39;m using Django 1.6**\r\n",
+      "link": "https://stackoverflow.com/questions/19772800/django-many-to-many-generic-relationship",
+      "title": "Django many-to-many generic relationship"
+    },
+    {
+      "tags": [
+        "django",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 4,
+          "answer_id": 12684384,
+          "body_markdown": "Django has a special syntax for Many-to-many fields from a model to itself.\r\n\r\nFrom [the documentation][1], you would want to use something like this in your model:\r\n\r\n    friends = models.ManyToManyField(&#39;self&#39;)\r\n\r\nIn general, Django doesn&#39;t have a problem with defining fields to models that are out of scope, or which haven&#39;t been defined yet. The solution is to name the model with a string, and that name is resolved once the other model has been defined. This is necessary when defining two models that have foreign keys to one another, for instance. `&#39;self&#39;` is a special case, though, for relationships back to the model which you are currently defining.\r\n\r\n\r\n\r\n  [1]: https://docs.djangoproject.com/en/1.4/ref/models/fields/#manytomanyfield"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 770,
+      "accepted_answer_id": 12684384,
+      "answer_count": 1,
+      "score": 2,
+      "last_activity_date": 1349150763,
+      "last_edit_date": 1349149958,
+      "question_id": 12684271,
+      "body_markdown": "I&#39;m experimenting with Django and I&#39;m trying to figure out how to define a many to many relationship relating one entity to itself. Let&#39;s say, for eg., I have a custom user object called &quot;Myuser&quot;. I want Myuser to have a list of friends that are also of type Myuser:\r\n\r\n\r\n    class Myuser(models.Model):\r\n        user = models.OneToOneField(User)\r\n        username = models.CharField(max_length=200)\r\n        last_login = DateTimeField(blank=True)\r\n        is_active  = BooleanField(default=True)\r\n        birthday = models.DateField()\r\n        name = models.CharField(max_length=200)\r\n        friends = models.ManyToManyField(Myuser)\r\n        objects = MyuserManager()\r\n\r\n        def __init__(self, *args, **kwargs):\r\n            super(Myuser, self).__init__(*args, **kwargs)\r\n            self.myuser = self\r\n\r\n\r\n        def __unicode__(self):\r\n            return self.name\r\n\r\n        def is_authenticated(self):\r\n            return self.user.is_authenticated()\r\n\r\nThat won&#39;t work because Myuser is not defined at the friends scope. So how would I define such a relationship?",
+      "link": "https://stackoverflow.com/questions/12684271/django-many-to-many-friends-relationship",
+      "title": "Django Many to Many friends relationship"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 6971430,
+          "body_markdown": "You can override the clean method to do extra validation, so if the second many2many is blank you can set the default values, for example:\r\n\r\n    def clean(self):\r\n        super(MyClassModel, self).clean()\r\n        \r\n        if not self.MySecondMany2Many:\r\n            # fill data\r\n\r\nyou should set this code in you models.py inside your class. if clean doesn&#39;t work because the model needs to be saved you could override the save function too, it&#39;s the same procedure. \r\n\r\nI havent test it and I don&#39;t think you can check if a many2many field is blank that way, but you should get the idea :)    "
+        },
+        {
+          "is_accepted": false,
+          "score": 3,
+          "answer_id": 6971999,
+          "body_markdown": "You can use a post-save signal. This looks like it might be the best way to handle your needs here: the bonus is that it will work outside of the admin, too.\r\n\r\n    @models.signals.post_save(sender=MyModel)\r\n    def duplicate_missing_field(sender, instance, **kwargs):\r\n        if not instance.my_second_m2m.count():\r\n            instance.my_second_m2m.add(*instance.my_first_m2m.all())\r\n            # or *instance.my_first_m2m.values_list(&#39;pk&#39;, flat=True), I think\r\n\r\nMy code may not be quite right: You&#39;ll want to read up on signals in django."
+        },
+        {
+          "is_accepted": true,
+          "score": 3,
+          "answer_id": 7008131,
+          "body_markdown": "The signal to be use is not `post_save`, rather `m2m_changed`, that is sent much after the model is saved to the database.\r\n\r\n\r\n\r\n    \r\n\r\n    @models.signals.m2m_changed(sender=MyModel.second_m2m.through)\r\n    def duplicate_other_on_this_if_empty(sender, instance, action, reverse, model, pk_set, **kwargs):\r\n        # just before adding a possibly empty set in &quot;second_m2m&quot;, check and populate.\r\n        if action == &#39;pre_add&#39; and not pk_set:\r\n            instance.__was_empty = True\r\n            pk_set.update(instance.first_m2m.values_list(&#39;pk&#39;, flat=True))\r\n\r\n    @models.signals.m2m_changed(sender=MyModel.first_m2m.through)\r\n    def duplicate_this_on_other_if_empty(sender, instance, action, reverse, model, pk_set, **kwargs):\r\n        # Just in case the &quot;first_m2m&quot; signals are sent after the other\r\n        # so the actual &quot;population&quot; of the &quot;second_m2m&quot; is wrong:\r\n        if action == &#39;post_add&#39; and not pk_set and getattr(instance, &#39;__was_empty&#39;):\r\n            instance.second_m2m = list(pk_set)\r\n            delattr(instance, &#39;__was_empty&#39;)\r\n\r\n\r\n*Edit: next code is simpler, and based upon new knowledge on the models definition*\r\n\r\nIn your code the &#39;first_m2m&#39; signals are sent before the the &#39;second_m2m&#39; (it really depends on your model definition). So we can work on the assumption that when the &#39;second_m2m&#39; signals are received, the &#39;first_m2m&#39; is already populated with current data.\r\n\r\nThis makes us happier, because now you only need to check the m2m-pre-add:\r\n\r\n    @models.signals.m2m_changed(sender=MyModel.second_m2m.through)\r\n    def duplicate_other_on_this_if_empty(sender, instance, action, reverse, model, pk_set, **kwargs):\r\n        # just before adding a possibly empty set in &quot;second_m2m&quot;, check and populate.\r\n        if action == &#39;pre_add&#39; and not pk_set:\r\n            pk_set.update(instance.first_m2m.values_list(&#39;pk&#39;, flat=True))\r\n\r\n"
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 7050110,
+          "body_markdown": "You can see [admin save override ][1] definition from here, just override it and check if related field is empty, if so, save the object, and get the related data from the second M2M and set it to first M2M and save it again...\r\n\r\n\r\n  [1]: https://docs.djangoproject.com/en/dev/ref/contrib/admin/#django.contrib.admin.ModelAdmin.save_model"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 1778,
+      "accepted_answer_id": 7008131,
+      "answer_count": 4,
+      "score": 4,
+      "last_activity_date": 1313443657,
+      "last_edit_date": 1312938189,
+      "question_id": 6971063,
+      "body_markdown": "I have a Django model with 2 many-to-many fields. When the model is saved from the admin interface I need to check if the second field is blank and if it is blank then I need the items from the first fielded copied to the second. How can I do this?\r\n\r\n**UPDATE**\r\n\r\nMatthew&#39;s answer seems like it would work great but I can&#39;t get the instance to save after I copied the field. I have tried instance.save() without any success.",
+      "link": "https://stackoverflow.com/questions/6971063/django-many-to-many-field-copy",
+      "title": "Django many-to-many field copy"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "orm",
+        "django-queryset"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 5,
+          "answer_id": 12753036,
+          "body_markdown": "You could &amp; together a bunch of Q objects:\r\n\r\n    q = Q()\r\n    for author in authors:\r\n        q &amp;= Q(authors=author)\r\n    Books.objects.filter(q)\r\n\r\nTo exclude books that have authors outside the list, you could limit the query to books with exactly the number of authors in the list:\r\n\r\n    Books.objects.annotate(count=Count(&#39;authors&#39;)).filter(count=len(authors)).filter(q)\r\n\r\n**Update:**\r\n\r\nBased on comments, I think the requirement is to get all books authored by at least one author in the list, but exclude books with any authors outside the list. \r\n\r\nSo we build a queryset selecting the authors that we hate:\r\n\r\n    # this queryset will be embedded as a subquery in the next\r\n    bad_authors = Author.objects.exclude(name__in=[&#39;A1&#39;, &#39;A2&#39;])\r\n\r\nThen exclude them to find the books we want:\r\n\r\n    # get all books without any of the bad_authors\r\n    Books.objects.exclude(authors__in=bad_authors)\r\n\r\nThis will return all books except those authored by someone outside your list.  If you also want to exclude those with no authors listed, add another exclude call:\r\n\r\n    Books.objects.exclude(authors__in=bad_authors).exclude(authors=None)\r\n\r\nThis will leave us with just the books authored by one or more of the good ones!\r\n"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 1259,
+      "accepted_answer_id": 12753036,
+      "answer_count": 1,
+      "score": 6,
+      "last_activity_date": 1349713939,
+      "question_id": 12752601,
+      "body_markdown": "For the sake of simplicity let&#39;s say I only have 2 models: Book, Author\r\n\r\n    class Author(models.Model):\r\n        name = models.CharField(max_length=&#39;100&#39;)\r\n        ...\r\n    \r\n    class Book(models.Model):\r\n        name = models.CharField(max_length=&#39;100&#39;)\r\n        authors = models.ManyToManyField(Author)\r\n        ...\r\n\r\nI want to filter Books using a list of authors. What I tried to do is:\r\n\r\n    authors = [...] # a list of author objects\r\n    Books.objects.filter(authors__in=authors)\r\nBut here, the authors will be ORed when I want them ANDed.\r\nIs there any way to AND many-to-many filtering??",
+      "link": "https://stackoverflow.com/questions/12752601/django-many-to-many-intersection-filtering",
+      "title": "Django Many To Many intersection filtering"
+    },
+    {
+      "tags": [
+        "django",
+        "performance"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 3,
+          "answer_id": 29543425,
+          "body_markdown": "The `in` operation can be costly specially if there are so many `waves` record, you can simplify your query as:\r\n\r\n```\r\nif not c.waves.filter(id__exact=obj.wave.id).exists():\r\n    pass # do something\r\n```"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 39,
+      "accepted_answer_id": 29543425,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1428595197,
+      "question_id": 29543234,
+      "body_markdown": "I&#39;ve profiled a piece of code that processes an excel spreadsheet of 350 rows and is about 200 lines long.  75.5% of the time is spent on this many to many call:\r\n\r\n    332       388    117059833 301700.6     75.5                      if obj.wave not in c.waves.all():\r\n\r\nand here is most of the rest:\r\n\r\n    136        97       341749   3523.2      0.2                      q.waves.add(obj.wave)\r\n    137        97     30551176 314960.6     19.7                      q.save()\r\n\r\nwave is a model, \r\nobj has a foreign key field to wave\r\n\r\n    wave = models.ForeignKey(Wave)\r\n\r\nand q has a many to many field to wave\r\n\r\n    waves = models.ManyToManyField(Wave)\r\n\r\nI&#39;ve checked the many to many table and there is a key on every field.  I&#39;ve changed it from ISAM to Innodb with no difference.\r\n\r\nIs there anything I can do to improve performance - it&#39;s currently taking 20 secs per line and using all the CPU on a 2 core linux box - before I rewrite the code to get rid of the many to many structure?",
+      "link": "https://stackoverflow.com/questions/29543234/django-many-to-many-performance-issue",
+      "title": "Django many to many performance issue"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-admin",
+        "modeladmin"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 25085495,
+          "body_markdown": "I haven&#39;t fully processed your lengthy `add_view` method, but the answer to your general question is simply &quot;No.&quot; The admin doesn&#39;t provide any good way to handle multi-layer heterogeneous hierarchies. Two-layer hierarchies are handled nicely by inlines, and so you can easily make it so that from editing an object in any one layer, you can conveniently manage related objects in the next layer down; but nothing beyond that.\r\n\r\nThere has been [a ticket][1] open for years to add nested-inline support to the admin, which would help to handle this situation. But there are lots of tricky edge-cases and it&#39;s very hard to make the UI understandable, so the patch has never reached a commit-ready state.\r\n\r\nAt some point the complexity of your data model is just beyond what the generic admin interface can handle with good usability, and you&#39;re better off just writing your own customized admin interface. Mostly the admin is just built on top of ModelForms and InlineModelFormsets, so it&#39;s not as hard as you might think to just build your own that works the way you want; it&#39;s often easier (and with better results) than trying to heavily customize the admin.\r\n\r\nI should also mention that it is possible to use admin inlines for many-to-many through tables (even if the through table is implicit, not its own model class), as it&#39;s not immediately obvious how to access the implicitly-created through model:\r\n\r\n```\r\nclass MyM2MInline(admin.TabularInline):\r\n    model = SomeModel.m2m_field.through\r\n```\r\n\r\n\r\n  [1]: https://code.djangoproject.com/ticket/9025"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 563,
+      "accepted_answer_id": 25085495,
+      "answer_count": 1,
+      "score": 4,
+      "last_activity_date": 1406914012,
+      "last_edit_date": 1405072266,
+      "question_id": 24694452,
+      "body_markdown": "I have a django ap which has a rather complicated model setup. I ended up using multi level composition to create a hierarchical model. All the relations are one to one, so I could have use inheritance but I chose not to so that i would benefit from having object composition for my models, this means I can do things like\r\n\r\n    product.outerframe.top.cost\r\n\r\nwhich make the complicated calculations I have to preform, a lot better organised.\r\n\r\nHowever, This model arrangement makes using the django admin tricky. I basically have a through table, i.e the outerframe table is just a bunch of foreign keys to other tables (with unique constraint on each). I ended up oerriding the add_view() and change_view() methods of ModelAdmin, which is pretty hard.\r\n\r\nIs there an easier way to deal with many to many / through tables when using the django admin?\r\n\r\n![enter image description here][1]\r\n\r\nThe tables are arranged like so:\r\n\r\nProduct &gt; outerframe, innerframe, glass, other\r\n\r\nouterframe &gt; top, bottom, side etc.\r\n\r\ninnerframe &gt; top, bottom, side etc.\r\n\r\nglass &gt; glass_type etc.\r\n\r\nother &gt; accessories etc.\r\n\r\n\r\nHere are my models:\r\n\r\n    class Product(mixins.ProductVariables):\r\n        name = models.CharField(max_length=255)\r\n        sku = models.CharField(max_length=100, unique=True, db_index=True)\r\n        image = thumbnail.ImageField(upload_to=&#39;product_images&#39;, blank=True)\r\n        description = models.TextField(blank=True)\r\n        group = models.ForeignKey(&#39;ProductGroup&#39;, related_name=&#39;products&#39;, null=True)\r\n        hidden = models.BooleanField(default=False)\r\n        product_specific_mark_up = models.DecimalField(default=1.0, max_digits=5,decimal_places=2)\r\n    \r\n        # Methods for totals\r\n        def total_material_cost(self, width, height, options):\r\n            return sum([\r\n                self.outerframe.cost(width, height, options),\r\n                self.innerframe.cost(width, height, options),\r\n                self.glass.cost(width, height, options),\r\n                self.other.cost(width, height, options),\r\n            ])\r\n    \r\n        def total_labour_time(self, width, height, options):\r\n            return sum([\r\n                self.outerframe.labour_time(width, height, options),\r\n                self.innerframe.labour_time(width, height, options),\r\n                self.glass.labour_time(width, height, options),\r\n                self.other.labour_time(width, height, options),\r\n            ])\r\n    \r\n        def total_co2_output(self, width, height, options):\r\n            return sum([\r\n                self.outerframe.co2_output(width, height, options),\r\n                self.innerframe.co2_output(width, height, options),\r\n                self.glass.co2_output(width, height, options),\r\n                self.other.co2_output(width, height, options),\r\n            ])\r\n    \r\n        @property\r\n        def max_overall_width(self):\r\n            return 1000\r\n    \r\n        @property\r\n        def max_overall_height(self):\r\n            return 1000\r\n    \r\n        def __unicode__(self):\r\n            return self.name\r\n    \r\n    \r\n    class OuterFrame(models.Model, mixins.GetFieldsMixin, mixins.GetRelatedClassesMixin):\r\n        top = models.OneToOneField(mixins.TopFrame)\r\n        bottom = models.OneToOneField(mixins.BottomFrame)\r\n        side = models.OneToOneField(mixins.SideFrame)\r\n        accessories = models.OneToOneField(mixins.Accessories)\r\n        flashing = models.OneToOneField(mixins.Flashing)\r\n        silicone = models.OneToOneField(mixins.Silicone)\r\n    \r\n        product = models.OneToOneField(Product)\r\n    \r\n        def cost(self, width, height, options):\r\n            #accessories_cost = (self.accessories.cost if options[&#39;accessories&#39;] else 0)\r\n            #flashing_cost = (self.flashing.cost if options[&#39;flashing&#39;] else 0)\r\n            #silicone_cost = (self.silicone.cost if options[&#39;silicone&#39;] else 0)\r\n            return sum([\r\n                self.top.cost * (width / 1000),\r\n                self.bottom.cost * (width / 1000),\r\n                self.side.cost * (width*2 / 1000),\r\n                #accessories_cost,\r\n                #flashing_cost,\r\n                #silicone_cost,\r\n            ])\r\n    \r\n        def labour_time(self, width, height, options):\r\n            return datetime.timedelta(minutes=100)\r\n    \r\n        def CO2_output(self, width, height, options):\r\n            return 100 # some kg measurement\r\n    \r\n        @classmethod\r\n        def get_fields(cls):\r\n            options = cls._meta\r\n            fields = {}\r\n            for field in options.fields:\r\n                if field.name == &#39;product&#39;:\r\n                    continue\r\n                if isinstance(field, models.OneToOneField):\r\n                    related_cls = field.rel.to\r\n                    related_fields = fields_for_model(related_cls, fields=related_cls.get_fields())\r\n                    fields.update( { related_cls.__name__ + &#39;_&#39; + name:field for name, field in related_fields.iteritems() })\r\n            return fields\r\n    \r\n    \r\n    \r\n    class InnerFrame(models.Model, mixins.GetFieldsMixin, mixins.GetRelatedClassesMixin):\r\n        top = models.OneToOneField(mixins.TopFrame)\r\n        bottom = models.OneToOneField(mixins.BottomFrame)\r\n        side = models.OneToOneField(mixins.SideFrame)\r\n        accessories = models.OneToOneField(mixins.Accessories)\r\n    \r\n        product = models.OneToOneField(Product)\r\n    \r\n        def cost(self, width, height, options):\r\n            #accessories_cost = (self.accessories.cost if options[&#39;accessories&#39;] else 0)\r\n            print self.top.cost\r\n            return sum([\r\n                self.top.cost * (width / 1000),\r\n                self.bottom.cost * (width / 1000),\r\n                self.side.cost * (width*2 / 1000),\r\n            #    accessories_cost,\r\n            ])\r\n    \r\n        def labour_time(self, width, height, options):\r\n            return datetime.timedelta(minutes=100)\r\n    \r\n        def CO2_output(self, width, height, options):\r\n            return 100 # some kg measurement\r\n    \r\n    class Glass(models.Model, mixins.GetRelatedClassesMixin):\r\n        glass_type_a = models.OneToOneField(mixins.GlassTypeA)\r\n        glass_type_b = models.OneToOneField(mixins.GlassTypeB)\r\n        enhanced = models.OneToOneField(mixins.Enhanced)\r\n        laminate = models.OneToOneField(mixins.Laminate)\r\n        low_iron = models.OneToOneField(mixins.LowIron)\r\n        privacy = models.OneToOneField(mixins.Privacy)\r\n        anti_slip = models.OneToOneField(mixins.AntiSlip)\r\n        heat_film_mirror = models.OneToOneField(mixins.HeatMirrorField)\r\n        posished_edges = models.OneToOneField(mixins.PolishedEdges)\r\n    \r\n        product = models.OneToOneField(Product)\r\n    \r\n        def cost(self, width, height, options):\r\n            return sum([\r\n            ])\r\n    \r\n        def labour_time(self, width, height, options):\r\n            return datetime.timedelta(minutes=100)\r\n    \r\n        def CO2_output(self, width, height, options):\r\n            return 100 # some kg measurement\r\n    \r\n    class Other(models.Model, mixins.GetRelatedClassesMixin):\r\n        num_packages = models.OneToOneField(mixins.NumberPackages)\r\n    \r\n        product = models.OneToOneField(Product)\r\n    \r\n        def cost(self, width, height, options):\r\n            return 100\r\n    \r\n        def labour_time(self, width, height, options):\r\n            return datetime.timedelta(minutes=100)\r\n    \r\n        def CO2_output(self, width, height, options):\r\n            return 100 # some kg measurement\r\n\r\nmixins:\r\n\r\n    class TimeCostMixin(models.Model, GetFieldsMixin):\r\n        cost = models.DecimalField(default=0.0, max_digits=10, decimal_places=2)\r\n        time = models.TimeField(default=datetime.timedelta(0))\r\n        class Meta:\r\n            abstract = True\r\n    \r\n    ##### Frame #####\r\n    class FrameComponentMixin(TimeCostMixin):\r\n        external_width = models.IntegerField(default=0)\r\n        material_weight = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n        u_value = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n        class Meta:\r\n            abstract = True\r\n    \r\n    \r\n    class TopFrame(FrameComponentMixin):\r\n        pass\r\n    \r\n    \r\n    class BottomFrame(FrameComponentMixin):\r\n        pass\r\n    \r\n    \r\n    class SideFrame(FrameComponentMixin):\r\n        pass\r\n    \r\n    \r\n    class Accessories(TimeCostMixin):\r\n        material_weight = models.DecimalField(default=0.0,max_digits=10,decimal_places=2)\r\n    \r\n    \r\n    class Flashing(TimeCostMixin):\r\n        pass\r\n    \r\n    \r\n    class Silicone(TimeCostMixin):\r\n        labour_time = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n    #################\r\n    \r\n    ##### Glass #####\r\n    class GlassTypeA(TimeCostMixin):\r\n        material_weight = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n        u_value = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n    \r\n    class GlassTypeB(TimeCostMixin):\r\n        material_weight = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n        u_value = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n    \r\n    class Enhanced(TimeCostMixin):\r\n        material_weight = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n    \r\n    class Laminate(TimeCostMixin):\r\n        material_weight = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n    \r\n    class LowIron(TimeCostMixin):\r\n        pass\r\n    \r\n    class Privacy(TimeCostMixin):\r\n        pass\r\n    \r\n    class AntiSlip(TimeCostMixin):\r\n        pass\r\n    \r\n    class HeatMirrorField(TimeCostMixin):\r\n        u_value = models.DecimalField(default=0.0, max_digits=10,decimal_places=2)\r\n    \r\n    class PolishedEdges(models.Model):\r\n        cost = models.DecimalField(default=0.0, max_digits=10, decimal_places=2)\r\n    ##################\r\n    \r\n    ##### other  #####\r\n    class NumberPackages(models.Model):\r\n        number_of_packages = models.IntegerField(default=0)\r\n    ##################\r\n\r\nand a hair pulling admin!\r\n\r\n    class ProductAdmin(AdminImageMixin, admin.ModelAdmin):\r\n        inlines = [ProductDownloadInline, ProductConfigurationInline]\r\n    \r\n        add_form_template = &#39;admin/products/add_form.html&#39;\r\n        change_form_template = &#39;admin/products/add_form.html&#39;\r\n    \r\n    \r\n        @csrf_protect_m\r\n        @transaction.atomic\r\n        def add_view(self, request, form_url=&#39;&#39;, extra_context=None):\r\n            extra_context = extra_context or {}\r\n    \r\n            &quot;The &#39;add&#39; admin view for this model.&quot;\r\n            model = self.model\r\n            opts = model._meta\r\n    \r\n            if not self.has_add_permission(request):\r\n                raise PermissionDenied\r\n    \r\n            ModelForm = self.get_form(request)\r\n            formsets = []\r\n            inline_instances = self.get_inline_instances(request, None)\r\n            if request.method == &#39;POST&#39;:\r\n                form = ModelForm(request.POST, request.FILES)\r\n                if form.is_valid():\r\n                    new_object = self.save_form(request, form, change=False)\r\n                    form_validated = True\r\n                else:\r\n                    form_validated = False\r\n                    new_object = self.model()\r\n                prefixes = {}\r\n                for FormSet, inline in zip(self.get_formsets(request), inline_instances):\r\n                    prefix = FormSet.get_default_prefix()\r\n                    prefixes[prefix] = prefixes.get(prefix, 0) + 1\r\n                    if prefixes[prefix] != 1 or not prefix:\r\n                        prefix = &quot;%s-%s&quot; % (prefix, prefixes[prefix])\r\n                    formset = FormSet(data=request.POST, files=request.FILES,\r\n                                      instance=new_object,\r\n                                      save_as_new=&quot;_saveasnew&quot; in request.POST,\r\n                                      prefix=prefix, queryset=inline.get_queryset(request))\r\n                    formsets.append(formset)\r\n    \r\n                #####\r\n                outer_frame_forms = [\r\n                    modelform_factory(cls)(request.POST, prefix=&#39;OuterFrame_&#39;+cls.__name__)\r\n                    for cls in models.OuterFrame.get_related_classes(exclude=[&#39;product&#39;])\r\n                ]\r\n                inner_frame_forms = [\r\n                    modelform_factory(cls)(request.POST, prefix=&#39;InnerFrame&#39;+cls.__name__)\r\n                    for cls in models.InnerFrame.get_related_classes(exclude=[&#39;product&#39;])\r\n                ]\r\n                glass_forms = [\r\n                    modelform_factory(cls)(request.POST, prefix=&#39;InnerFrame&#39;+cls.__name__)\r\n                    for cls in models.Glass.get_related_classes(exclude=[&#39;product&#39;])\r\n                ]\r\n                other_forms = [\r\n                    modelform_factory(cls)(request.POST, prefix=&#39;InnerFrame&#39;+cls.__name__)\r\n                    for cls in models.Other.get_related_classes(exclude=[&#39;product&#39;])\r\n                ]\r\n                #####\r\n    \r\n                if all_valid(formsets\r\n                            +outer_frame_forms\r\n                            +inner_frame_forms\r\n                            +glass_forms\r\n                            +other_forms\r\n                            ) and form_validated:\r\n                    self.save_model(request, new_object, form, False)\r\n                    self.save_related(request, form, formsets, False)\r\n                    self.log_addition(request, new_object)\r\n    \r\n                    ##### save object hierichy #####\r\n                    # inner frame\r\n                    inner_frame = models.InnerFrame()\r\n                    inner_frame.product = new_object\r\n                    mapping = {f.rel.to:f.name for f in models.InnerFrame._meta.fields if f.name not in [&#39;id&#39;,&#39;product&#39;]}\r\n                    for f in inner_frame_forms:\r\n                        obj = f.save()\r\n                        setattr(inner_frame, mapping[obj.__class__], obj)\r\n                    inner_frame.save()\r\n                    # outer frame\r\n                    outer_frame = models.OuterFrame()\r\n                    outer_frame.product = new_object\r\n                    mapping = {f.rel.to:f.name for f in models.OuterFrame._meta.fields if f.name not in [&#39;id&#39;,&#39;product&#39;]}\r\n                    for f in outer_frame_forms:\r\n                        obj = f.save()\r\n                        setattr(outer_frame, mapping[obj.__class__], obj)\r\n                    outer_frame.save()\r\n                    # glass\r\n                    glass = models.Glass()\r\n                    glass.product = new_object\r\n                    mapping = {f.rel.to:f.name for f in models.Glass._meta.fields if f.name not in [&#39;id&#39;,&#39;product&#39;]}\r\n                    for f in glass_forms:\r\n                        obj = f.save()\r\n                        setattr(glass, mapping[obj.__class__], obj)\r\n                    glass.save()\r\n                    # other\r\n                    other = models.Other()\r\n                    other.product = new_object\r\n                    mapping = {f.rel.to:f.name for f in models.Other._meta.fields if f.name not in [&#39;id&#39;,&#39;product&#39;]}\r\n                    for f in other_forms:\r\n                        obj = f.save()\r\n                        setattr(other, mapping[obj.__class__], obj)\r\n                    other.save()\r\n                    #################################\r\n    \r\n                    return self.response_add(request, new_object)\r\n            else:\r\n                forms = SortedDict({})\r\n                forms[&#39;Outer Frame Variables&#39;] = {\r\n                    cls.__name__: modelform_factory(cls)(prefix=&#39;OuterFrame_&#39;+cls.__name__)\r\n                    for cls in models.OuterFrame.get_related_classes(exclude=[&#39;product&#39;])\r\n                }\r\n                forms[&#39;Inner Frame Variables&#39;] = {\r\n                    cls.__name__: modelform_factory(cls)(prefix=&#39;InnerFrame&#39;+cls.__name__)\r\n                    for cls in models.InnerFrame.get_related_classes(exclude=[&#39;product&#39;])\r\n                }\r\n                forms[&#39;Glass Variables&#39;] = {\r\n                    cls.__name__: modelform_factory(cls)(prefix=&#39;InnerFrame&#39;+cls.__name__)\r\n                    for cls in models.Glass.get_related_classes(exclude=[&#39;product&#39;])\r\n                }\r\n                forms[&#39;Other Variables&#39;] = {\r\n                    cls.__name__: modelform_factory(cls)(prefix=&#39;InnerFrame&#39;+cls.__name__)\r\n                    for cls in models.Other.get_related_classes(exclude=[&#39;product&#39;])\r\n                }\r\n                extra_context[&#39;forms&#39;] = forms\r\n    \r\n                # Prepare the dict of initial data from the request.\r\n                # We have to special-case M2Ms as a list of comma-separated PKs.\r\n                initial = dict(request.GET.items())\r\n                for k in initial:\r\n                    try:\r\n                        f = opts.get_field(k)\r\n                    except models.FieldDoesNotExist:\r\n                        continue\r\n                    if isinstance(f, models.ManyToManyField):\r\n                        initial[k] = initial[k].split(&quot;,&quot;)\r\n                form = ModelForm(initial=initial)\r\n                prefixes = {}\r\n                for FormSet, inline in zip(self.get_formsets(request), inline_instances):\r\n                    prefix = FormSet.get_default_prefix()\r\n                    prefixes[prefix] = prefixes.get(prefix, 0) + 1\r\n                    if prefixes[prefix] != 1 or not prefix:\r\n                        prefix = &quot;%s-%s&quot; % (prefix, prefixes[prefix])\r\n                    formset = FormSet(instance=self.model(), prefix=prefix,\r\n                                      queryset=inline.get_queryset(request))\r\n                    formsets.append(formset)\r\n    \r\n            adminForm = helpers.AdminForm(form, list(self.get_fieldsets(request)),\r\n                self.get_prepopulated_fields(request),\r\n                self.get_readonly_fields(request),\r\n                model_admin=self)\r\n            media = self.media + adminForm.media\r\n    \r\n            inline_admin_formsets = []\r\n            for inline, formset in zip(inline_instances, formsets):\r\n                fieldsets = list(inline.get_fieldsets(request))\r\n                readonly = list(inline.get_readonly_fields(request))\r\n                prepopulated = dict(inline.get_prepopulated_fields(request))\r\n                inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,\r\n                    fieldsets, prepopulated, readonly, model_admin=self)\r\n                inline_admin_formsets.append(inline_admin_formset)\r\n                media = media + inline_admin_formset.media\r\n    \r\n            context = {\r\n                &#39;title&#39;: _(&#39;Add %s&#39;) % force_text(opts.verbose_name),\r\n                &#39;adminform&#39;: adminForm,\r\n                &#39;is_popup&#39;: IS_POPUP_VAR in request.REQUEST,\r\n                &#39;media&#39;: media,\r\n                &#39;inline_admin_formsets&#39;: inline_admin_formsets,\r\n                &#39;errors&#39;: helpers.AdminErrorList(form, formsets),\r\n                &#39;app_label&#39;: opts.app_label,\r\n                &#39;preserved_filters&#39;: self.get_preserved_filters(request),\r\n            }\r\n            context.update(extra_context or {})\r\n            return self.render_change_form(request, context, form_url=form_url, add=True)\r\n\r\n  [1]: http://i.stack.imgur.com/ur6WQ.jpg\r\n",
+      "link": "https://stackoverflow.com/questions/24694452/django-many-to-many-and-admin",
+      "title": "Django Many to Many and admin"
+    },
+    {
+      "tags": [
+        "django",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 2,
+          "answer_id": 12725150,
+          "body_markdown": "You can add\r\n\r\n    categories = models.ManyToManyField(Category, \r\n                                        through=Category.products.through)\r\n\r\n\r\nto your Product model"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 767,
+      "accepted_answer_id": 12725150,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1349348761,
+      "last_edit_date": 1349348761,
+      "question_id": 12724789,
+      "body_markdown": "I had two django models connected with many to many relationship.\r\n\r\nFirst model:\r\n\r\n    class Category(models.Model):\r\n    \r\n       name = models.CharField(max_length=255)\r\n       products = models.ManyToManyField(Product, related_name=&#39;categories&#39;,\r\n                                      blank=True, null=True,\r\n                                      verbose_name=_(&#39;Products&#39;),\r\n                                      )\r\n\r\nsecond model:\r\n\r\n\r\n    class Product(models.Model):\r\n\r\n        description = models.TextField(verbose_name=_(&#39;Description&#39;), default=&#39;&#39;)\r\n        manifactor = models.CharField(verbose_name=_(&#39;Manifactor&#39;), default=&#39;Blackberry&#39;, max_length=255)\r\n\r\nok, so:\r\n \r\n    product = Product.objects.all()[0]\r\n    product.categories  - give me a list of categories for this product.\r\n\r\nbut:\r\n\r\n    product._meta.many_to_many - return empty list [].\r\n    and product._meta.get_field(&#39;categories&#39;) - return None.\r\nWhy ?\r\n\r\nHow can I get the verbose name of category field from product object ?\r\n\r\n\r\n\r\n    ",
+      "link": "https://stackoverflow.com/questions/12724789/django-many-to-many-relation-get-field-name",
+      "title": "django, many to many relation get_field name"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-admin"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 29356116,
+          "body_markdown": "There is an open source Django app called django-admin-extend which addresses the issue of bidirectional many-to-many fields using add_bidirectional_m2m and _get_bidirectional_m2m_fields. It can be installed via pip.\r\n\r\nhttps://github.com/kux/django-admin-extend\r\n\r\nhttps://pypi.python.org/pypi/django-admin-extend"
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 29373353,
+          "body_markdown": "If you define the m2m relationship in both models, and set the &quot;through&quot; attribute of one to be equal to the &quot;through&quot; of the other, you get access to the m2m relationship from both sides, and get to see it from both admin pages.\r\n\r\n    class Test1(models.Model):\r\n        tests2 = models.ManyToManyField(&#39;Test2&#39;, blank=True)\r\n\r\n    class Test2(models.Model):\r\n        tests1 = models.ManyToManyField(&#39;Test1&#39;, through=Test1.tests2.through, blank=True)\r\n\r\nas seen in https://code.djangoproject.com/ticket/897"
+        }
+      ],
+      "is_answered": false,
+      "view_count": 75,
+      "answer_count": 2,
+      "score": 1,
+      "last_activity_date": 1427830591,
+      "last_edit_date": 1427830591,
+      "question_id": 25513350,
+      "body_markdown": "I have a many-to-many field between two models in Django. I however only see a form field in one of the models on the admin page. I tried adding a many-to-many field in the second model, and although this added a form field in the admin page, the two form fields were not synchronized (so changing the value on one form field doesn&#39;t affect the other one). Is there a way to have a many-to-many relationship and have two form fields in the admin page and both are synchronized?",
+      "link": "https://stackoverflow.com/questions/25513350/django-many-to-many-field-admin-page",
+      "title": "django many-to-many field admin page"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "python-2.7",
+        "python-3.x",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 0,
+          "answer_id": 44641521,
+          "body_markdown": "What happens if you change `assistants = models.ManyToManyField(GroupMember,through=SessionAssistant)` to `assistants = models.ManyToManyField(GroupMember,through=&#39;SessionAssistant&#39;)`?\r\n"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 19,
+      "accepted_answer_id": 44641521,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1497915517,
+      "question_id": 44640660,
+      "body_markdown": "I have a problem in my models because I have a circular reference in a many to many relationship\r\n\r\nThis is a part of my web app, the Sessions are of a group (a group can have more than one session) and each Session have more than one assistant but the assistants only can be members of the session&#39;s group \r\n\r\nHere are my models:\r\n\r\n    class GroupMember(models.Model):\r\n        member = models.ForeignKey(Volunteer, null=True, blank=True)\r\n        group = models.ForeignKey(Group)\r\n        leader = models.BooleanField(default=False)\r\n        created = models.DateTimeField(auto_now_add=True)\r\n\r\n        def __str__(self):\r\n            return &#39;{}&#39;.format(self.member)\r\n\r\n    class Session(models.Model):\r\n        name = models.CharField(max_length=250)\r\n        group = models.ForeignKey(Group)\r\n        assistants = models.ManyToManyField(GroupMember,through=SessionAssistant)\r\n        created = models.DateTimeField(auto_now_add=True)\r\n\r\n        def __str__(self):\r\n            return &#39;{}&#39;.format(self.name)\r\n\r\n    class SessionAssistant(models.Model):\r\n        assistant = models.ForeignKey(GroupMember)\r\n        session = models.ForeignKey(Session, null=True, blank=True, on_delete=models.CASCADE)\r\n        assist = models.BooleanField(default=True)\r\n        ability = models.IntegerField(null=True,\r\n                                  blank=True,\r\n                                  validators=[MaxValueValidator(5), MinValueValidator(1)])\r\n        performance = models.IntegerField(null=True,\r\n                                      blank=True,\r\n                                      validators=[MaxValueValidator(5), MinValueValidator(1)])\r\n        created = models.DateTimeField(auto_now_add=True)\r\n\r\n        def __str__(self):\r\n            return &#39;{}&#39;.format(self.assistant)\r\n",
+      "link": "https://stackoverflow.com/questions/44640660/django-many-to-many-circular-reference",
+      "title": "Django: many to many circular reference"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 35381221,
+          "body_markdown": "Are you sure your code adds duplicates to `Image` and not to `ImageUser` (which is how many-to-many table works)?\r\n\r\n    --------------------     ---------------------------     ----------------------------\r\n    |       Users      |     |         ImageUser       |     |           Image          |\r\n    --------------------     ---------------------------     ----------------------------\r\n    | id |   username  |     | id | user_id | image_id |     | id |         path        |\r\n    -------------------- --&lt; --------------------------- &gt;-- ----------------------------\r\n    | 1  |  AndyApple  |     | 1  |    1    |     1    |     | 1  | &#39;img/andyapple.jpg&#39; |\r\n    --------------------     ---------------------------     ----------------------------\r\n    | 2  | BettyBanana |     | 2  |    2    |     1    |\r\n    --------------------     ---------------------------\r\n\r\nBut anyway, the problem is not right here, if you want: \r\n\r\n&gt; &quot;one unique image path to point to multiple users without having\r\n&gt; duplicate images in the Image table.&quot;\r\n\r\nthen you have to define the field as `unique`, see code sample below. In this case if you will try to save the image with the pathy that is already in DB the exception will be raised. But note that in this case if two users upload different images, but with the same name, then the last uploaded image will be used for both users.\r\n\r\n    class Image(models.Model):\r\n        path = models.CharField(max_length=128, unique=True)"
+        }
+      ],
+      "is_answered": false,
+      "view_count": 65,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1455527925,
+      "last_edit_date": 1455527925,
+      "question_id": 35375464,
+      "body_markdown": "I&#39;m getting duplication in my path (many to many) table, and would like it only to contain unique items. \r\n\r\nmodels.py\r\n\r\n    class Image(models.Model):\r\n        path = models.CharField(max_length=128)\r\n    \r\n    class User(models.Model):\r\n        username = models.CharField(max_length=32)\r\n        created = models.DateTimeField()\r\n        images = models.ManyToManyField(Image, through=&#39;ImageUser&#39;)\r\n \r\n    class ImageUser(models.Model):\r\n        user = models.ForeignKey(User, on_delete=models.CASCADE)\r\n        image = models.ForeignKey(Image, on_delete=models.CASCADE)\r\n\r\nBut, I seem to be able to create more than one image with the same path. I would like one unique image path to point to multiple users without having duplicate images in the Image table. \r\n    \r\n    u = User.objects.create(username=&#39;AndyApple&#39;)\r\n    i = Image(path=&#39;img/andyapple.jpg&#39;)\r\n    i.save()\r\n    ui = ImageUser(user=u, image=i)\r\n    ui.save()\r\n\r\n    u2 = User.objects.create(username=&#39;BettyBanana&#39;)\r\n    ui = ImageUser(user=u2, image=i)\r\n\r\nThis seems to create two rows in the images table for the same image. The docs suggest this should not happen [ManyToManyField.through][1]\r\n\r\nThanks!\r\n    \r\n    \r\n\r\n\r\n  [1]: https://docs.djangoproject.com/en/1.9/ref/models/fields/#django.db.models.ManyToManyField.through",
+      "link": "https://stackoverflow.com/questions/35375464/django-many-to-many-avoiding-duplication",
+      "title": "Django many to many avoiding duplication"
+    },
+    {
+      "tags": [
+        "django",
+        "forms",
+        "postgresql"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 19710432,
+          "body_markdown": "Object must be saved - so that it has primary key - before M2M relationships are saved. Update your code as\r\n\r\n    connector = Connector(profile=profile)\r\n    connector.profile = profile\r\n    connector.save()\r\n    connector.attributes = self.cleaned_data[&#39;selected_attributes&#39;]\r\n    connector.save()"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 61,
+      "accepted_answer_id": 19710432,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1383232899,
+      "question_id": 19710176,
+      "body_markdown": "I have a model called Connector that has a foreign key to profile and a many-to-many relation with an ExternalAttribute model.  The ExternalAttribute model has a list of attribute objects that are static.  I want users to be able to add and remove the attributes of the ExternalAttribute model from their profiles.\r\n\r\nIn the forms, I pull down all the objects from ExternalAttribute into a ModelMultipleChoiceField, which works fine, but I cannot save the selected attributes and add an object to the Connector model.\r\n\r\nHere is the form save code:\r\n\r\n    profile = Profile.objects.get(user = User.objects.get(username=self.cleaned_data[&#39;user&#39;]))\r\n\r\n    connector = Connector(profile=profile)\r\n    connector.profile = profile\r\n    connector.attributes = self.cleaned_data[&#39;selected_attributes&#39;]\r\n    connector.save()\r\n\r\nWhen I try to save the selected attributes in the form, I get this error in the stack trace:\r\n\r\n    ValueError: &quot;&lt;Connector: Connector object&gt;&quot; needs to have a value for field &quot;connector&quot; before this many-to-many relationship can be used.\r\n\r\nI am working with an inefficient database and must use these models.  Thanks for the help.",
+      "link": "https://stackoverflow.com/questions/19710176/django-many-to-many-relation-edit",
+      "title": "Django: Many-to-many relation edit"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models",
+        "django-admin"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 3,
+          "answer_id": 3561526,
+          "body_markdown": "You forgot to specify `blank=True` in your `ManyToManyField` declaration:\r\n\r\n    class Article(models.Model):\r\n        tags = models.ManyToManyField(ArticleTag, blank=True, \r\n            related_name=&quot;articles&quot;)\r\n\r\n&gt;Also, is there a fairly easy way to create a control to facilitate tagging as per stack overflow or delicious.com?\r\n\r\nThere&#39;s nothing built-in, but there are several add-on libraries for Django that do tagging.  One of them might fit your needs."
+        }
+      ],
+      "is_answered": true,
+      "view_count": 229,
+      "accepted_answer_id": 3561526,
+      "answer_count": 1,
+      "score": 2,
+      "last_activity_date": 1282688928,
+      "question_id": 3561508,
+      "body_markdown": "I am essentially creating a blog application in django as a way of learning the ropes and boosting my skill level in django. I basically have a many-to-many relationship that I am having problems with in the admin site. I have two main types, Article and ArticleTag. Many Articles can belong to many ArticleTags, and the relationship should be bidirectional so as to be able to &quot;follow&quot; the relationship from either side. \r\n\r\nThe problem I am having is that in the admin panel, when I go to create a new Article, it will not allow me to create a new Article without creating a new ArticleTag, which can&#39;t be created without creating a new Article, etc. How can I make these work properly and be optional? Also, is there a fairly easy way to create a control to facilitate tagging as per stack overflow or delicious.com? I am fairly new to the admin system :)",
+      "link": "https://stackoverflow.com/questions/3561508/django-many-to-many-problem-in-admin",
+      "title": "Django many-to-many problem in admin"
+    },
+    {
+      "tags": [
+        "python",
+        "django"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 5164550,
+          "body_markdown": "`Post.objects.all(catagory__title=&quot;My catagory title&quot;)`?"
+        },
+        {
+          "is_accepted": false,
+          "score": 1,
+          "answer_id": 5164595,
+          "body_markdown": "From the category objects you can retrieve the related objects using the automatically created field post_set, if the post model is named Post.\r\n\r\nThis is a bit tricky to find in the documentation because it is in a dedicated section, see here:\r\nhttp://docs.djangoproject.com/en/dev/topics/db/queries/#many-to-many-relationships"
+        },
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 5165257,
+          "body_markdown": "give title\r\n&gt;     category = Category.objects.get(title=title)\r\n    post_list = category.post_set.all()\r\n\r\nreturn result"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 261,
+      "accepted_answer_id": 5165257,
+      "answer_count": 3,
+      "score": 1,
+      "last_activity_date": 1299055986,
+      "question_id": 5164307,
+      "body_markdown": "how in django find list of post related with special many to many field?\r\n\r\nfor example \r\n\r\ncatagory have title\r\n\r\npost have many to many relation to catagory\r\n\r\nhow find all post from category title",
+      "link": "https://stackoverflow.com/questions/5164307/many-to-many-problem-django",
+      "title": "many to many problem django"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 2,
+          "answer_id": 27908057,
+          "body_markdown": "Use this:\r\n\r\n    for author in Author.objects.filter(post__isnull=False):\r\n        print author"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 90,
+      "accepted_answer_id": 27908057,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1421085580,
+      "question_id": 27907832,
+      "body_markdown": "I&#39;m able to query my database below to get the result that I want but I don&#39;t want to have to iterate through all of the author objects, just the ones that have more than one post. There is a many-to-many relationship between Authors and Posts with the Many-To-ManyField on the Post. Does anyone know how to make this more efficient?\r\n\r\n    for author in Author.objects.all():\r\n        if len(author.post_set.all()) &gt; 0:\r\n            print author",
+      "link": "https://stackoverflow.com/questions/27907832/django-many-to-many-query-set-filter",
+      "title": "Django Many to Many Query Set Filter"
+    },
+    {
+      "tags": [
+        "python",
+        "django"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 18568368,
+          "body_markdown": "    class Like(models.Model):\r\n        user = models.ForeignKey(User)\r\n        photo  = models.ForeignKey(Photo)\r\n"
+        },
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 18568466,
+          "body_markdown": "You just need to think about how photos are liked.\r\n\r\nCan a user like many photos?\r\n\r\nCan many photos be liked by the one user?\r\n\r\nThen it is a many to many.\r\n\r\n\r\nYou would implement it like this\r\n\r\n    class Photo(models.Model):\r\n        publish_by = models.ForeignKey(User)\r\n        name = models.CharField(max_length=40)\r\n        desc = models.CharField(max_length=40)\r\n        liked_by = models.ManyToManyField(User, related_name=&quot;likes&quot;)\r\n\r\n\r\n\r\nThen, it works like this, you can add likes to a photo by\r\n    \r\n    photoInstance.liked_by.add(user)\r\n\r\nAccess the likes of a photo this way \r\n    \r\n     photoInstance.liked_by.all()\r\n\r\nTo get all the photos a user liked\r\n\r\n    user.likes.all()\r\n\r\n    "
+        }
+      ],
+      "is_answered": true,
+      "view_count": 113,
+      "accepted_answer_id": 18568466,
+      "answer_count": 2,
+      "score": 0,
+      "last_activity_date": 1378111731,
+      "last_edit_date": 1378111731,
+      "question_id": 18568333,
+      "body_markdown": "i have this tables in my django :\r\n\r\n    class User(models.Model):\r\n       username = models.CharField(max_length=40)\r\n\r\n    class Photo(models.Model):\r\n       publish_by = models.ForeignKey(User)\r\n       name = models.CharField(max_length=40)\r\n       desc = models.CharField(max_length=40)\r\n\r\n\r\n\r\nUser could publish Phtotos , and they can like Photos .but i don&#39;t know how to write the like in the phtoto , should i use one to many or many to many ?\r\n\r\nand how could i get the Users that like a Photo . \r\n\r\nthanks for help .\r\n\r\n\r\n**UPDATE**\r\n\r\nIn the end I decided to use a many to many with a through model because I also wanted to record the time. The models I have settled on are these\r\n\r\n\r\n    class User(models.Model):\r\n       username = models.CharField(max_length=40)\r\n\r\n     class Photo(Model):\r\n        author = models.ForeignKey(User, related_name=&#39;%(class)ss&#39;)\r\n        publish_time =  models.DateTimeField(default=datetime.datetime.now)\r\n        liked_by = models.ManyToManyField(User, related_name=&quot;likes&quot;,through=&#39;PhotoLike&#39;,)\r\n    \r\n        def like(self, user):\r\n            liked, created = PhotoLike.objects.get_or_create(photo=self,user=user)\r\n            return liked\r\n    \r\n        def save(self, *args, **kwargs):\r\n            super(Photo, self).save(*args, **kwargs)\r\n    \r\n        class Meta:\r\n            app_label = &#39;meinv&#39;\r\n    \r\n    class PhotoLike(models.Model):\r\n        user = models.ForeignKey(User)\r\n        photo = models.ForeignKey(Photo)\r\n        like_time =  models.DateTimeField(default=datetime.datetime.now)\r\n    \r\n        class Meta:\r\n            app_label = &#39;meinv&#39;\r\n",
+      "link": "https://stackoverflow.com/questions/18568333/django-many-to-many-relation-or-one-to-many-relation",
+      "title": "Django Many-to-Many Relation or One-to-Many relation"
+    },
+    {
+      "tags": [
+        "django",
+        "django-queryset"
+      ],
+      "is_answered": false,
+      "view_count": 66,
+      "answer_count": 0,
+      "score": 0,
+      "last_activity_date": 1419379367,
+      "last_edit_date": 1419379367,
+      "question_id": 19781990,
+      "body_markdown": "So I have an person model that has a many to many relationship with a film model.\r\n\r\nThe `Film` model looks like this:\r\n\r\n    class Film(models.Model):\r\n    \tname = models.TextField(db_index=True, unique = True)\r\n    \tdate = models.DateField()\r\n    \tvotes = models.IntegerField(db_index=True)\r\n    \trating = models.DecimalField(max_digits=3 , decimal_places=1)\r\n    \tactors = models.ManyToManyField(&#39;Person&#39;)\r\n    \r\n    \tdef __unicode__(self):\r\n    \t\treturn self.name\r\n\r\n`Person` model:\r\n\r\n    class Person(models.Model):\r\n    \tobjects = PersonManager()\r\n    \tfull = models.CharField(db_index=True,max_length=100,unique = True)\r\n    \tshort = models.CharField(db_index=True,max_length=100)\r\n    \tdef natural_key(self):\r\n    \t\treturn (self.full,)\r\n    \r\n    \tdef __unicode__(self):\r\n    \t    return self.full\r\n\r\nI&#39;m trying to get a query of the top 20 persons who have the best average rating with at least 20 films that have at least 250 votes. \r\n\r\nSo far I have this:\r\n\r\n    Person.objects.annotate(film_count=Count(&#39;film&#39;)).filter(film_count__gte=20).filter(film__votes__gte=250).annotate(avg_rating=Avg(&#39;film__rating&#39;)).order_by(&#39;-avg_rating&#39;)[:20]\r\n\r\nbut the results of that return persons with less than 20 films. \r\n",
+      "link": "https://stackoverflow.com/questions/19781990/django-many-to-many-query-with-annotations",
+      "title": "Django, many to many query with annotations"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "database",
+        "models"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 2,
+          "answer_id": 27319643,
+          "body_markdown": "You are looking for an &lt;a href=&quot;https://docs.djangoproject.com/en/dev/topics/db/models/#extra-fields-on-many-to-many-relationships&quot;&gt;Extra fields on many-to-many relationships&lt;/a&gt;\r\n&lt;br&gt;\r\nYour code should look like this:\r\n\r\n\tclass Bank(models.Model):\r\n\t\tname = models.Charfield()\r\n\t\tmoney = models.IntegerField()\r\n\t\tmembers = models.ManyToManyField(StockShares, through=&#39;Sale&#39;)\r\n\r\n\tclass StockShares(models.Model):\r\n\t\tname = models.Charfield()\r\n\t\tprice = models.Charfield()\r\n\r\n\r\n\tclass Sale(models.Model):\r\n\t\tbank = models.ForeignKey(Bank)\r\n\t\tstockshares = models.ForeignKey(StockShares)\r\n\t\tdate = models.DateField()\r\n    \r\n\r\nMaybe quantity should be calculated field"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 101,
+      "accepted_answer_id": 27319643,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1417794463,
+      "last_edit_date": 1417793727,
+      "question_id": 27319297,
+      "body_markdown": "im doing some models and have a thought while designing them, here is an example: a bank buys stock shares, so one bank can have many stock shares and many stock shares can be bought from many banks, its a many to many relationship but when a bank buys a stock shares it has to keep a record of the price and the date/period/round of the purchase, works the same for a sale, o in order to keep record of all of that im doing a class something like this:\r\n\r\n    class Bank(models.Model):\r\n        name = models.Charfield()\r\n        money = models.IntegerField()\r\n        \r\n\r\n    class StockShares(models.Model):\r\n        name = models.Charfield()\r\n        price = models.Charfield()\r\n\r\nnow to make a relationship i know i have to add\r\n\r\n    stock = models.ManyToManyField(StockShares)\r\n\r\nbut then how do i add the relationship attributes that only exist when a purchase or sale happens?\r\n\r\ni was thinking maybe i can do something like this:\r\n\r\n    class Bank(models.Model):\r\n        name = models.Charfield()\r\n        money = models.IntegerField()\r\n        \r\n\r\n    class StockShares(models.Model):\r\n        name = models.Charfield()\r\n        price = models.Charfield()\r\n\r\n\r\n    class Sale(models.Model):\r\n        bank = models.ForeignKey(Bank)\r\n        stockshares = models.ForeignKey(StockShares)\r\n        date = models.DateField()\r\n        quantity = models.ForeignKey()##this should be the quantity of stockshares sold in $ im just lazy to write it down \r\n\r\n\r\nthis is what i would to normaly without using django and inside a database manager\r\n\r\nis there a way to aproach to this in django without doing an intermediate class to deal with the relationship? or im doing my thougth good and this is how things have to be done in django\r\n\r\npd: english is not my first language im doing my best here \r\n\r\nthanks in advance for answering!\r\n\r\n",
+      "link": "https://stackoverflow.com/questions/27319297/django-many-to-many-relationship-model-definition",
+      "title": "Django: many to many relationship model definition"
+    },
+    {
+      "tags": [
+        "django",
+        "django-models"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 13548079,
+          "body_markdown": "I think you&#39;re using a self-referential relationship in the wrong situation.  Self-referential relationships are useful if you&#39;re trying to an arbitrary undirected graph of connections between users.  \r\n\r\nIf being connected to a user means you&#39;re automatically connected to all other users, and all of those connections are totally equivalent semantically, then it seems to me that you&#39;re trying to define something more like a graph with [complete][1] [connected components][2].  If this is the case, then each user can really only belong to one group.\r\n\r\nYou *could* do this with your scheme, but as you can see, it&#39;s going to require a lot of manual management enforce your fully connected condition, overly descriptive.  A step in a better direction would be to this by making grouping a simple field, like a nullable IntegerField.  \r\n\r\n    class User(models.Model):\r\n        group = models.IntegerField(null=True)\r\n\r\nThen you could query for all users in the same group as a given `myUser` just by `User.objects.filter(group=myUser.group)`. The only tricky part would be that you would have to reassign groups for a bunch of user at once if two users in previously unconnected groups become connected.  But you can just do a [bulk update][3] to reassign all users in the second group to the first one, to merge the groups.  \r\n\r\nOne question you need to ask yourself though is whether a user disconnecting from any other user in the same group results in that user disconnecting from all users in the group.\r\n\r\n  [1]: http://en.wikipedia.org/wiki/Complete_graph\r\n  [2]: http://en.wikipedia.org/wiki/Connected_component_%28graph_theory%29\r\n  [3]: https://docs.djangoproject.com/en/dev/topics/db/queries/#updating-multiple-objects-at-once"
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 13553782,
+          "body_markdown": "If your goal is to **get all other users**, excluding the instance your already have, then this would do the trick:\r\n\r\n    class User(models.Model):\r\n        def groups(self):\r\n            return User.objects.exclude(pk=self.pk)\r\n\r\nHowever, if you only want to search a subset of `User` instances you could create a second model called `Group`. (This all seems a little patronising, since we are now essentially replicating `django.contib.auth.models`.)\r\n\r\n    class Group(models.Model):\r\n        # Some attributes you would like (maybe a name, or code)\r\n\r\n    class User(models.Model):\r\n        groups = models.ManyToManyField(Group, related_name=&#39;users&#39;)\r\n\r\n        def get_linked_users(self, group):\r\n            return group.users.exclude(pk=self.pk)\r\n\r\nWhat you&#39;re trying to achieve is too vaguely defined, but these are a couple of ways to represent relationships between instances in Django.\r\n\r\n---\r\n\r\nI&#39;m not sure, however, that permutations should to be represented in a database. I would just get retrive all the `User` objects I wished to include, and work out the permutations after the fact with Python.\r\n\r\nMaybe you could go into more detail regarding the reason behind this attempt. Maybe there is a more simple way.\r\n"
+        }
+      ],
+      "is_answered": false,
+      "view_count": 155,
+      "answer_count": 2,
+      "score": 1,
+      "last_activity_date": 1353866598,
+      "question_id": 13535683,
+      "body_markdown": "I have a self-referencing Many-to-Many Relationship like so:\r\n\r\n    class User(models.Model):\r\n        groups = models.ManyToManyField(&#39;self&#39;, blank=True, null=True)\r\n\r\nWhen I create a relationship between User 1 and User 2, this is bidirectional. I can see this with:\r\n\r\n    User_1_obj.groups.all()\r\n    User_2_obj.groups.all()\r\n\r\nHowever, when I add a User 3 into the relationships using:\r\n\r\n    User_1_obj.groups.add(User_3_obj) \r\n\r\nUser 1 and User 3 are linked bidirectionally. But I also want User 2 and User 3 (and any other Users in the relationships to be linked). In other words, I want all permutations to be linked to each other, where:\r\n\r\n    User 1 linked to User 2, User 3, User 4\r\n    User 2 linked to User 1, User 3, User 4\r\n    User 3 linked to User 1, User 2, User 4\r\n    User 4 linked to User 1, User 2, User 3\r\n\r\nIs there a simpler way to do this than iterating through all the links and add connectinos that are missing?\r\n\r\nThanks! All help is appreciated.",
+      "link": "https://stackoverflow.com/questions/13535683/django-many-to-many-relationship-permutation-relationships",
+      "title": "Django Many-to-Many Relationship Permutation Relationships"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 40209316,
+          "body_markdown": "In the line\r\n\r\n    user_trips = Trip.objects.filter(user=request.session[&#39;logged_user&#39;])\r\n\r\nyou are comparing the user id from the session with the `User` object. That will not work. Correct would be\r\n\r\n    user_trips = Trip.objects.filter(user=user)\r\n\r\nBut there is a better way to get the user trips. To every relation Django create a reverse relation. The name can be set as the `related` name attribute of the `ManyToManyField`\r\n\r\n    user = models.ManyToManyField(User, related_name=&#39;trips&#39;)\r\n\r\nNow you can just use that attribute on the target model as an object manager (like `objects`)\r\n\r\n    user_trips = user.trips.all()"
+        }
+      ],
+      "is_answered": false,
+      "view_count": 96,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1477270110,
+      "question_id": 40209177,
+      "body_markdown": "Long time listener, first time poster. Hoping to get some help with my models issue.\r\n\r\nI&#39;m having trouble with my many to many relationship. When I submit a form, I want to have my user&#39;s info associated with the post that they create. I&#39;m using a many to many because I will have an additional feature where other users can join in on that same trip.\r\n\r\nCurrently my data for my Trip tables creates fine, but my user isn&#39;t being linked to the Trip id so I can&#39;t render out their name on the template.\r\n\r\nBelow is my code. Appreciate any help!\r\nCheers\r\n\r\nHere are my models.py:\r\n\r\n    class User(models.Model):\r\n        name = models.CharField(max_length=45)\r\n        username = models.CharField(max_length=255)\r\n        password = models.CharField(max_length=255)\r\n        created_at = models.DateTimeField(auto_now_add=True)\r\n        updated_at = models.DateTimeField(auto_now=True)\r\n        objects = UserManager()\r\n    \r\n    class Trip(models.Model):\r\n        destination = models.CharField(max_length=45)\r\n        description = models.CharField(max_length=255)\r\n        datefrom = models.CharField(max_length=255)\r\n        dateend = models.CharField(max_length=255)\r\n        user = models.ManyToManyField(User)\r\n        created_at = models.DateTimeField(auto_now_add=True)\r\n        updated_at = models.DateTimeField(auto_now=True)\r\n\r\nHere is my views.py:\r\n\r\n    def travels(request):\r\n        user = User.objects.get(id=request.session[&#39;logged_user&#39;])\r\n        all_trips = Trip.objects.all().order_by(&#39;-id&#39;)\r\n        user_trips = Trip.objects.filter(user=request.session[&#39;logged_user&#39;])\r\n        context = {\r\n            &quot;user_trips&quot;: user_trips,\r\n            &quot;all_trips&quot;: all_trips,\r\n            &quot;user&quot;: user,\r\n        }\r\n        return render(request, &#39;belt_exam/travels.html&#39;, context)\r\n    \r\n    def addtrip(request):\r\n        user_id = request.session[&#39;logged_user&#39;]\r\n        createdtrip = Trip.objects.create(destination=request.POST[&#39;destination&#39;], description=request.POST[&#39;description&#39;], datefrom=request.POST[&#39;datefrom&#39;], dateend=request.POST[&#39;dateend&#39;])\r\n        createdtrip.user.add(User.objects.get(id=user_id))    \r\n        return redirect(&#39;/travels&#39;)\r\n\r\nHere&#39;s my template:\r\n\r\n    {% for alltrip in all_trips.all %}\r\n        &lt;tr&gt;\r\n            &lt;td&gt;{{alltrip.name}}&lt;/td&gt;\r\n            &lt;td&gt;&lt;a href=&quot;travels/destination/{{alltrip.id}}&quot;&gt;{{alltrip.destination}}&lt;/a&gt;&lt;/td&gt;\r\n            &lt;td&gt;{{alltrip.datefrom}}&lt;/td&gt;\r\n            &lt;td&gt;{{alltrip.dateend}}&lt;/td&gt;\r\n            &lt;td&gt;\r\n            &lt;form class=&quot;&quot; action=&quot;travels/destination/{{alltrip.id}}&quot; method=&quot;POST&quot;&gt;\r\n            {% csrf_token %}\r\n            &lt;input type=&quot;submit&quot; value=&quot;Join&quot;&gt;\r\n            &lt;/form&gt;\r\n            &lt;/td&gt;\r\n        &lt;/tr&gt;\r\n    {% endfor %}\r\n\r\n\r\n",
+      "link": "https://stackoverflow.com/questions/40209177/django-many-to-many-model-returning-none",
+      "title": "Django - Many to Many Model Returning None"
+    },
+    {
+      "tags": [
+        "mysql",
+        "django",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 2,
+          "answer_id": 9112201,
+          "body_markdown": "You can access to m2m relation fields via `Model1()._meta.many_to_many` which will return all m2m relations, including `GenericRelations`."
+        }
+      ],
+      "is_answered": true,
+      "view_count": 122,
+      "accepted_answer_id": 9112201,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1328185148,
+      "question_id": 9112137,
+      "body_markdown": "I&#39;d like to automatically generate a list of an objects many-to-many links.\r\n\r\nLet&#39;s say I have 5 Models:\r\n\r\n    Model 1 has a M2M link to Model 2\r\n    Model 2 has a M2M link to Models 3 and 4\r\n    Model 4 has a M2M link to Model 5\r\n\r\nIf the user adds an object to Model 1, I want to give them the option to add another Model 1 or add Model 2\r\n\r\nIf the user adds an object to Model 2, I want to give them the option to add another Model 2, or add a Model 1, 3, or 4.\r\n\r\nIf the user adds an object to Model 4, I want to give them the option to add another Model 4 or a Model 5/2.\r\n\r\netc.\r\n\r\nIs there a way to detect these relationships (forward and backward) automatically?",
+      "link": "https://stackoverflow.com/questions/9112137/programmatically-identify-django-many-to-many-links",
+      "title": "Programmatically identify django many-to-many links"
+    },
+    {
+      "tags": [
+        "django",
+        "database",
+        "many-to-many",
+        "many-to-one"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 0,
+          "answer_id": 29890428,
+          "body_markdown": "There is no such thing as a OneToManyField. \r\n\r\nIt doesn&#39;t matter from a practical point of view which side the ManyToManyField lives on. Personally, I&#39;d put it on Ride, both to avoid changing the User model and because conceptually I&#39;d say that rides are the main objects here.\r\n\r\nAnd yes, adding the field will automatically create the linking table."
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 29890483,
+          "body_markdown": "what you want is probably something like this\r\n\r\n    class MyModel(models.Model):\r\n    \r\n        driver = models.ForeignKey(to=User, related_name=&#39;r_driver&#39;)\r\n        # you need to use a related name if you want to link to the same model more than once\r\n        passengers = models.ManyToManyField(User, related_name=&quot;r_passengers&quot;)"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 80,
+      "accepted_answer_id": 29890428,
+      "answer_count": 2,
+      "score": 0,
+      "last_activity_date": 1489227644,
+      "last_edit_date": 1489227644,
+      "question_id": 29890314,
+      "body_markdown": "I am working in django, am planning a database for rides for users.\r\n\r\n- each **User** can be on multiple **Rides** (over time) and each **Ride** can have multiple **Users** (passengers) in it. \r\n\r\n- Also, for each Ride there has to be only one Driver (also a **User**) so I think I have a **many-to many** relationship between the Rides and Users tables for what **user** is on what **ride**, and also a **One-To-Many** relationship between the Rides&#39;s Driver_id and the User_id. right?\r\n\r\n**My questions are-** \r\n\r\n1. I saw in the django docs that I should put a many-to-many field in **One** of the models. Does it matter which one? and also, does it create a new table like rides_users?\r\n\r\n2. and also, what is the difference (**in One-To-many relationship**) between using a **foreignKey** field and a **OneToManyField** field?\r\n\r\n\r\n**EDIT:**\r\n\r\nCurrently, there are my models:\r\n\r\n    def get_image_path(models.Model):\r\n        return os.path.join(&#39;photos&#39;,str(instance.id),filename)\r\n    \r\n    \r\n    class UserProfile(models.Model):\r\n        user=models.OneToOneField(User)\r\n        phone_number=models.CharField(max_length=12)\r\n        profile_picture=models.ImageField(upload_to=get_image_path, black=True, null=True)\r\n    \r\n    class Ride(models.Model):\r\n        driver=models.ForeignKey(UserProfile, related_name=&quot;r_driver&quot;)\r\n        destination=models.ForeignKey(Destination, related_name=&quot;r_final_destination&quot;)\r\n        leaving_time=models.DateTimeField()\r\n        num_of_spots=models.IntergerField()\r\n        passengers=models.ManyToMany(UserProfile, related_name=&quot;r_passengers&quot;)\r\n        mid_destinations=models.ManyToMany(Destination, related_name=&quot;r_mid_destinations&quot;)\r\n    \r\n    class Destination(models.Model):\r\n        name=models.CharField(max_length=30)\r\n\r\nAs you can see, each Ride has **multiple** mid_destination and **multiple** passengers. a Ride also has **One** driver and **One** final destination.\r\n\r\n\r\n**The Issue is -** when a **User**  adds a **Ride**, I want the *driver*, *destination* and *mid_destinations* and the rest of the fields to be set by the **User** (the driver is user adding the Ride), **Except** for the *passengers* field. I want the other Users to add themselves to the ride, so when the Ride is created the User (driver) doesn&#39;t have to set the passengers.\r\n\r\nHow do I go about it? and also, any other suggestions about the models? \r\n\r\n",
+      "link": "https://stackoverflow.com/questions/29890314/django-many-to-many-and-one-to-many-relationships",
+      "title": "django - many-to-many and one-to-many relationships"
+    },
+    {
+      "tags": [
+        "python",
+        "django",
+        "django-models",
+        "many-to-many"
+      ],
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 4,
+          "answer_id": 9476298,
+          "body_markdown": "You need to call `recurrence.save()` before assigning Many2Many relationships. In your code you do\r\n\r\n    recurrence.repeat_on = (EVENT_DAY_CHOICES[1][0], EVENT_DAY_CHOICES[3][0], EVENT_DAY_CHOICES[5][0])\r\n\r\nwithout saving the recurrence first. Because its not saved, recurrence does not have primary key generated yet, and Django ORM doesn&#39;t know what to insert as a foreign key into the M2M table.\r\n"
+        }
+      ],
+      "is_answered": true,
+      "view_count": 608,
+      "accepted_answer_id": 9476298,
+      "answer_count": 1,
+      "score": 2,
+      "last_activity_date": 1330402629,
+      "last_edit_date": 1330400311,
+      "question_id": 9476010,
+      "body_markdown": "I have three models that are related. The first is called DayOfWeek, which is juts a day label and number. It looks like this:\r\n\r\n    class DayOfWeek(models.Model):\r\n      day = models.IntegerField()\r\n      label = models.CharField(max_length=&#39;20&#39;)\r\n\r\n      def __str__(self):\r\n        return self.label\r\n\r\nThis class is populated using a fixture every time I syncdb.Next, I have an event model, it looks like this:\r\n\r\n    class Event(AnnouncementBase, Location):\r\n      cost = CurrencyField(decimal_places=2, max_digits=10, blank=True, default=0.00)\r\n      start_date = models.DateField(default = datetime.now().date())\r\n      start_time = models.TimeField(default = datetime.now().time())\r\n      end_date = models.DateField(blank=True, default=None, null = True)\r\n      end_time = models.TimeField(blank=True, default=None, null = True)\r\n\r\nFinally, there is a recurrence. It has an event and is used to schedule the event for recurring events. It looks like this:\r\n\r\n    class Recurrence(models.Model):\r\n\r\n      event = models.ForeignKey(Event, related_name=&#39;event&#39;)\r\n      repeats  = models.CharField(max_length = 50, choices = EVENT_REPEAT_CHOICES)\r\n      repeat_every = models.IntegerField(default = 1)\r\n\r\n      repeat_on = models.ManyToManyField(DayOfWeek, blank=True, null=True)\r\n\r\n      repeat_by = models.CharField(max_length = 50, choices = EVENT_REPEAT_BY_CHOICES, blank=True)\r\n      repeat_by_day_of_month = models.IntegerField(default = 0, blank=True)\r\n\r\n      repeat_ends = models.CharField(max_length = 50, choices = EVENT_REPEAT_END_CHOICES)\r\n      end_occurrences = models.IntegerField(default = 0, blank=True)\r\n      repeat_end_date = models.DateField(blank=True, default=None, null = True)\r\n\r\n      past_event_count = models.IntegerField(default=0, blank=True)\r\n      scheduled_events = models.ManyToManyField(Event, blank=True, default=None, related_name = &#39;scheduled_events&#39;)\r\n      is_active = models.BooleanField(blank=True, default=True)\r\n\r\n       def save(self, force_insert=False, force_update=False, using=None):\r\n          &quot;&quot;&quot;Overridden to create events the first time.&quot;&quot;&quot;\r\n\r\n          self.full_clean()\r\n          #First do  normal save so the data is there for the even scheduler.\r\n          self.save_base(force_insert=force_insert, force_update=force_update, using=using)\r\n\r\n          #If nothing is scheduled yet, schedule the first batch\r\n          if self.scheduled_events.count() == 0 and self.past_event_count == 0:\r\n              self.scheduleEvents()\r\n\r\n\r\n      def clean(self):\r\n          #repeat on weekly\r\n          if self.repeat_every &lt; 1:\r\n              raise ValidationError(&#39;Repeat every must be at least 1.&#39;)\r\n\r\n    \r\n          #weekly\r\n          if self.repeats == EVENT_REPEAT_CHOICES[1][0]:\r\n            #look for missing stuff\r\n            if not self.repeat_on:\r\n                raise ValidationError(&#39;Missing repeat on.&#39;)\r\n\r\nFinally, I have a unit test that checks this works ok it looks like this:\r\n\r\n    def test_weekly_mon_wed_fri_occurrence(self):\r\n        event = Event()\r\n        event.start_date = date(year=2012, month=1, day=2)\r\n        event.start_time = time(hour=13, minute=30)\r\n        event.save()\r\n\r\n        recurrence = Recurrence()\r\n        recurrence.repeats = EVENT_REPEAT_CHOICES[1][0]\r\n        recurrence.repeat_on = (EVENT_DAY_CHOICES[1][0], EVENT_DAY_CHOICES[3][0], EVENT_DAY_CHOICES[5][0])\r\n        recurrence.repeat_ends = EVENT_REPEAT_END_CHOICES[0][0]\r\n        recurrence.event = event\r\n\r\n        nextEvent = recurrence.getNextEvent(event)\r\n\r\n        self.assertEquals(date(year=2012, month=1, day=4), nextEvent.start_date)\r\n        self.assertEquals(event.start_time, nextEvent.start_time)\r\n\r\n        nextNextEvent = recurrence.getNextEvent(nextEvent)\r\n\r\n        self.assertEquals(date(year=2012, month=1, day=6), nextNextEvent.start_date)\r\n        self.assertEquals(event.start_time, nextNextEvent.start_time)\r\n\r\n\r\nWhenever the test is run it fails, with the following exception. \r\n    ValueError: &#39;Recurrence&#39; instance needs to have a primary key value before a many-to-many   relationship can be used.\r\n\r\nThe error happens on the line if self.repeat_on in the clean method.\r\n\r\nI want repeat_on to be optional, only some types of recurrences need it. How do I make this work? What am I missing that is causing it to fail?\r\n\r\n      ",
+      "link": "https://stackoverflow.com/questions/9476010/django-many-to-many-complaining-about-primarykey",
+      "title": "Django Many To Many Complaining about PrimaryKey"
+    }
+  ],
+  "has_more": true,
+  "quota_max": 10000,
+  "quota_remaining": 9989,
+  "page": 1,
+  "page_size": 30,
+  "total": 6451
+}

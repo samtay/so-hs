@@ -43,7 +43,7 @@ instance FromJSON Question where
   parseJSON = withObject "question" $ \o -> do
     qId      <- o .: "question_id"
     qScore   <- o .: "score"
-    qAnswers <- o .: "answers"
+    qAnswers <- o .:? "answers" .!= []
     qTitle   <- o .: "title"
     qBody    <- o .: "body_markdown"
     return Question {..}
@@ -53,7 +53,7 @@ instance FromJSON Answer where
     aId       <- o .: "answer_id"
     aScore    <- o .: "score"
     aBody     <- o .: "body_markdown"
-    aAccepted <- o .: "false"
+    aAccepted <- o .: "is_accepted"
     return Answer {..}
 
 instance FromJSON Site where
