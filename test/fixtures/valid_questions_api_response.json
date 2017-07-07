@@ -1,0 +1,67 @@
+{
+  "items": [
+    {
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 41781938,
+          "question_id": 41781864,
+          "body_markdown": "Your problem is your routes don't have names. So when you are using `reverse('some_name')`, you have to have such name defined. The name is `detail` in your case, so you want to do something like this (see the parameter `name`)\r\n\r\n    urlpatterns = [\r\n        url(r'^(?P<res_number>\\d+)/$', reservations_detail, name='detail'),\r\n    ]\r\n\r\nAlso please don't insert traceback as a screenshot. You see the link 'switch to copy-and-paste view'? Yeah, use that the next time.\r\n",
+          "body": "<p>Your problem is your routes don't have names. So when you are using <code>reverse('some_name')</code>, you have to have such name defined. The name is <code>detail</code> in your case, so you want to do something like this (see the parameter <code>name</code>)</p>\n\n<pre><code>urlpatterns = [\n    url(r'^(?P&lt;res_number&gt;\\d+)/$', reservations_detail, name='detail'),\n]\n</code></pre>\n\n<p>Also please don't insert traceback as a screenshot. You see the link 'switch to copy-and-paste view'? Yeah, use that the next time.</p>\n"
+        }
+      ],
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1485017359,
+      "question_id": 41781864,
+      "body_markdown": "I'm new to Django and slowly learning how it works. I just upgraded to 1.10 and part of my app stopped working. I know it is related to the changes made into Reverse. I have been reading and I cannot find exactly what I'm doing wrong. Almost everything works as it should with a couple of exceptions. The behavior is as follows:\r\n\r\n1) On my app I load reservations/create, it works perfectly I can create my reservation\r\n\r\n2) When I click create, the reservation is actually created and saved into the database, but the browser is sent to the wrong address. It gets sent to reservations/create instead of reservations/reservation number (for example reservations/2 where it shows its details) and shows a Reverse error (included in this post)\r\n\r\n3) If I test reservations/2 for example, it shows that it was actually created.\r\n\r\n4) Also if a go straight to reservations/ it should show a list of all the ones already create, but instead shows a Reverse error too.\r\n\r\nI would really appreciate any help in understanding what I'm doing wrong.\r\n\r\n\r\n**Models.py**\r\n\r\n    class Reservation(models.Model):\r\n\t    res_number = models.AutoField(primary_key=True)\r\n\t    date = models.DateField(default=datetime.date.today())\r\n\t    status = models.CharField(max_length=10,default=\"Created\")\r\n\t    reservation_type = models.CharField(max_length=11,choices=shced_type_choices, default=\"rental\")\r\n\t    aircraft = models.ForeignKey('aircraft.Aircraft')\r\n\t    renter = models.CharField(max_length=30,blank=False,null=False)\r\n\t    instructor = models.CharField(max_length=30,blank=True,null=False)\r\n\r\n\t    def get_absolute_url(self):\r\n\t\t    return reverse(\"reservations:detail\", kwargs={\"res_number\": self.res_number})\r\n\r\n**Main urls.py**\r\n\r\n    url(r'^reservations/', include('dispatch.urls', namespace='reservations')),\r\n\r\n**Dispatch.urls** \r\n\r\n    from django.conf.urls import include, url\r\n    from django.contrib import admin\r\n    from .views import (\r\n\t    reservations_list,\r\n\t    reservations_detail,\r\n\t    reservations_edit,\r\n\t    reservations_dispatch,\r\n\t    reservations_close,\r\n\t    reservations_cancel,\r\n\t    reservations_create,\r\n\t    reservations_close,\r\n    )\r\n\r\n\r\n    urlpatterns = [\r\n\r\n\t    url(r'^$', reservations_list),\r\n\t    url(r'^(?P<res_number>\\d+)/$', reservations_detail),\r\n\t    url(r'^(?P<res_number>\\d+)/edit/$', reservations_edit),\r\n\t    url(r'^(?P<res_number>\\d+)/dispatch/$', reservations_dispatch),\r\n\t    url(r'^(?P<res_number>\\d+)/close/$', reservations_close),\r\n\t    url(r'^(?P<res_number>\\d+)/cancel/$', reservations_cancel),\t\r\n\t    url(r'^create/$', reservations_create),\r\n\t    url(r'^close/$', reservations_close),\r\n\r\n    ]\r\n\r\n**Views.py**\r\n\r\n    from django.contrib import messages\r\n    from django import forms\r\n    from django.http import HttpResponse, HttpResponseRedirect\r\n    from django.shortcuts import render, get_object_or_404\r\n    from .forms import ReservationForm, CloseReservationForm\r\n    from .models import Reservation\r\n\r\n    def reservations_list(request):\r\n\t    queryset = Reservation.objects.all()\r\n\t    context = {\r\n\t\t    \"object_list\": queryset,\r\n\t\t    \"title\": \"List of Reservations:\"\r\n\r\n\t    }\r\n\t    return render(request, \"dispatch/list.html\", context)\r\n\r\n    def reservations_detail(request, res_number=None):\r\n\t    instance = get_object_or_404(Reservation, res_number=res_number)\r\n\t    context = {\r\n\t\t    \"title\": instance.renter,\r\n\t\t    \"instance\": instance,\r\n\r\n\t    }\r\n\t    return render(request, \"dispatch/details.html\", context)\r\n\r\n\r\n    def reservations_create(request):\r\n\t    form = ReservationForm(request.POST or None)\r\n\t    if form.is_valid():\r\n\t\t    instance = form.save(commit=False)\r\n\t\t    print(instance.aircraft.hobbs)\r\n\t\t    instance.save()\r\n\t\t    messages.success(request, \"Reservation Created\")\r\n\t\t    return HttpResponseRedirect(instance.get_absolute_url())\r\n\r\n\t    context = {\r\n\t    \"form\": form,\r\n\t    }\r\n\t    return render(request, \"dispatch/create.html\", context)\r\n\r\n**Details.html**\r\n\r\n    {% extends \"dispatch/base.html\" %}\r\n    {% block head_title %}{{ block.super }} | {{instance.res_number}}{% endblock head_title %}\r\n    {% block content %}\r\n\r\n    <h1>Reservation for {{title}} on {{instance.date}}</h1>\r\n\r\n\r\n    Reservation Number: {{instance.res_number}}</br>\r\n    Date: {{instance.date}}</br>\r\n    Status: {{instance.status}}</br>\r\n    Reservation Type: {{instance.reservation_type}}</br>\r\n    Aircraft: {{instance.aircraft}}</br>\r\n    Renter's Name: {{instance.renter}}</br>\r\n    Instructor's Name: {{instance.instructor}}</br>\r\n    Expected Flight Hours: {{instance.expected_hours}} Hrs</br>\r\n    Actual Flown Hours: {{instance.flown_hours}} Hrs</br>\r\n    Reservation Created on: {{instance.created}}</br>\r\n    Last Updated on: {{instance.updated}}</br>\r\n\r\n    {% endblock content %}\r\n\r\n**Create.html**\r\n\r\n    {% extends \"dispatch/base.html\" %}\r\n\r\n    {% block head_title %}{{ block.super }} | Create{% endblock head_title %}\r\n\r\n    {% block content %}\r\n\r\n    <h1>Create Reservation</h1>\r\n\r\n    <form method='POST' action=''>{% csrf_token %}\r\n\r\n    {{form.as_p}}\r\n    <input type=\"submit\" name=\"Create Reservation\">\r\n\r\n    </form>\r\n\r\n    {% endblock content %}\r\n\r\n[Reverse error screenshot][1]\r\n\r\n\r\n  [1]: https://i.stack.imgur.com/oC6R3.jpg",
+      "title": "Reverse error in Django 1.10"
+    },
+    {
+      "answers": [
+        {
+          "is_accepted": false,
+          "score": 2,
+          "answer_id": 6932450,
+          "question_id": 6932382,
+          "body_markdown": "Can't test this _right now_ so not 100% sure if it will work\r\n\r\n<kbd>esc</kbd>, followed by\r\n\r\n    :r ! curl -sSd=\"`cat`\" http://prefixr.com/api/index.php`\r\n",
+          "body": "<p>Can't test this <em>right now</em> so not 100% sure if it will work</p>\n\n<p><kbd>esc</kbd>, followed by</p>\n\n<pre><code>:r ! curl -sSd=\"`cat`\" http://prefixr.com/api/index.php`\n</code></pre>\n"
+        },
+        {
+          "is_accepted": false,
+          "score": 1,
+          "answer_id": 6936983,
+          "question_id": 6932382,
+          "body_markdown": "By selecting one or more rows and using :!<command> you can pass these lines to a command, for example:\r\n\r\nSo sort an entire file using the `sort` command, try this: ggVG !sort, which should look like this in your editor:\r\n\r\n> B\r\n\r\n> C\r\n\r\n> A\r\n>\r\n>:'<,'>!sort",
+          "body": "<p>By selecting one or more rows and using :! you can pass these lines to a command, for example:</p>\n\n<p>So sort an entire file using the <code>sort</code> command, try this: ggVG !sort, which should look like this in your editor:</p>\n\n<blockquote>\n  <p>B</p>\n  \n  <p>C</p>\n  \n  <p>A</p>\n  \n  <p>:'&lt;,'>!sort</p>\n</blockquote>\n"
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 38290282,
+          "question_id": 6932382,
+          "body_markdown": "For piping words without gratuitous newlines, see this example to uppercase selected text: \r\n\r\n  <pre>select-region c Control-r = system(\"perl -pe '$_=uc($_)'\", @\")<CR></pre>\r\n\r\nExplanation: select region, c is to (change selection), C-r to execute expression.\r\nNote: dollar is dollar underscore, but underscore not visible after posting.\r\n",
+          "body": "<p>For piping words without gratuitous newlines, see this example to uppercase selected text: </p>\n\n<p><pre>select-region c Control-r = system(\"perl -pe '$<em>=uc($</em>)'\", @\")</pre></p>\n\n<p>Explanation: select region, c is to (change selection), C-r to execute expression.\nNote: dollar is dollar underscore, but underscore not visible after posting.</p>\n"
+        },
+        {
+          "is_accepted": true,
+          "score": 14,
+          "answer_id": 6937075,
+          "question_id": 6932382,
+          "body_markdown": "You can use the `:!` command to filter selected text through an external program.\r\nThe text is fed to stdin and substituted with the results from stdout.\r\n\r\nIn this case you'll have to use cat and command substitution to feed the lines as a parameter to curl, like so:\r\n\r\n    :'<,'>!curl -sSd css=\"`cat`\" http://prefixr.com/api/index.php",
+          "body": "<p>You can use the <code>:!</code> command to filter selected text through an external program.\nThe text is fed to stdin and substituted with the results from stdout.</p>\n\n<p>In this case you'll have to use cat and command substitution to feed the lines as a parameter to curl, like so:</p>\n\n<pre><code>:'&lt;,'&gt;!curl -sSd css=\"`cat`\" http://prefixr.com/api/index.php\n</code></pre>\n"
+        }
+      ],
+      "answer_count": 4,
+      "score": 13,
+      "last_activity_date": 1468141760,
+      "question_id": 6932382,
+      "body_markdown": "I need to pass some selected text in vim to a curl command as a parameter value. For example. I need to be able to run \r\n\r\n    curl -sSd css=\"body { border-radius: 5px; }\" http://prefixr.com/api/index.php\r\n\r\nfrom vim. Obviously, the \"body { border-radius: 5px; }\" part will be dynamic. Usually, a visual mode selection in vim.\r\n\r\nHow do I get the selected text and pass it as a parameter to curl?\r\n\r\n ",
+      "title": "Replace vim selection with output of shell command"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 10000,
+  "quota_remaining": 9989
+}

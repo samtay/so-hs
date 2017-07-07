@@ -8,56 +8,58 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Text (Text)
 
+import Utils
+
 data Question = Question
-  { _qId      :: Int
-  , _qScore   :: Int
-  , _qAnswers :: [Answer]
-  , _qTitle   :: Text
-  , _qBody    :: Text
+  { qId      :: Int
+  , qScore   :: Int
+  , qAnswers :: [Answer]
+  , qTitle   :: Text
+  , qBody    :: Text
   } deriving (Show)
 
 data Answer = Answer
-  { _aId       :: Int
-  , _aScore    :: Int
-  , _aBody     :: Text
-  , _aAccepted :: Bool
+  { aId       :: Int
+  , aScore    :: Int
+  , aBody     :: Text
+  , aAccepted :: Bool
   } deriving (Show)
 
 data Site = Site
-  { _sUrl :: Text
-  , _sApiParam :: Text
+  { sUrl :: Text
+  , sApiParam :: Text
   } deriving (Eq, Show)
 
-makeLenses ''Question
-makeLenses ''Answer
+suffixLenses ''Question
+suffixLenses ''Answer
 
 instance Eq Question where
-  q1 == q2 = _qId q1 == _qId q2
+  q1 == q2 = qId q1 == qId q2
 
 instance Eq Answer where
-  a1 == a2 = _aId a1 == _aId a2
+  a1 == a2 = aId a1 == aId a2
 
 instance FromJSON Question where
   parseJSON = withObject "question" $ \o -> do
-    _qId      <- o .: "question_id"
-    _qScore   <- o .: "score"
-    _qAnswers <- o .: "answers"
-    _qTitle   <- o .: "title"
-    _qBody    <- o .: "body_markdown"
+    qId      <- o .: "question_id"
+    qScore   <- o .: "score"
+    qAnswers <- o .: "answers"
+    qTitle   <- o .: "title"
+    qBody    <- o .: "body_markdown"
     return Question {..}
 
 instance FromJSON Answer where
   parseJSON = withObject "answer" $ \o -> do
-    _aId       <- o .: "answer_id"
-    _aScore    <- o .: "score"
-    _aBody     <- o .: "body_markdown"
-    _aAccepted <- o .: "false"
+    aId       <- o .: "answer_id"
+    aScore    <- o .: "score"
+    aBody     <- o .: "body_markdown"
+    aAccepted <- o .: "false"
     return Answer {..}
 
 instance FromJSON Site where
   parseJSON = withObject "site" $ \o -> do
-    _sUrl      <- o .: "site_url"
-    _sApiParam <- o .: "api_site_parameter"
+    sUrl      <- o .: "site_url"
+    sApiParam <- o .: "api_site_parameter"
     return Site {..}
 
 questionsParser :: Value -> Parser [Question]
