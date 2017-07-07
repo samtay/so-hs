@@ -1,0 +1,65 @@
+{
+  "items": [
+    {
+      "answers": [
+        {
+          "is_accepted": true,
+          "score": 1,
+          "answer_id": 41781938,
+          "question_id": 41781864,
+          "body_markdown": "Your problem is your routes don't have names. So when you are using `reverse('some_name')`, you have to have such name defined. The name is `detail` in your case, so you want to do something like this (see the parameter `name`)\r\n\r\n    urlpatterns = [\r\n        url(r'^(?P<res_number>\\d+)/$', reservations_detail, name='detail'),\r\n    ]\r\n\r\nAlso please don't insert traceback as a screenshot. You see the link 'switch to copy-and-paste view'? Yeah, use that the next time.\r\n",
+          "body": "<p>Your problem is your routes don't have names. So when you are using <code>reverse('some_name')</code>, you have to have such name defined. The name is <code>detail</code> in your case, so you want to do something like this (see the parameter <code>name</code>)</p>\n\n<pre><code>urlpatterns = [\n    url(r'^(?P&lt;res_number&gt;\\d+)/$', reservations_detail, name='detail'),\n]\n</code></pre>\n\n<p>Also please don't insert traceback as a screenshot. You see the link 'switch to copy-and-paste view'? Yeah, use that the next time.</p>\n"
+        }
+      ],
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1485017359,
+      "question_id": 41781864,
+      "title": "Reverse error in Django 1.10"
+    },
+    {
+      "answers": [
+        {
+          "score": 2,
+          "answer_id": 6932450,
+          "question_id": 6932382,
+          "body_markdown": "Can't test this _right now_ so not 100% sure if it will work\r\n\r\n<kbd>esc</kbd>, followed by\r\n\r\n    :r ! curl -sSd=\"`cat`\" http://prefixr.com/api/index.php`\r\n",
+          "body": "<p>Can't test this <em>right now</em> so not 100% sure if it will work</p>\n\n<p><kbd>esc</kbd>, followed by</p>\n\n<pre><code>:r ! curl -sSd=\"`cat`\" http://prefixr.com/api/index.php`\n</code></pre>\n"
+        },
+        {
+          "is_accepted": false,
+          "score": 1,
+          "answer_id": 6936983,
+          "question_id": 6932382,
+          "body_markdown": "By selecting one or more rows and using :!<command> you can pass these lines to a command, for example:\r\n\r\nSo sort an entire file using the `sort` command, try this: ggVG !sort, which should look like this in your editor:\r\n\r\n> B\r\n\r\n> C\r\n\r\n> A\r\n>\r\n>:'<,'>!sort",
+          "body": "<p>By selecting one or more rows and using :! you can pass these lines to a command, for example:</p>\n\n<p>So sort an entire file using the <code>sort</code> command, try this: ggVG !sort, which should look like this in your editor:</p>\n\n<blockquote>\n  <p>B</p>\n  \n  <p>C</p>\n  \n  <p>A</p>\n  \n  <p>:'&lt;,'>!sort</p>\n</blockquote>\n"
+        },
+        {
+          "is_accepted": false,
+          "score": 0,
+          "answer_id": 38290282,
+          "question_id": 6932382,
+          "body_markdown": "For piping words without gratuitous newlines, see this example to uppercase selected text: \r\n\r\n  <pre>select-region c Control-r = system(\"perl -pe '$_=uc($_)'\", @\")<CR></pre>\r\n\r\nExplanation: select region, c is to (change selection), C-r to execute expression.\r\nNote: dollar is dollar underscore, but underscore not visible after posting.\r\n",
+          "body": "<p>For piping words without gratuitous newlines, see this example to uppercase selected text: </p>\n\n<p><pre>select-region c Control-r = system(\"perl -pe '$<em>=uc($</em>)'\", @\")</pre></p>\n\n<p>Explanation: select region, c is to (change selection), C-r to execute expression.\nNote: dollar is dollar underscore, but underscore not visible after posting.</p>\n"
+        },
+        {
+          "is_accepted": true,
+          "score": 14,
+          "answer_id": 6937075,
+          "question_id": 6932382,
+          "body_markdown": "You can use the `:!` command to filter selected text through an external program.\r\nThe text is fed to stdin and substituted with the results from stdout.\r\n\r\nIn this case you'll have to use cat and command substitution to feed the lines as a parameter to curl, like so:\r\n\r\n    :'<,'>!curl -sSd css=\"`cat`\" http://prefixr.com/api/index.php",
+          "body": "<p>You can use the <code>:!</code> command to filter selected text through an external program.\nThe text is fed to stdin and substituted with the results from stdout.</p>\n\n<p>In this case you'll have to use cat and command substitution to feed the lines as a parameter to curl, like so:</p>\n\n<pre><code>:'&lt;,'&gt;!curl -sSd css=\"`cat`\" http://prefixr.com/api/index.php\n</code></pre>\n"
+        }
+      ],
+      "answer_count": 4,
+      "score": 13,
+      "last_activity_date": 1468141760,
+      "question_id": 6932382,
+      "body_markdown": "I need to pass some selected text in vim to a curl command as a parameter value. For example. I need to be able to run \r\n\r\n    curl -sSd css=\"body { border-radius: 5px; }\" http://prefixr.com/api/index.php\r\n\r\nfrom vim. Obviously, the \"body { border-radius: 5px; }\" part will be dynamic. Usually, a visual mode selection in vim.\r\n\r\nHow do I get the selected text and pass it as a parameter to curl?\r\n\r\n ",
+      "title": "Replace vim selection with output of shell command"
+    }
+  ],
+  "has_more": false,
+  "quota_max": 10000,
+  "quota_remaining": 9989
+}

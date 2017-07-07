@@ -1,6 +1,6 @@
 name:                so
 version:             0.1.0.0
--- synopsis:
+synopsis:            A terminal interface for StackExchange sites
 -- description:
 homepage:            https://github.com/SamTay/so#readme
 license:             BSD3
@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     StackOverflow
-  other-modules:       StackOverflow.Types
+                     , StackOverflow.Types
                      , StackOverflow.Google
                      , Utils
   build-depends:       base >= 4.7 && < 5
@@ -44,6 +44,8 @@ test-suite so-test
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
+                     , aeson
+                     , bytestring
                      , so
                      , hspec
                      , yaml

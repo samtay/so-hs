@@ -3,7 +3,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module StackOverflow.Types where
 
-import Control.Lens.TH
+import Control.Lens (view)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Text (Text)
@@ -63,4 +63,5 @@ instance FromJSON Site where
     return Site {..}
 
 questionsParser :: Value -> Parser [Question]
-questionsParser = withObject "questions" (.: "items")
+questionsParser = filter answered <$$> withObject "questions" (.: "items")
+  where answered = not . null . qAnswers
