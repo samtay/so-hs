@@ -40,6 +40,8 @@ that it's easier to work across two computers.
 4. check if caching makes sense for expensive widgets (probably clear on
    resize)
 5. `suspendAndResume` to view answer in editor of choice
+6. in addition to vim h,j,k,l bindings for scrolling current viewport,
+   shift+h,j,k,l for resizing sections
 
 ### config
 0. xdga config to set defaults, i.e. deault `--no-google`, default `--lucky`,
