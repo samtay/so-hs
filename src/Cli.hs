@@ -24,9 +24,7 @@ import Utils
 
 -- | Get and parse args from command line and return resulting `SO` type
 run :: IO SO
-run = do
-  ecfg <- getUserConfig'
-  either showUserConfigError go ecfg
+run = getUserConfigE >>= either showUserConfigError go
   where
     go :: Config -> IO SO
     go cfg = join . execParser $

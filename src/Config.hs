@@ -45,8 +45,8 @@ getUserConfig :: IO (Maybe Config)
 getUserConfig = testGetUserConfig
   where testGetUserConfig = return . decode $ defaultConfigFileContent
 
-getUserConfig' :: IO (Either String Config)
-getUserConfig' = testGetUserConfig
+getUserConfigE :: IO (Either String Config)
+getUserConfigE = testGetUserConfig
   where testGetUserConfig = return . decodeEither $ defaultConfigFileContent
 
 resetUserConfig :: IO ()
