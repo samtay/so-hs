@@ -37,6 +37,7 @@ that it's easier to work across two computers.
 5. `suspendAndResume` to view answer in editor of choice
 6. in addition to vim h,j,k,l bindings for scrolling current viewport,
    shift+h,j,k,l for resizing sections
+7. Note that optparse-applicative has `execParserPure` !
 
 ### config
 0. xdga config to set defaults, i.e. deault `--no-google`, default `--lucky`,

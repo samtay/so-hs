@@ -1,12 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Cli
-  (
+  ( run
   ) where
 
 import Control.Monad (join, when)
 import Data.Semigroup ((<>))
-import System.IO (stderr)
+import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
+import System.IO (stderr)
 
 import Control.Lens (each, (^.), (^..))
 import Data.Text (Text)
@@ -43,12 +44,13 @@ run = do
 
 -- | Intermediary function that handles actions determined
 -- by CLI that don't fit within the core `SO` state.
-cli :: Config  -- ^ User config
-    -> Options -- ^ Options parsed from CLI
-    -> Bool    -- ^ Print sites flag
-    -> Bool    -- ^ Reset configuration file flag
-    -> Text    -- ^ Query argument parsed from CLI
-    -> IO SO   -- ^ Resulting state
+cli
+  :: Config  -- ^ User config
+  -> Options -- ^ Options parsed from CLI
+  -> Bool    -- ^ Print sites flag
+  -> Bool    -- ^ Reset configuration file flag
+  -> Text    -- ^ Query argument parsed from CLI
+  -> IO SO   -- ^ Resulting state
 cli cfg opts printsites reset query = do
   when reset resetUserConfig
   when printsites $ do
@@ -58,7 +60,9 @@ cli cfg opts printsites reset query = do
   return $ SO query [] opts
 
 -- | Parse full CLI options and args
-parseCli :: Config -> Parser (IO SO)
+parseCli
+  :: Config         -- ^ User config
+  -> Parser (IO SO) -- ^ Returns parser of IO action to return SO state
 parseCli cfg = cli cfg
   <$> parseOpts cfg
   <*> switch
@@ -72,17 +76,19 @@ parseCli cfg = cli cfg
   <*> multiTextArg (metavar "QUERY")
 
 -- | Parse CLI options that have defaults in 'Config'
-parseOpts :: Config -> Parser Options
+parseOpts
+  :: Config         -- ^ User config (used for default values)
+  -> Parser Options -- ^ Returns parser of options
 parseOpts cfg = Options
-  <$> enableDisableOpt undefined undefined
-  <*> enableDisableOpt undefined undefined
+  <$> undefined
+  <*> undefined
   <*> option auto
       ( long "limit"
      <> metavar "INT"
      <> help "Upper limit on number of questions to fetch"
      <> value (cfg ^. cDefaultOptsL ^. oLimitL)
       )
-  <*> strOption
+  <*> strOption -- TODO READER FOR SITE
       ( long "site"
      <> short 's'
      <> metavar "SHORTCODE"
@@ -90,7 +96,7 @@ parseOpts cfg = Options
      <> value (cfg ^. cDefaultOptsL ^. oSiteL)
      <> completeWith (T.unpack . sApiParam <$> cSites cfg)
       )
-  <*> uiOption
+  <*> option readUi
       ( long "interface"
      <> short 'i'
      <> metavar "brick|prompt"
@@ -99,11 +105,45 @@ parseOpts cfg = Options
       )
 
 -- | Bool option determind by flag in [--option|--no-option]
-enableDisableOpt :: Bool -> Mod OptionFields String -> Parser Bool
-enableDisableOpt = undefined
+enableDisableOpt
+  :: String
+  -> String
+  -> Bool
+  -> Mod FlagFields Bool
+  -> Parser Bool
+enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this thought
+  foldr (<|>) (pure def)
+  [ flag' True
+      ( hidden
+     <> internal
+     <> long name
+     <> help helptxt
+     <> mods
+      )
+  , flag' False
+      ( hidden
+     <> internal
+     <> long ("no-" ++ name)
+     <> help helptxt
+     <> mods
+      )
+  , flag' def
+      ( long ("[no-]" ++ name)
+     <> help helptxt
+     <> mods
+      )
+  ]
 
-uiOption :: Mod OptionFields Interface -> Parser Interface
-uiOption = undefined
+readUi :: ReadM Interface
+readUi = str >>= go where
+  go s
+    | s `elem` ["b", "brick"]  = return Brick
+    | s `elem` ["p", "prompt"] = return Prompt
+    | otherwise = readerError . unwords
+      $ [ s
+        , "is not a valid interface. The available options are:"
+        , "brick, prompt" ]
 
+-- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
-multiTextArg mods = T.concat <$> some (strArgument mods)
+multiTextArg mods = T.unwords <$> some (strArgument mods)
