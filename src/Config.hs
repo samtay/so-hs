@@ -1,9 +1,15 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Config where
 
+import Data.Char (toUpper, toLower)
+import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
+
 import Data.ByteString (ByteString)
+import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Yaml
 import Text.RawString.QQ
@@ -21,16 +27,16 @@ data Options = Options
   { oGoogle :: Bool
   , oLucky :: Bool
   , oLimit :: Int
-  , oSite :: Text
+  , oSite :: Site
   , oUi :: Interface
   } deriving (Show)
 
-data Interface = Prompt | Brick
-  deriving (Show)
+data Interface = Brick | Prompt
+  deriving (Show, Read)
 
 -- Note emacs requires process substitution, check if possible with shelly/turtle
 data Editor = Less | More | Vim | CustomEditor Text
-  deriving (Show)
+  deriving (Show, Read)
 
 suffixLenses ''Config
 suffixLenses ''Options
@@ -46,23 +52,65 @@ getUserConfig' = testGetUserConfig
 resetUserConfig :: IO ()
 resetUserConfig = undefined
 
--- | TODO implement... then move where appropriate
-editWith :: Text -> Editor -> IO ()
-editWith t e = useTurtleTo $ t |> editCommand e
-  where useTurtleTo = undefined
-        (|>)        = undefined
-
-editCommand :: Editor -> Text
-editCommand Less             = "less"
-editCommand More             = "more"
-editCommand Vim              = "vim +':setlocal buftype = nofile' -"
-editCommand (CustomEditor c) = c
-
 instance FromJSON Config where
-  parseJSON = undefined
+  parseJSON = withObject "config" $ \o -> do
+    cDefaultOpts <- o .:? "defaultOptions" .!= mempty
+    cSites'      <- o .:? "sites"          .!= [Site' soSite]
+    cEditor      <- o .:? "editor"
+    let cSites = site <$> cSites'
+    return Config{..}
+
+instance FromJSON Options where
+  parseJSON = withObject "options" $ \o -> do
+    oGoogle <- o .:? "google"    .!= oGoogle defaultOptions
+    oLucky  <- o .:? "lucky"     .!= oLucky defaultOptions
+    oLimit  <- o .:? "limit"     .!= oLimit defaultOptions
+    oSite'  <- o .:? "site"      .!= Site' (oSite defaultOptions)
+    oUi     <- o .:? "interface" .!= oUi defaultOptions
+    let oSite = site oSite'
+    return Options{..}
+
+-- Allow users to have a more intuitive yaml config than the JSON api
+newtype Site' = Site' { site :: Site }
+instance FromJSON Site' where
+  parseJSON = withObject "site" $ \o -> do
+    sUrl      <- o .: "url"
+    sApiParam <- o .: "shortcode"
+    return . Site' $ Site {..}
 
 instance ToJSON Config where
   toJSON = undefined
+
+instance Monoid Options where
+  mempty          = defaultOptions
+  o1 `mappend` o2 = o2
+
+instance FromJSON Editor where
+  parseJSON = withText "editor" $ \s -> do
+    let c = capitalize . T.unpack $ s
+    return $ fromMaybe (CustomEditor s) (readMaybe c)
+
+instance FromJSON Interface where
+  parseJSON = withText "interface" $ \s -> do
+    let c = capitalize . T.unpack $ s
+    fromMaybe (fail "invalid interface") (return <$> readMaybe c)
+
+defaultOptions :: Options
+defaultOptions = Options
+  { oGoogle = True
+  , oLucky  = False
+  , oLimit  = 25
+  , oSite   = soSite
+  , oUi     = Brick }
+
+soSite :: Site
+soSite = Site
+  { sUrl = "https://stackoverflow.com"
+  , sApiParam = "stackoverflow" }
+
+capitalize :: String -> String
+capitalize []       = []
+capitalize (h:tail) = toUpper h : fmap toLower tail
 
 -- Kept as ByteString instead of Config so that end users can see comments
 defaultConfigFileContent :: ByteString
@@ -79,36 +127,36 @@ ui: brick
 # you can find more at https://api.stackexchange.com/docs/sites
 sites:
 
-  - site_url: https://stackoverflow.com
-    api_site_parameter: stackoverflow
+  - url: https://stackoverflow.com
+    shortcode: stackoverflow
 
-  - site_url: https://serverfault.com
-    api_site_parameter: serverfault
+  - url: https://serverfault.com
+    shortcode: serverfault
 
-  - site_url: https://superuser.com
-    api_site_parameter: superuser
+  - url: https://superuser.com
+    shortcode: superuser
 
-  - site_url: https://askubuntu.com
-    api_site_parameter: askubuntu
+  - url: https://askubuntu.com
+    shortcode: askubuntu
 
-  - site_url: https://apple.stackexchange.com
-    api_site_parameter: apple
+  - url: https://apple.stackexchange.com
+    shortcode: apple
 
-  - site_url: https://gaming.stackexchange.com
-    api_site_parameter: gaming
+  - url: https://gaming.stackexchange.com
+    shortcode: gaming
 
-  - site_url: https://math.stackexchange.com
-    api_site_parameter: math
+  - url: https://math.stackexchange.com
+    shortcode: math
 
-  - site_url: https://meta.stackexchange.com
-    api_site_parameter: meta
+  - url: https://meta.stackexchange.com
+    shortcode: meta
 
-  - site_url: https://english.stackexchange.com
-    api_site_parameter: english
+  - url: https://english.stackexchange.com
+    shortcode: english
 
-  - site_url: https://tex.stackexchange.com
-    api_site_parameter: tex
+  - url: https://tex.stackexchange.com
+    shortcode: tex
 
-  - site_url: https://unix.stackexchange.com
-    api_site_parameter: unix
+  - url: https://unix.stackexchange.com
+    shortcode: unix
 |]

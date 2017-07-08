@@ -67,7 +67,7 @@ parseCli cfg = cli cfg
   <$> parseOpts cfg
   <*> switch
       ( long "print-sites"
-     <> help "Print StackExchange sites and exit"
+     <> help "Print Stack Exchange sites and exit"
       )
   <*> switch
       ( long "reset-config"
@@ -80,19 +80,27 @@ parseOpts
   :: Config         -- ^ User config (used for default values)
   -> Parser Options -- ^ Returns parser of options
 parseOpts cfg = Options
-  <$> undefined
-  <*> undefined
+  <$> enableDisableOpt
+      "google"
+      "Enable/disable: using google to find relevant Stack Exchange links"
+      (cfg ^. cDefaultOptsL ^. oGoogleL)
+      mempty
+  <*> enableDisableOpt
+      "lucky"
+      "Enable/disable: just return the single most relevant answer"
+      (cfg ^. cDefaultOptsL ^. oLuckyL)
+      mempty
   <*> option auto
       ( long "limit"
      <> metavar "INT"
      <> help "Upper limit on number of questions to fetch"
      <> value (cfg ^. cDefaultOptsL ^. oLimitL)
       )
-  <*> strOption -- TODO READER FOR SITE
+  <*> option (readSite (cSites cfg))
       ( long "site"
      <> short 's'
-     <> metavar "SHORTCODE"
-     <> help "StackExchange site to search. See --print-sites for available options."
+     <> metavar "CODE"
+     <> help "Stack Exchange site to search. See --print-sites for available options."
      <> value (cfg ^. cDefaultOptsL ^. oSiteL)
      <> completeWith (T.unpack . sApiParam <$> cSites cfg)
       )
@@ -100,16 +108,16 @@ parseOpts cfg = Options
       ( long "interface"
      <> short 'i'
      <> metavar "brick|prompt"
-     <> help "Interface for exploring questions and answers."
+     <> help "Interface for exploring questions and answers"
      <> value (cfg ^. cDefaultOptsL ^. oUiL)
       )
 
 -- | Bool option determind by flag in [--option|--no-option]
 enableDisableOpt
-  :: String
-  -> String
-  -> Bool
-  -> Mod FlagFields Bool
+  :: String              -- ^ Long name
+  -> String              -- ^ Help text
+  -> Bool                -- ^ Default value
+  -> Mod FlagFields Bool -- ^ Any additional mods
   -> Parser Bool
 enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this thought
   foldr (<|>) (pure def)
@@ -143,6 +151,17 @@ readUi = str >>= go where
       $ [ s
         , "is not a valid interface. The available options are:"
         , "brick, prompt" ]
+
+readSite :: [Site] -> ReadM Site
+readSite sites = str >>= go sites
+  where
+    go [] sc = readerError . unwords
+      $ [ sc
+        , "is not a valid site shortcode."
+        , "See --print-sites for help." ]
+    go (s:ss) sc
+      | T.pack sc == sApiParam s = return s
+      | otherwise = go ss sc
 
 -- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
