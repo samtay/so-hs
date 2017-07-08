@@ -55,9 +55,9 @@ resetUserConfig = undefined
 instance FromJSON Config where
   parseJSON = withObject "config" $ \o -> do
     cDefaultOpts <- o .:? "defaultOptions" .!= mempty
-    cSites'      <- o .:? "sites"          .!= [Site' soSite]
+    cSites'      <- o .:? "sites"          .!= []
     cEditor      <- o .:? "editor"
-    let cSites = site <$> cSites'
+    let cSites = if null cSites' then [soSite] else site <$> cSites'
     return Config{..}
 
 instance FromJSON Options where

@@ -3,7 +3,9 @@ module Cli
   ( run
   ) where
 
-import Control.Monad (join, when)
+import Control.Monad (join, when, forM_)
+import Data.Function (on)
+import Data.List (sortBy)
 import Data.Semigroup ((<>))
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
@@ -53,10 +55,7 @@ cli
   -> IO SO   -- ^ Resulting state
 cli cfg opts printsites reset query = do
   when reset resetUserConfig
-  when printsites $ do
-    mapM_ TIO.putStrLn
-      [T.concat [sApiParam s, ": ", sUrl s] | s <- cSites cfg]
-    exitSuccess
+  when printsites . printSites . cSites $ cfg
   return $ SO query [] opts
 
 -- | Parse full CLI options and args
@@ -92,6 +91,7 @@ parseOpts cfg = Options
       mempty
   <*> option auto
       ( long "limit"
+     <> short 'l'
      <> metavar "INT"
      <> help "Upper limit on number of questions to fetch"
      <> value (cfg ^. cDefaultOptsL ^. oLimitL)
@@ -105,8 +105,7 @@ parseOpts cfg = Options
      <> completeWith (T.unpack . sApiParam <$> cSites cfg)
       )
   <*> option readUi
-      ( long "interface"
-     <> short 'i'
+      ( short 'i'
      <> metavar "brick|prompt"
      <> help "Interface for exploring questions and answers"
      <> value (cfg ^. cDefaultOptsL ^. oUiL)
@@ -165,4 +164,19 @@ readSite sites = str >>= go sites
 
 -- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
-multiTextArg mods = T.unwords <$> some (strArgument mods)
+multiTextArg mods = T.unwords <$> many (strArgument mods)
+
+-- | Print sites. TODO align and sort nicely
+printSites :: [Site] -> IO ()
+printSites sites = do
+  let ordered = sortBy (compare `on` sApiParam) sites        -- alphabetically ordered
+      m       = maximum . map (T.length . sApiParam) $ sites -- maximum shortcode length
+
+  -- Print each site aligned on ":" separator
+  forM_ ordered $ \s -> do
+    let diff = m - T.length (sApiParam s)
+        indent = T.replicate diff " "
+    TIO.putStrLn . T.concat
+      $ [indent, sApiParam s, ": ", sUrl s]
+
+  exitSuccess
