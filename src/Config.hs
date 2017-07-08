@@ -1,30 +1,50 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 module Config where
 
-import Data.ByteString.Lazy (ByteString)
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Yaml
 import Text.RawString.QQ
 
-import StackOverflow.Types
+import StackOverflow
+import Utils
 
 data Config = Config
-  { defaultOpts :: () -- TODO CLI OPTS
-  , ui          :: () -- need names for (prompt,haskeline) and (brick tui)
-  , sites       :: [Site]
-  , editor      :: Maybe Editor
+  { cDefaultOpts :: Options      -- ^ Default CLI options
+  , cSites       :: [Site]       -- ^ Available SE sites
+  , cEditor      :: Maybe Editor -- ^ Custom editor to view answer
   } deriving (Show)
+
+data Options = Options
+  { oGoogle :: Bool
+  , oLucky :: Bool
+  , oLimit :: Int
+  , oSite :: Text
+  , oUi :: Interface
+  } deriving (Show)
+
+data Interface = Prompt | Brick
+  deriving (Show)
 
 -- Note emacs requires process substitution, check if possible with shelly/turtle
 data Editor = Less | More | Vim | CustomEditor Text
   deriving (Show)
 
-instance FromJSON Config where
-  parseJSON = undefined
+suffixLenses ''Config
+suffixLenses ''Options
 
-instance ToJSON Config where
-  toJSON = undefined
+getUserConfig :: IO (Maybe Config)
+getUserConfig = testGetUserConfig
+  where testGetUserConfig = return . decode $ defaultConfigFileContent
+
+getUserConfig' :: IO (Either String Config)
+getUserConfig' = testGetUserConfig
+  where testGetUserConfig = return . decodeEither $ defaultConfigFileContent
+
+resetUserConfig :: IO ()
+resetUserConfig = undefined
 
 -- | TODO implement... then move where appropriate
 editWith :: Text -> Editor -> IO ()
@@ -37,6 +57,12 @@ editCommand Less             = "less"
 editCommand More             = "more"
 editCommand Vim              = "vim +':setlocal buftype = nofile' -"
 editCommand (CustomEditor c) = c
+
+instance FromJSON Config where
+  parseJSON = undefined
+
+instance ToJSON Config where
+  toJSON = undefined
 
 -- Kept as ByteString instead of Config so that end users can see comments
 defaultConfigFileContent :: ByteString

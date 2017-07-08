@@ -23,13 +23,8 @@ that it's easier to work across two computers.
    add to field to Config as well.
 
 ### cli
-0. set up optparse-applicative types
-1. allow `--google|--no-google`
-2. allow `--site|-s` option which defaults to 'stackoverflow'
-3. allow `--print-sites` to print all available sites and exit
-4. allow `--count` for limiting results
-5. allow `-l|--lucky` to just straight print top voted answer, then space to
-   show full results
+0. finish parsers in Cli.hs
+1. might already be time to start some StateT
 
 ### interface
 0. both sophisticated brick column interface and basic prompting (haskeline or
@@ -52,6 +47,7 @@ that it's easier to work across two computers.
 ### general
 0. maybe start this thing off with StateT ??? or choose a new extension to
    learn and run with it?
+  read: http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
 1. in the future, maybe --site defaults to Nothing (so long as --google is
    used) and we parse out any known URLs from google search and perform
    multiple stack exchange requests to each site (this is a nice to have and

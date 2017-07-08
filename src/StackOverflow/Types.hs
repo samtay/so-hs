@@ -32,6 +32,7 @@ data Site = Site
 
 suffixLenses ''Question
 suffixLenses ''Answer
+suffixLenses ''Site
 
 instance Eq Question where
   q1 == q2 = qId q1 == qId q2
@@ -62,6 +63,8 @@ instance FromJSON Site where
     sApiParam <- o .: "api_site_parameter"
     return Site {..}
 
+-- TODO handle API errors; maybe data ApiResponse = Error | [Question]
+--    which works if Parser is instance of Alternative
 questionsParser :: Value -> Parser [Question]
 questionsParser = filter answered <$$> withObject "questions" (.: "items")
   where answered = not . null . qAnswers
