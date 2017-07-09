@@ -1,4 +1,5 @@
-# so
+# so [![Build Status](https://travis-ci.org/samtay/so.svg?branch=master)](https://travis-ci.org/samtay/so)
+
 
 This isn't done yet! If you're reading this, feel free to bookmark the repo but
 come back in like a month for the first release. I'm just pushing to GitHub so
