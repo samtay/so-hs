@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Cli
-  ( run
+  ( execSO
+  , parseSO
   ) where
 
 import Control.Monad (join, when, forM_)
@@ -24,16 +25,20 @@ import StackOverflow
 import State
 import Utils
 
--- | Get and parse args from command line and return resulting `SO` type
-run :: IO SO
-run = getConfigE >>= either showConfigError go
+-- TODO consider splitting up parsers so that CLI options that exit
+-- are unavailable from Brick prompt...
+
+-- | Parse args from command line and return resulting `SO` type
+-- Exits with failure info on invalid args
+execSO :: IO SO
+execSO = do
+  args <- getArgs
+  eCfg <- getConfigE
+  either showConfigError (execWith args) eCfg
   where
-    go :: Config -> IO SO
-    go cfg = join . execParser $
-      info (helper <*> parseCli cfg)
-      (  fullDesc
-      <> progDesc "Stack Overflow from your terminal"
-      )
+    execWith :: [String] -> Config -> IO SO
+    execWith args cfg = join . handleParseResult $ parseSOPure cfg args
+
     showConfigError :: String -> IO SO
     showConfigError e = do
       TIO.hPutStrLn stderr . T.unwords
@@ -44,25 +49,50 @@ run = getConfigE >>= either showConfigError go
           , T.pack e ]
       exitFailure
 
+-- | Generalized 'execSO' that accepts 'Config' and args and returns
+-- either an error message or resulting SO state
+parseSO
+  :: Config
+  -> [String]
+  -> IO (Either Text SO)
+parseSO = handle .*. parseSOPure
+  where handle :: ParserResult (IO SO) -> IO (Either Text SO)
+        handle (Success ioa) = sequence (Right ioa)
+        handle (Failure f)   = return . Left . T.pack . fst $ renderFailure f "so"
+        handle _             = return . Left $ "Don't try to invoke completion from here!"
+
+parseSOPure
+  :: Config
+  -> [String]
+  -> ParserResult (IO SO)
+parseSOPure = execParserPure defaultPrefs . fullCliInfo
+
+fullCliInfo :: Config -> ParserInfo (IO SO)
+fullCliInfo cfg =
+  info (helper <*> parseCliExec cfg)
+  (  fullDesc
+  <> progDesc "Stack Overflow from your terminal"
+  )
+
 -- | Intermediary function that handles actions determined
 -- by CLI that don't fit within the core `SO` state.
-cli
+execCli
   :: Config  -- ^ User config
   -> Options -- ^ Options parsed from CLI
   -> Bool    -- ^ Print sites flag
   -> Bool    -- ^ Reset configuration file flag
   -> Text    -- ^ Query argument parsed from CLI
   -> IO SO   -- ^ Resulting state
-cli cfg opts printsites reset query = do
-  when reset (resetConfig >> exitSuccess)
-  when printsites (printSites . cSites $ cfg)
+execCli cfg opts printsites reset query = do
+  when reset (resetConfig >> exitSuccess)      -- reset config and exit
+  when printsites (printSites . cSites $ cfg)  -- print sites and exit
   return $ SO query [] opts
 
 -- | Parse full CLI options and args
-parseCli
+parseCliExec
   :: Config         -- ^ User config
   -> Parser (IO SO) -- ^ Returns parser of IO action to return SO state
-parseCli cfg = cli cfg
+parseCliExec cfg = execCli cfg
   <$> parseOpts cfg
   <*> switch
       ( long "print-sites"
@@ -167,7 +197,7 @@ readSite sites = str >>= go sites
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
 multiTextArg mods = T.unwords <$> many (strArgument mods)
 
--- | Print sites. TODO align and sort nicely
+-- | Print sites.
 printSites :: [Site] -> IO ()
 printSites sites = do
   let ordered = sortBy (compare `on` sApiParam) sites        -- alphabetically ordered

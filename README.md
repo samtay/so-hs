@@ -23,10 +23,6 @@ that it's easier to work across two computers.
    own, but allow it to be overridable with envvar `$STACKEXCHANGE_API_KEY` and
    add to field to Config as well.
 
-### cli
-0. finish parsers in Cli.hs
-1. might already be time to start some StateT
-
 ### interface
 0. both sophisticated brick column interface and basic prompting (haskeline or
    plain)
@@ -38,13 +34,16 @@ that it's easier to work across two computers.
 5. `suspendAndResume` to view answer in editor of choice
 6. in addition to vim h,j,k,l bindings for scrolling current viewport,
    shift+h,j,k,l for resizing sections
-7. Note that optparse-applicative has `execParserPure` !
 
 ### config
-0. xdga config to set defaults, i.e. deault `--no-google`, default `--lucky`,
-   etc.
-2. xdga config for buffer viewer, e.g.: native, vim, less, more
+0. xdga config: FIX allow user to set default site with shortcode instead of full info
 1. xdga data to save `--filter` string
+
+### cli
+0. After too much late-night-can-barely-think programming, Cli module is kind
+of a jumble of effectful functions all over the place. Replace all the parse/exec funcs
+with Cli datatype that holds Options as well as flags like --print-sites. Then just
+have a single exec that handles all effects.
 
 ### general
 0. maybe start this thing off with StateT ??? or choose a new extension to
