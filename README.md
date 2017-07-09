@@ -47,8 +47,6 @@ with Cli datatype that holds Options as well as flags like --print-sites. Then j
 have a single exec that handles all effects.
 1. Consider adding ansi-terminal for colors in prompting and error msgs (modeled like yaourt)
    -- this is added in the `ansi-colors` branch
-2. BUG --reset-config is useless if we throw error before interpreting it!!!
-   Or I could just direct the user to delete the path?? Way easier..
 
 ### general
 0. maybe start this thing off with StateT ??? or choose a new extension to

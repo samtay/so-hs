@@ -41,11 +41,16 @@ execSO = do
 
     showConfigError :: String -> IO SO
     showConfigError e = do
-      TIO.hPutStrLn stderr . T.unwords
+      f <- T.pack <$> getConfigFile
+      TIO.hPutStrLn stderr . T.unlines
         $ [ "It looks like there is an error in your configuration."
           , "If you're having trouble fixing it, you can always run:"
-          , "`so --reset-config` to reset to defaults."
-          , "\n\nFor reference, the yaml parsing error was: "
+          , ""
+          , "    " <> "rm " <> f
+          , ""
+          , "to reset to defaults."
+          , "For reference, the yaml parsing error was:"
+          , ""
           , T.pack e ]
       exitFailure
 
@@ -80,11 +85,9 @@ execCli
   :: Config  -- ^ User config
   -> Options -- ^ Options parsed from CLI
   -> Bool    -- ^ Print sites flag
-  -> Bool    -- ^ Reset configuration file flag
   -> Text    -- ^ Query argument parsed from CLI
   -> IO SO   -- ^ Resulting state
-execCli cfg opts printsites reset query = do
-  when reset (resetConfig >> exitSuccess)      -- reset config and exit
+execCli cfg opts printsites query = do
   when printsites (printSites . cSites $ cfg)  -- print sites and exit
   return $ SO query [] opts
 
@@ -97,10 +100,6 @@ parseCliExec cfg = execCli cfg
   <*> switch
       ( long "print-sites"
      <> help "Print Stack Exchange sites and exit"
-      )
-  <*> switch
-      ( long "reset-config"
-     <> help "Reset configuration to defaults"
       )
   <*> multiTextArg (metavar "QUERY")
 
@@ -211,3 +210,6 @@ printSites sites = do
       $ [indent, sApiParam s, ": ", sUrl s]
 
   exitSuccess
+
+code :: Text -> Text
+code t = "`" <> t <> "`"
