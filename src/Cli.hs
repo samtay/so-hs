@@ -7,7 +7,8 @@ module Cli
 import Control.Monad (join, when, forM_)
 import Data.Function (on)
 import Data.List (sortBy)
-import Data.Semigroup ((<>))
+import Data.Semigroup (Semigroup, (<>))
+import Data.String (IsString, fromString)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (stderr)
@@ -19,6 +20,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Data.Yaml (decode)
 import Options.Applicative
+import qualified System.Console.ANSI as A
 
 import Config
 import StackOverflow
@@ -45,8 +47,8 @@ execSO = do
         $ [ "It looks like there is an error in your configuration."
           , "If you're having trouble fixing it, you can always run:"
           , "`so --reset-config` to reset to defaults."
-          , "\n\nFor reference, the yaml parsing error was: "
-          , T.pack e ]
+          , "\n\nFor reference, the yaml parsing error was:\n"
+          , T.pack (red e) ]
       exitFailure
 
 -- | Generalized 'execSO' that accepts 'Config' and args and returns
@@ -177,7 +179,7 @@ enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this 
 readUi :: ReadM Interface
 readUi = str >>= \s -> maybe (err s) return (decode s)
   where
-    err s = readerError . unwords
+    err s = readerError . red . unwords
       $ [ BS.unpack s
         , "is not a valid interface. The available options are:"
         , "brick, prompt" ]
@@ -185,7 +187,7 @@ readUi = str >>= \s -> maybe (err s) return (decode s)
 readSite :: [Site] -> ReadM Site
 readSite sites = str >>= go sites
   where
-    go [] sc = readerError . unwords
+    go [] sc = readerError . red . unwords
       $ [ sc
         , "is not a valid site shortcode."
         , "See --print-sites for help." ]
@@ -211,3 +213,12 @@ printSites sites = do
       $ [indent, sApiParam s, ": ", sUrl s]
 
   exitSuccess
+
+-- | Make text red
+--
+-- TODO see if ansi codes embedded in readerErrors actually get escaped
+-- when rendering to a brick interface... if not, remove!
+red :: (Semigroup s, IsString s) => s -> s
+red = (startRed<>) . (<>reset)
+  where startRed = fromString . A.setSGRCode $ [A.SetColor A.Foreground A.Vivid A.Red]
+        reset    = fromString . A.setSGRCode $ []
