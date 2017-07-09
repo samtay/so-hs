@@ -26,6 +26,8 @@ library
                      , aeson
                      , brick
                      , bytestring
+                     , directory
+                     , filepath
                      , lens
                      , optparse-applicative
                      , raw-strings-qq

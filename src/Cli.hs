@@ -24,7 +24,7 @@ import Utils
 
 -- | Get and parse args from command line and return resulting `SO` type
 run :: IO SO
-run = getUserConfigE >>= either showUserConfigError go
+run = getConfigE >>= either showConfigError go
   where
     go :: Config -> IO SO
     go cfg = join . execParser $
@@ -32,8 +32,8 @@ run = getUserConfigE >>= either showUserConfigError go
       (  fullDesc
       <> progDesc "Stack Overflow from your terminal"
       )
-    showUserConfigError :: String -> IO SO
-    showUserConfigError e = do
+    showConfigError :: String -> IO SO
+    showConfigError e = do
       TIO.hPutStrLn stderr . T.unwords
         $ [ "It looks like there is an error in your configuration."
           , "If you're having trouble fixing it, you can always run:"
@@ -52,8 +52,8 @@ cli
   -> Text    -- ^ Query argument parsed from CLI
   -> IO SO   -- ^ Resulting state
 cli cfg opts printsites reset query = do
-  when reset resetUserConfig
-  when printsites . printSites . cSites $ cfg
+  when reset (resetConfig >> exitSuccess)
+  when printsites (printSites . cSites $ cfg)
   return $ SO query [] opts
 
 -- | Parse full CLI options and args
@@ -81,18 +81,19 @@ parseOpts cfg = Options
       "google"
       "Enable/disable: using google to find relevant Stack Exchange links"
       (cfg ^. cDefaultOptsL ^. oGoogleL)
-      mempty
+      showDefault
   <*> enableDisableOpt
       "lucky"
       "Enable/disable: just return the single most relevant answer"
       (cfg ^. cDefaultOptsL ^. oLuckyL)
-      mempty
+      showDefault
   <*> option auto
       ( long "limit"
      <> short 'l'
      <> metavar "INT"
      <> help "Upper limit on number of questions to fetch"
      <> value (cfg ^. cDefaultOptsL ^. oLimitL)
+     <> showDefault
       )
   <*> option (readSite (cSites cfg))
       ( long "site"
@@ -100,6 +101,7 @@ parseOpts cfg = Options
      <> metavar "CODE"
      <> help "Stack Exchange site to search. See --print-sites for available options."
      <> value (cfg ^. cDefaultOptsL ^. oSiteL)
+     <> showDefaultWith (T.unpack . sApiParam)
      <> completeWith (T.unpack . sApiParam <$> cSites cfg)
       )
   <*> option readUi
@@ -107,6 +109,7 @@ parseOpts cfg = Options
      <> metavar "brick|prompt"
      <> help "Interface for exploring questions and answers"
      <> value (cfg ^. cDefaultOptsL ^. oUiL)
+     <> showDefault
       )
 
 -- | Bool option determind by flag in [--option|--no-option]

@@ -1,17 +1,21 @@
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Config where
 
+import Control.Monad (unless)
 import Data.Char (toUpper, toLower)
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 
+import qualified Data.ByteString as BS
 import Data.ByteString (ByteString)
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Yaml
+import qualified System.Directory as D
+import System.FilePath ((</>))
 import Text.RawString.QQ
 
 import StackOverflow
@@ -41,16 +45,33 @@ data Editor = Less | More | Vim | CustomEditor Text
 suffixLenses ''Config
 suffixLenses ''Options
 
-getUserConfig :: IO (Maybe Config)
-getUserConfig = testGetUserConfig
-  where testGetUserConfig = return . decode $ defaultConfigFileContent
+getConfigWith :: Monad m => (ByteString -> m Config) -> IO (m Config)
+getConfigWith decoder = do
+  f <- getConfigFile
+  exists <- D.doesFileExist f
+  unless exists resetConfig
+  yml <- BS.readFile f
+  return $ decoder yml
 
-getUserConfigE :: IO (Either String Config)
-getUserConfigE = testGetUserConfig
-  where testGetUserConfig = return . decodeEither $ defaultConfigFileContent
+getConfigM :: IO (Maybe Config)
+getConfigM = getConfigWith decode
 
-resetUserConfig :: IO ()
-resetUserConfig = undefined
+getConfigE :: IO (Either String Config)
+getConfigE = getConfigWith decodeEither
+
+resetConfig :: IO ()
+resetConfig = do
+  f <- getConfigFile
+  BS.writeFile f defaultConfigFileContent
+
+getConfigFile :: IO FilePath
+getConfigFile = getXdgaFilePath D.XdgConfig "config.yml"
+
+getXdgaFilePath :: D.XdgDirectory -> FilePath -> IO FilePath
+getXdgaFilePath d f = do
+  xdg <- D.getXdgDirectory d "so"
+  D.createDirectoryIfMissing True xdg
+  return (xdg </> f)
 
 instance FromJSON Config where
   parseJSON = withObject "config" $ \o -> do
@@ -62,11 +83,11 @@ instance FromJSON Config where
 
 instance FromJSON Options where
   parseJSON = withObject "options" $ \o -> do
-    oGoogle <- o .:? "google"    .!= oGoogle defaultOptions
-    oLucky  <- o .:? "lucky"     .!= oLucky defaultOptions
-    oLimit  <- o .:? "limit"     .!= oLimit defaultOptions
-    oSite'  <- o .:? "site"      .!= Site' (oSite defaultOptions)
-    oUi     <- o .:? "interface" .!= oUi defaultOptions
+    oGoogle <- o .:? "google" .!= oGoogle defaultOptions
+    oLucky  <- o .:? "lucky"  .!= oLucky defaultOptions
+    oLimit  <- o .:? "limit"  .!= oLimit defaultOptions
+    oSite'  <- o .:? "site"   .!= Site' (oSite defaultOptions)
+    oUi     <- o .:? "ui"     .!= oUi defaultOptions
     let oSite = site oSite'
     return Options{..}
 
@@ -91,9 +112,13 @@ instance FromJSON Editor where
     return $ fromMaybe (CustomEditor s) (readMaybe c)
 
 instance FromJSON Interface where
-  parseJSON = withText "interface" $ \s -> do
-    let c = capitalize . T.unpack $ s
-    fromMaybe (fail "invalid interface") (return <$> readMaybe c)
+  parseJSON = withText "interface" $
+    \s -> case (T.toLower s) of
+      "b"      -> return Brick
+      "brick"  -> return Brick
+      "p"      -> return Prompt
+      "prompt" -> return Prompt
+      _        -> fail "invalid interface"
 
 defaultOptions :: Options
 defaultOptions = Options
@@ -114,14 +139,12 @@ capitalize (h:tail) = toUpper h : fmap toLower tail
 
 -- Kept as ByteString instead of Config so that end users can see comments
 defaultConfigFileContent :: ByteString
-defaultConfigFileContent = [r|
-# default CLI flags (see `so --help` for info)
+defaultConfigFileContent = [r|# default CLI options (see `so --help` for info)
 defaultOptions:
   google: yes
   lucky: no
+  ui: brick # options: brick, prompt
 
-# ui options: brick, basic
-ui: brick
 
 # stack exchange sites available for searching
 # you can find more at https://api.stackexchange.com/docs/sites
