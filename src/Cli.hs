@@ -12,10 +12,11 @@ import System.Exit (exitSuccess, exitFailure)
 import System.IO (stderr)
 
 import Control.Lens (each, (^.), (^..))
+import qualified Data.ByteString.Char8 as BS
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Data.Yaml (decodeEither)
+import Data.Yaml (decode)
 import Options.Applicative
 
 import Config
@@ -144,7 +145,12 @@ enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this 
   ]
 
 readUi :: ReadM Interface
-readUi = str >>= either readerError return . decodeEither
+readUi = str >>= \s -> maybe (err s) return (decode s)
+  where
+    err s = readerError . unwords
+      $ [ BS.unpack s
+        , "is not a valid interface. The available options are:"
+        , "brick, prompt" ]
 
 readSite :: [Site] -> ReadM Site
 readSite sites = str >>= go sites
