@@ -7,7 +7,8 @@ module Cli
 import Control.Monad (join, when, forM_)
 import Data.Function (on)
 import Data.List (sortBy)
-import Data.Semigroup ((<>))
+import Data.Semigroup (Semigroup, (<>))
+import Data.String (IsString, fromString)
 import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (stderr)
@@ -19,14 +20,12 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Data.Yaml (decode)
 import Options.Applicative
+import qualified System.Console.ANSI as A
 
 import Config
 import StackOverflow
 import State
 import Utils
-
--- TODO consider splitting up parsers so that CLI options that exit
--- are unavailable from Brick prompt...
 
 -- | Parse args from command line and return resulting `SO` type
 -- Exits with failure info on invalid args
@@ -42,16 +41,16 @@ execSO = do
     showConfigError :: String -> IO SO
     showConfigError e = do
       f <- T.pack <$> getConfigFile
-      TIO.hPutStrLn stderr . T.unlines
-        $ [ "It looks like there is an error in your configuration."
+      TIO.hPutStrLn stderr . T.concat
+        $ [ "It looks like there is an error in your configuration. "
           , "If you're having trouble fixing it, you can always run:"
-          , ""
-          , "    " <> "rm " <> f
-          , ""
-          , "to reset to defaults."
+          , "\n\n"
+          , code ("    " <> "rm " <> f)
+          , "\n\n"
+          , "to reset to defaults. "
           , "For reference, the yaml parsing error was:"
-          , ""
-          , T.pack e ]
+          , "\n\n"
+          , T.pack (err e) ]
       exitFailure
 
 -- | Generalized 'execSO' that accepts 'Config' and args and returns
@@ -174,9 +173,9 @@ enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this 
   ]
 
 readUi :: ReadM Interface
-readUi = str >>= \s -> maybe (err s) return (decode s)
+readUi = str >>= \s -> maybe (rError s) return (decode s)
   where
-    err s = readerError . unwords
+    rError s = readerError . err . unwords
       $ [ BS.unpack s
         , "is not a valid interface. The available options are:"
         , "brick, prompt" ]
@@ -184,7 +183,7 @@ readUi = str >>= \s -> maybe (err s) return (decode s)
 readSite :: [Site] -> ReadM Site
 readSite sites = str >>= go sites
   where
-    go [] sc = readerError . unwords
+    go [] sc = readerError . err . unwords
       $ [ sc
         , "is not a valid site shortcode."
         , "See --print-sites for help." ]
@@ -211,5 +210,16 @@ printSites sites = do
 
   exitSuccess
 
+-- | Style code
 code :: Text -> Text
-code t = "`" <> t <> "`"
+code = color A.Vivid A.Cyan
+
+-- | Style errors with vivid red
+err :: (Semigroup s, IsString s) => s -> s
+err = color A.Vivid A.Red
+
+-- | Style strings with given intensity, color
+color :: (Semigroup s, IsString s) => A.ColorIntensity -> A.Color -> s -> s
+color i c s = start <> s <> reset
+  where start = fromString . A.setSGRCode $ [A.SetColor A.Foreground i c]
+        reset = fromString . A.setSGRCode $ [A.Reset]
