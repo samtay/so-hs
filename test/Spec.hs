@@ -16,8 +16,10 @@ main = hspec $ do
   describe "Google Scraper" $ do
     it "parses english.meta question links" $
       pending
-    it "fails gracefully on botched attempt" $
+    it "fails gracefully on botched parse" $
       pending
+    it "fails gracefully on no connection" $
+      pendingWith "look at other libraries that simulate this by throwing IO exceptions"
 
   describe "StackExchange API JSON" $ do
     it "parses json correctly" $
@@ -29,6 +31,8 @@ main = hspec $ do
     it "fails gracefully on botched attempt" $
       decodeQFromFile invalidQuestionsFile
         `shouldReturn` Left "Error in $.items[0]: key \"body_markdown\" not present"
+    it "fails gracefully on no connection" $
+      pendingWith "look at other libraries that simulate this by throwing IO exceptions"
 
   describe "Configuration" $ do
     it "handles bad yaml configuration" $
