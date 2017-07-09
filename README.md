@@ -34,17 +34,12 @@ that it's easier to work across two computers.
 5. `suspendAndResume` to view answer in editor of choice
 6. in addition to vim h,j,k,l bindings for scrolling current viewport,
    shift+h,j,k,l for resizing sections
+7. can set up themes named in configuration and then keep attrmap within app state
 
 ### config
 0. xdga config: FIX allow user to set default site with shortcode instead of full info
 1. xdga data to save `--filter` string
 2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
-
-### cli
-0. After too much late-night-can-barely-think programming, Cli module is kind
-of a jumble of effectful functions all over the place. Replace all the parse/exec funcs
-with Cli datatype that holds Options as well as flags like --print-sites. Then just
-have a single exec that handles all effects.
 
 ### general
 0. maybe start this thing off with StateT ??? or choose a new extension to

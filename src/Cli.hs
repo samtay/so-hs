@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Cli
-  ( execSO
-  , parseSO
+  ( run
   ) where
 
 import Control.Monad (join, when, forM_)
@@ -27,18 +26,23 @@ import StackOverflow
 import State
 import Utils
 
+data Cli = Cli
+  { options :: Options
+  , query   :: Text
+  }
+
 -- | Parse args from command line and return resulting `SO` type
 -- Exits with failure info on invalid args
-execSO :: IO SO
-execSO = do
-  args <- getArgs
-  eCfg <- getConfigE
-  either showConfigError (execWith args) eCfg
+run :: IO SO
+run = getConfigE >>= either showConfigError execCliParser >>= cliToSO
   where
-    execWith :: [String] -> Config -> IO SO
-    execWith args cfg = join . handleParseResult $ parseSOPure cfg args
+    execCliParser :: Config -> IO Cli
+    execCliParser = execParser . cliParserInfo
 
-    showConfigError :: String -> IO SO
+    cliToSO :: Cli -> IO SO
+    cliToSO (Cli opts query) = return $ SO query [] opts
+
+    showConfigError :: String -> IO Cli
     showConfigError e = do
       f <- T.pack <$> getConfigFile
       TIO.hPutStrLn stderr . T.concat
@@ -53,59 +57,26 @@ execSO = do
           , T.pack (err e) ]
       exitFailure
 
--- | Generalized 'execSO' that accepts 'Config' and args and returns
--- either an error message or resulting SO state
-parseSO
-  :: Config
-  -> [String]
-  -> IO (Either Text SO)
-parseSO = handle .*. parseSOPure
-  where handle :: ParserResult (IO SO) -> IO (Either Text SO)
-        handle (Success ioa) = sequence (Right ioa)
-        handle (Failure f)   = return . Left . T.pack . fst $ renderFailure f "so"
-        handle _             = return . Left $ "Don't try to invoke completion from here!"
-
-parseSOPure
-  :: Config
-  -> [String]
-  -> ParserResult (IO SO)
-parseSOPure = execParserPure defaultPrefs . fullCliInfo
-
-fullCliInfo :: Config -> ParserInfo (IO SO)
-fullCliInfo cfg =
-  info (helper <*> parseCliExec cfg)
+-- | Full parser info with --help and --print-sites options
+cliParserInfo :: Config -> ParserInfo Cli
+cliParserInfo cfg =
+  info (helper <*> printSitesOption cfg <*> cliParser cfg)
   (  fullDesc
   <> progDesc "Stack Overflow from your terminal"
   )
 
--- | Intermediary function that handles actions determined
--- by CLI that don't fit within the core `SO` state.
-execCli
-  :: Config  -- ^ User config
-  -> Options -- ^ Options parsed from CLI
-  -> Bool    -- ^ Print sites flag
-  -> Text    -- ^ Query argument parsed from CLI
-  -> IO SO   -- ^ Resulting state
-execCli cfg opts printsites query = do
-  when printsites (printSites . cSites $ cfg)  -- print sites and exit
-  return $ SO query [] opts
-
--- | Parse full CLI options and args
-parseCliExec
-  :: Config         -- ^ User config
-  -> Parser (IO SO) -- ^ Returns parser of IO action to return SO state
-parseCliExec cfg = execCli cfg
+-- | Parse 'Cli' options and query arg
+cliParser
+  :: Config     -- ^ User config
+  -> Parser Cli -- ^ Returns 'Cli' parser
+cliParser cfg = Cli
   <$> parseOpts cfg
-  <*> switch
-      ( long "print-sites"
-     <> help "Print Stack Exchange sites and exit"
-      )
   <*> multiTextArg (metavar "QUERY")
 
 -- | Parse CLI options that have defaults in 'Config'
 parseOpts
   :: Config         -- ^ User config (used for default values)
-  -> Parser Options -- ^ Returns parser of options
+  -> Parser Options -- ^ Returns 'Options' parser
 parseOpts cfg = Options
   <$> enableDisableOpt
       "google"
@@ -142,6 +113,17 @@ parseOpts cfg = Options
      <> showDefault
       )
 
+-- | Top level info option parser that lives in ParserInfo
+--
+-- By "top level" and "info option", I mean this is like --help
+-- in that once encountered, regardless of any other args,
+-- the program will spit out sites and exit.
+printSitesOption :: Config -> Parser (a -> a)
+printSitesOption cfg = infoOption (prettifiedSites (cSites cfg))
+  ( long "print-sites"
+ <> help "Print Stack Exchange sites and exit"
+  )
+
 -- | Bool option determind by flag in [--option|--no-option]
 enableDisableOpt
   :: String              -- ^ Long name
@@ -149,7 +131,7 @@ enableDisableOpt
   -> Bool                -- ^ Default value
   -> Mod FlagFields Bool -- ^ Any additional mods
   -> Parser Bool
-enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this thought
+enableDisableOpt name helptxt def mods =
   foldr (<|>) (pure def)
   [ flag' True
       ( hidden
@@ -172,6 +154,7 @@ enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this 
       )
   ]
 
+-- | Read interface option (uses same mechanism as FromJSON parser)
 readUi :: ReadM Interface
 readUi = str >>= \s -> maybe (rError s) return (decode s)
   where
@@ -180,6 +163,7 @@ readUi = str >>= \s -> maybe (rError s) return (decode s)
         , "is not a valid interface. The available options are:"
         , "brick, prompt" ]
 
+-- | Read site option (TODO: use same mechanism as FromJSON parser, once fixed)
 readSite :: [Site] -> ReadM Site
 readSite sites = str >>= go sites
   where
@@ -195,20 +179,17 @@ readSite sites = str >>= go sites
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
 multiTextArg mods = T.unwords <$> many (strArgument mods)
 
--- | Print sites.
-printSites :: [Site] -> IO ()
-printSites sites = do
-  let ordered = sortBy (compare `on` sApiParam) sites        -- alphabetically ordered
-      m       = maximum . map (T.length . sApiParam) $ sites -- maximum shortcode length
-
-  -- Print each site aligned on ":" separator
-  forM_ ordered $ \s -> do
-    let diff = m - T.length (sApiParam s)
-        indent = T.replicate diff " "
-    TIO.putStrLn . T.concat
-      $ [indent, sApiParam s, ": ", sUrl s]
-
-  exitSuccess
+-- | Align and alphabetically order sites
+prettifiedSites :: [Site] -> String
+prettifiedSites sites =
+  T.unpack
+    . T.unlines
+    $ [ T.concat [indent s, sApiParam s, ": ", sUrl s] | s <- ordered ]
+ where
+  ordered  = sortBy (compare `on` sApiParam) sites        -- alphabetically ordered
+  maxL     = maximum . map (T.length . sApiParam) $ sites -- maximum shortcode length
+  diff s   = maxL - T.length (sApiParam s)
+  indent s = T.replicate (diff s) " "
 
 -- | Style code
 code :: Text -> Text
