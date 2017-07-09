@@ -15,6 +15,7 @@ import Control.Lens (each, (^.), (^..))
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import Data.Yaml (decodeEither)
 import Options.Applicative
 
 import Config
@@ -143,14 +144,7 @@ enableDisableOpt name helptxt def mods = -- last <$> some $ -- TODO finish this 
   ]
 
 readUi :: ReadM Interface
-readUi = str >>= go where
-  go s
-    | s `elem` ["b", "brick"]  = return Brick
-    | s `elem` ["p", "prompt"] = return Prompt
-    | otherwise = readerError . unwords
-      $ [ s
-        , "is not a valid interface. The available options are:"
-        , "brick, prompt" ]
+readUi = str >>= either readerError return . decodeEither
 
 readSite :: [Site] -> ReadM Site
 readSite sites = str >>= go sites
