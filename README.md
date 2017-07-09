@@ -38,12 +38,17 @@ that it's easier to work across two computers.
 ### config
 0. xdga config: FIX allow user to set default site with shortcode instead of full info
 1. xdga data to save `--filter` string
+2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
 
 ### cli
 0. After too much late-night-can-barely-think programming, Cli module is kind
 of a jumble of effectful functions all over the place. Replace all the parse/exec funcs
 with Cli datatype that holds Options as well as flags like --print-sites. Then just
 have a single exec that handles all effects.
+1. Consider adding ansi-terminal for colors in prompting and error msgs (modeled like yaourt)
+   -- this is added in the `ansi-colors` branch
+2. BUG --reset-config is useless if we throw error before interpreting it!!!
+   Or I could just direct the user to delete the path?? Way easier..
 
 ### general
 0. maybe start this thing off with StateT ??? or choose a new extension to
