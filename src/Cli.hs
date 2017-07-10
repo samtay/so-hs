@@ -80,12 +80,12 @@ parseOpts
 parseOpts cfg = Options
   <$> enableDisableOpt
       "google"
-      "Enable/disable: using google to find relevant Stack Exchange links"
+      "Use google to find relevant question links"
       (cfg ^. cDefaultOptsL ^. oGoogleL)
       showDefault
   <*> enableDisableOpt
       "lucky"
-      "Enable/disable: just return the single most relevant answer"
+      "Return the single most relevant answer"
       (cfg ^. cDefaultOptsL ^. oLuckyL)
       showDefault
   <*> option auto
@@ -132,27 +132,19 @@ enableDisableOpt
   -> Mod FlagFields Bool -- ^ Any additional mods
   -> Parser Bool
 enableDisableOpt name helptxt def mods =
-  foldr (<|>) (pure def)
-  [ flag' True
-      ( hidden
-     <> internal
-     <> long name
-     <> help helptxt
-     <> mods
-      )
-  , flag' False
-      ( hidden
-     <> internal
-     <> long ("no-" ++ name)
-     <> help helptxt
-     <> mods
-      )
-  , flag' def
-      ( long ("[no-]" ++ name)
-     <> help helptxt
-     <> mods
-      )
-  ]
+  enabledOpt <|> disabledOpt <|> showOpt
+  where
+    enabledOpt  = mkOpt flag' True name (hidden <> internal)
+    disabledOpt = mkOpt flag' False ("no-" ++ name) (hidden <> internal)
+    showOpt     = mkOpt (flag def) (not def) ("[no-]" ++ name) mempty
+    defWord     = if def then "enabled" else "disabled"
+    mkOpt fn b n ms =
+      fn b
+        ( long n
+       <> help (helptxt ++ " (default: " ++ defWord ++ ")")
+       <> ms
+       <> mods
+        )
 
 -- | Read interface option (uses same mechanism as FromJSON parser)
 readUi :: ReadM Interface
