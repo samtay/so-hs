@@ -12,7 +12,7 @@ import System.Environment (getArgs)
 import System.Exit (exitSuccess, exitFailure)
 import System.IO (stderr)
 
-import Control.Lens (each, (^.), (^..))
+import Lens.Micro (each, (^.), (^..))
 import qualified Data.ByteString.Char8 as BS
 import Data.Text (Text)
 import qualified Data.Text as T

@@ -3,7 +3,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module StackOverflow.Types where
 
-import Control.Lens (view)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Text (Text)

@@ -29,7 +29,8 @@ library
                      , bytestring
                      , directory
                      , filepath
-                     , lens
+                     , microlens
+                     , microlens-th
                      , optparse-applicative
                      , raw-strings-qq
                      , text
