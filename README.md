@@ -39,10 +39,6 @@ that it's easier to work across two computers.
 7. can set up themes named in configuration and then keep attrmap within app state
 
 ### config
-0. xdga config: FIX allow user to set default site with shortcode instead of full info
-   WOW turns out that is really hard. Maybe ping community for solution that doesnt
-   involve an entire Options' newtype wrapper just to allow site decoded to shortcode
-   text
 1. xdga data to save `--filter` string
 2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
 3. need to keep track of "editor" option from config through cli parser; does this

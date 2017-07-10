@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE LambdaCase #-}
 module Cli
   ( run
   ) where
@@ -32,28 +34,28 @@ data Cli = Cli
 -- | Parse args from command line and return resulting `SO` type
 -- Exits with failure info on invalid args
 run :: IO SO
-run = getConfigE >>= either showConfigError execCliParser >>= cliToSO
-  where
-    execCliParser :: Config -> IO Cli
-    execCliParser = execParser . cliParserInfo
+run = getConfigE >>= \case
+  Left e    -> showConfigError e
+  Right cfg -> do
+    Cli{options, query} <- execParser $ cliParserInfo cfg
+    let sc   = oSiteSC options
+        site = head . filter ((==sc) . sApiParam) . cSites $ cfg
+    return $ SO query site [] options
 
-    cliToSO :: Cli -> IO SO
-    cliToSO Cli{options, query} = return $ SO query [] options
-
-    showConfigError :: String -> IO Cli
-    showConfigError e = do
-      f <- T.pack <$> getConfigFile
-      TIO.hPutStrLn stderr . T.concat
-        $ [ "It looks like there is an error in your configuration. "
-          , "If you're having trouble fixing it, you can always run:"
-          , "\n\n"
-          , code ("    " <> "rm " <> f)
-          , "\n\n"
-          , "to reset to defaults. "
-          , "For reference, the yaml parsing error was:"
-          , "\n\n"
-          , T.pack (err e) ]
-      exitFailure
+showConfigError :: String -> IO a
+showConfigError e = do
+  f <- T.pack <$> getConfigFile
+  TIO.hPutStrLn stderr . T.concat
+    $ [ "It looks like there is an error in your configuration. "
+      , "If you're having trouble fixing it, you can always run:"
+      , "\n\n"
+      , code ("    " <> "rm " <> f)
+      , "\n\n"
+      , "to reset to defaults. "
+      , "For reference, the yaml parsing error was:"
+      , "\n\n"
+      , T.pack (err e) ]
+  exitFailure
 
 -- | Full parser info with --help and --print-sites options
 cliParserInfo :: Config -> ParserInfo Cli
@@ -99,8 +101,8 @@ parseOpts cfg = Options
      <> short 's'
      <> metavar "CODE"
      <> help "Stack Exchange site to search. See --print-sites for available options."
-     <> value (cfg ^. cDefaultOptsL ^. oSiteL)
-     <> showDefaultWith (T.unpack . sApiParam)
+     <> value (cfg ^. cDefaultOptsL ^. oSiteSCL)
+     <> showDefault
      <> completeWith (T.unpack . sApiParam <$> cSites cfg)
       )
   <*> option readUi
@@ -154,16 +156,16 @@ readUi = str >>= \s -> maybe (rError s) return (decode s)
         , "brick, prompt" ]
 
 -- | Read site option (TODO: use same mechanism as FromJSON parser, once fixed)
-readSite :: [Site] -> ReadM Site
-readSite sites = str >>= go sites
+readSite :: [Site] -> ReadM Text
+readSite sites =
+  str >>= \s -> if | s `elem` scs -> return s
+                   | otherwise    -> throwErr (T.unpack s)
   where
-    go [] sc = readerError . err . unwords
+    scs = sApiParam <$> sites
+    throwErr sc = readerError . err . unwords
       $ [ sc
         , "is not a valid site shortcode."
         , "See --print-sites for help." ]
-    go (s:ss) sc
-      | T.pack sc == sApiParam s = return s
-      | otherwise = go ss sc
 
 -- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text

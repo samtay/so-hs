@@ -18,6 +18,7 @@ type App = StateT SO IO
 
 data SO = SO
   { soQuery     :: Text
+  , soSite      :: Site
   , soQuestions :: [Question]
   , soOptions   :: Options
   } deriving (Show)
@@ -30,10 +31,10 @@ data Config = Config
 
 data Options = Options
   { oGoogle :: Bool
-  , oLucky :: Bool
-  , oLimit :: Int
-  , oSite :: Site
-  , oUi :: Interface
+  , oLucky  :: Bool
+  , oLimit  :: Int
+  , oSiteSC :: Text
+  , oUi     :: Interface
   } deriving (Show)
 
 data Interface = Brick | Prompt
@@ -48,7 +49,7 @@ instance FromJSON Config where
     cDefaultOpts <- o .:? "defaultOptions" .!= mempty
     cSites'      <- o .:? "sites"          .!= []
     cEditor      <- o .:? "editor"
-    let cSites = if null cSites' then [soSite] else site <$> cSites'
+    let cSites = if null cSites' then [defSite] else site <$> cSites'
     return Config{..}
 
 instance FromJSON Options where
@@ -56,9 +57,8 @@ instance FromJSON Options where
     oGoogle <- o .:? "google" .!= oGoogle defaultOptions
     oLucky  <- o .:? "lucky"  .!= oLucky defaultOptions
     oLimit  <- o .:? "limit"  .!= oLimit defaultOptions
-    oSite'  <- o .:? "site"   .!= Site' (oSite defaultOptions)
+    oSiteSC <- o .:? "site"   .!= oSiteSC defaultOptions
     oUi     <- o .:? "ui"     .!= oUi defaultOptions
-    let oSite = site oSite'
     return Options{..}
 
 -- Allow users to have a more intuitive yaml config than the JSON api
@@ -70,8 +70,8 @@ instance FromJSON Site' where
     return . Site' $ Site {..}
 
 instance Monoid Options where
-  mempty          = defaultOptions
-  o1 `mappend` o2 = o2
+  mempty         = defaultOptions
+  _ `mappend` o2 = o2
 
 instance FromJSON Editor where
   parseJSON = withText "editor" $ \s -> do
@@ -92,11 +92,11 @@ defaultOptions = Options
   { oGoogle = True
   , oLucky  = False
   , oLimit  = 25
-  , oSite   = soSite
+  , oSiteSC = sApiParam defSite
   , oUi     = Brick }
 
-soSite :: Site
-soSite = Site
+defSite :: Site
+defSite = Site
   { sUrl = "https://stackoverflow.com"
   , sApiParam = "stackoverflow" }
 
