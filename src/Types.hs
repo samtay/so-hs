@@ -1,7 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
-module Types where
+module Types
+  ( module Types
+  , module Types.StackOverflow
+  ) where
+
 
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
@@ -11,7 +15,7 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Yaml
 
-import StackOverflow.Types
+import Types.StackOverflow
 import Utils
 
 type App = StateT SO IO

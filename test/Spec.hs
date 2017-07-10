@@ -7,7 +7,7 @@ import qualified Data.Aeson.Types as AT
 import qualified Data.ByteString.Lazy as BS
 import Test.Hspec
 
-import StackOverflow.Types
+import Types
 import Utils
 
 main :: IO ()

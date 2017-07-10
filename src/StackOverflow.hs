@@ -2,14 +2,13 @@
 module StackOverflow
   ( queryG
   , querySE
-  , module StackOverflow.Types
   , module StackOverflow.Google
   ) where
 
 import Data.Text (Text)
 
-import StackOverflow.Types
 import StackOverflow.Google
+import Types
 
 -- | Google query
 --

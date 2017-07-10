@@ -10,6 +10,7 @@ that it's easier to work across two computers.
 ### google
 0. Google scraper + parser
 1. Include `&num=100` in params of google query (100 == limiter)
+2. Consider tagsoup dependency
 
 ### stack exchange
 0. actually conduit (or some other lazy method) might be good for this.
@@ -53,3 +54,5 @@ that it's easier to work across two computers.
    used) and we parse out any known URLs from google search and perform
    multiple stack exchange requests to each site (this is a nice to have and
    results in possibly too many API requests)
+2. Investigate whether GADTs / TypeFamilies can solve my problem with Text vs
+   Site representation in the Options datatype

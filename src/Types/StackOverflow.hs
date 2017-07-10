@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TemplateHaskell #-}
-module StackOverflow.Types where
+module Types.StackOverflow where
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)

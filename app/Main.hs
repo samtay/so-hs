@@ -1,6 +1,6 @@
 module Main where
 
-import StackOverflow
+import Cli
 
 main :: IO ()
-main = undefined
+main = run >>= print
