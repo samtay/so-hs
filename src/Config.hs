@@ -145,7 +145,6 @@ defaultOptions:
   lucky: no
   ui: brick # options: brick, prompt
 
-
 # stack exchange sites available for searching
 # you can find more at https://api.stackexchange.com/docs/sites
 sites:

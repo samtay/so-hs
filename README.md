@@ -17,7 +17,9 @@ that it's easier to work across two computers.
    memory.
 1. filters are finicky but work -- remember to make filter unsafe to not worry
    about printing weird chars
-2. add a `--create-filters` sub command to update xdga data with named filter
+2. add a `--update-filters` sub command to update xdga data with named filter.
+   in fact, maybe this ships without hardcoded filters and on first run, creates new
+   filter and stores in xdga data.
 3. apparently i need to accept gzip?
 4. template haskell or makefile to replace `@@STACKEXCHANGE_API_KEY@@` with my
    own, but allow it to be overridable with envvar `$STACKEXCHANGE_API_KEY` and
@@ -38,8 +40,14 @@ that it's easier to work across two computers.
 
 ### config
 0. xdga config: FIX allow user to set default site with shortcode instead of full info
+   WOW turns out that is really hard. Maybe ping community for solution that doesnt
+   involve an entire Options' newtype wrapper just to allow site decoded to shortcode
+   text
 1. xdga data to save `--filter` string
 2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
+3. need to keep track of "editor" option from config through cli parser; does this
+   become a cli option as well? or does it get forwarded with possibly many other things
+   into SO?
 
 ### general
 0. maybe start this thing off with StateT ??? or choose a new extension to
