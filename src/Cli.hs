@@ -8,6 +8,7 @@ module Cli
 
 import Data.Function (on)
 import Data.List (sortBy)
+import Data.Maybe (listToMaybe)
 import Data.Semigroup (Semigroup, (<>))
 import Data.String (IsString, fromString)
 import System.Exit (exitFailure)
@@ -39,8 +40,10 @@ run = getConfigE >>= \case
   Right cfg -> do
     Cli{options, query} <- execParser $ cliParserInfo cfg
     let sc   = oSiteSC options
-        site = head . filter ((==sc) . sApiParam) . cSites $ cfg
-    return $ SO query site [] options
+        msite = listToMaybe . filter ((==sc) . sApiParam) . cSites $ cfg
+    case msite of
+      Nothing   -> TIO.hPutStrLn stderr (shortCodeError sc) >> exitFailure
+      Just site -> return $ SO query site [] options
 
 showConfigError :: String -> IO a
 showConfigError e = do
@@ -158,14 +161,15 @@ readUi = str >>= \s -> maybe (rError s) return (decode s)
 -- | Read site option (TODO: use same mechanism as FromJSON parser, once fixed)
 readSite :: [Site] -> ReadM Text
 readSite sites =
-  str >>= \s -> if | s `elem` scs -> return s
-                   | otherwise    -> throwErr (T.unpack s)
-  where
-    scs = sApiParam <$> sites
-    throwErr sc = readerError . err . unwords
-      $ [ sc
-        , "is not a valid site shortcode."
-        , "See --print-sites for help." ]
+  let scs = sApiParam <$> sites
+   in str >>= \s -> if | s `elem` scs -> return s
+                       | otherwise    -> readerError . T.unpack . shortCodeError $ s
+
+shortCodeError :: Text -> Text
+shortCodeError sc = err . T.unwords
+  $ [ sc
+    , "is not a valid site shortcode."
+    , "See --print-sites for help." ]
 
 -- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
