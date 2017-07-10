@@ -1,18 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 module Cli
   ( run
   ) where
 
-import Control.Monad (join, when, forM_)
 import Data.Function (on)
 import Data.List (sortBy)
 import Data.Semigroup (Semigroup, (<>))
 import Data.String (IsString, fromString)
-import System.Environment (getArgs)
-import System.Exit (exitSuccess, exitFailure)
+import System.Exit (exitFailure)
 import System.IO (stderr)
 
-import Lens.Micro (each, (^.), (^..))
+import Lens.Micro ((^.))
 import qualified Data.ByteString.Char8 as BS
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -23,8 +22,7 @@ import qualified System.Console.ANSI as A
 
 import Config
 import StackOverflow
-import State
-import Utils
+import Types
 
 data Cli = Cli
   { options :: Options
@@ -40,7 +38,7 @@ run = getConfigE >>= either showConfigError execCliParser >>= cliToSO
     execCliParser = execParser . cliParserInfo
 
     cliToSO :: Cli -> IO SO
-    cliToSO (Cli opts query) = return $ SO query [] opts
+    cliToSO Cli{options, query} = return $ SO query [] options
 
     showConfigError :: String -> IO Cli
     showConfigError e = do
