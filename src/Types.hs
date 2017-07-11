@@ -6,7 +6,6 @@ module Types
   , module Types.StackOverflow
   ) where
 
-
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 
@@ -22,7 +21,6 @@ type App = StateT SO IO
 
 data SO = SO
   { soQuery     :: Text
-  , soSite      :: Site
   , soQuestions :: [Question]
   , soOptions   :: Options
   } deriving (Show)
@@ -37,7 +35,7 @@ data Options = Options
   { oGoogle :: Bool
   , oLucky  :: Bool
   , oLimit  :: Int
-  , oSiteSC :: Text
+  , oSite   :: Site
   , oUi     :: Interface
   } deriving (Show)
 
@@ -61,8 +59,9 @@ instance FromJSON Options where
     oGoogle <- o .:? "google" .!= oGoogle defaultOptions
     oLucky  <- o .:? "lucky"  .!= oLucky defaultOptions
     oLimit  <- o .:? "limit"  .!= oLimit defaultOptions
-    oSiteSC <- o .:? "site"   .!= oSiteSC defaultOptions
+    oSite'  <- o .:? "site"   .!= Site' (oSite defaultOptions)
     oUi     <- o .:? "ui"     .!= oUi defaultOptions
+    let oSite = site oSite'
     return Options{..}
 
 -- Allow users to have a more intuitive yaml config than the JSON api
@@ -96,7 +95,7 @@ defaultOptions = Options
   { oGoogle = True
   , oLucky  = False
   , oLimit  = 25
-  , oSiteSC = sApiParam defSite
+  , oSite   = defSite
   , oUi     = Brick }
 
 defSite :: Site

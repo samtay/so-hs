@@ -43,17 +43,12 @@ getXdgaFilePath d f = do
 
 -- Kept as ByteString instead of Config so that end users can see comments
 defaultConfigFileContent :: ByteString
-defaultConfigFileContent = [r|# default CLI options (see `so --help` for info)
-defaultOptions:
-  google: yes
-  lucky: no
-  ui: brick # options: brick, prompt
-
-# stack exchange sites available for searching
+defaultConfigFileContent = [r|# stack exchange sites available for searching
 # you can find more at https://api.stackexchange.com/docs/sites
 sites:
 
-  - url: https://stackoverflow.com
+  - &defaultSite
+    url: https://stackoverflow.com
     shortcode: stackoverflow
 
   - url: https://serverfault.com
@@ -85,4 +80,11 @@ sites:
 
   - url: https://unix.stackexchange.com
     shortcode: unix
+
+# default CLI options (see `so --help` for info)
+defaultOptions:
+  google: yes
+  lucky: no
+  ui: brick # options: brick, prompt
+  site: *defaultSite
 |]

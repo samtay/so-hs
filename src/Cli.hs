@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE LambdaCase #-}
 module Cli
   ( run
   ) where
@@ -24,7 +23,6 @@ import Options.Applicative
 import qualified System.Console.ANSI as A
 
 import Config
-import StackOverflow
 import Types
 
 data Cli = Cli
@@ -35,18 +33,16 @@ data Cli = Cli
 -- | Parse args from command line and return resulting `SO` type
 -- Exits with failure info on invalid args
 run :: IO SO
-run = getConfigE >>= \case
-  Left e    -> showConfigError e
-  Right cfg -> do
-    Cli{options, query} <- execParser $ cliParserInfo cfg
-    let sc   = oSiteSC options
-        msite = listToMaybe . filter ((==sc) . sApiParam) . cSites $ cfg
-    case msite of
-      Nothing   -> TIO.hPutStrLn stderr (shortCodeError sc) >> exitFailure
-      Just site -> return $ SO query site [] options
+run = getConfigE >>= either exitConfigError execCliParser >>= cliToSO
+  where
+    execCliParser :: Config -> IO Cli
+    execCliParser = execParser . cliParserInfo
 
-showConfigError :: String -> IO a
-showConfigError e = do
+    cliToSO :: Cli -> IO SO
+    cliToSO Cli{options, query} = return $ SO query [] options
+
+exitConfigError :: String -> IO a
+exitConfigError e = do
   f <- T.pack <$> getConfigFile
   TIO.hPutStrLn stderr . T.concat
     $ [ "It looks like there is an error in your configuration. "
@@ -104,8 +100,8 @@ parseOpts cfg = Options
      <> short 's'
      <> metavar "CODE"
      <> help "Stack Exchange site to search. See --print-sites for available options."
-     <> value (cfg ^. cDefaultOptsL ^. oSiteSCL)
-     <> showDefault
+     <> value (cfg ^. cDefaultOptsL ^. oSiteL)
+     <> showDefaultWith (T.unpack . sApiParam)
      <> completeWith (T.unpack . sApiParam <$> cSites cfg)
       )
   <*> option readUi
@@ -158,18 +154,24 @@ readUi = str >>= \s -> maybe (rError s) return (decode s)
         , "is not a valid interface. The available options are:"
         , "brick, prompt" ]
 
--- | Read site option (TODO: use same mechanism as FromJSON parser, once fixed)
-readSite :: [Site] -> ReadM Text
+-- | Read site option, compare it against given 'sites' argument
+readSite :: [Site] -> ReadM Site
 readSite sites =
-  let scs = sApiParam <$> sites
-   in str >>= \s -> if | s `elem` scs -> return s
-                       | otherwise    -> readerError . T.unpack . shortCodeError $ s
+  str >>= \s -> maybe (throwErr s)
+                      return
+                      (findWith (matchSc s) sites)
+  where
+    findWith :: (a -> Bool) -> [a] -> Maybe a
+    findWith p = listToMaybe . filter p
 
-shortCodeError :: Text -> Text
-shortCodeError sc = err . T.unwords
-  $ [ sc
-    , "is not a valid site shortcode."
-    , "See --print-sites for help." ]
+    matchSc :: Text -> Site -> Bool
+    matchSc sc site = sc == site ^. sApiParamL
+
+    throwErr :: Text -> ReadM Site
+    throwErr sc = readerError . err . unwords
+      $ [ T.unpack sc
+        , "is not a valid site shortcode."
+        , "See --print-sites for help." ]
 
 -- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text

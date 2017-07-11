@@ -8,8 +8,6 @@ module Utils
 import Data.Char (toUpper, toLower)
 
 import Brick.Types (suffixLenses)
-import qualified Data.ByteString as BS
-import qualified Data.Yaml as Y
 
 -- | Lift twice
 (<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
@@ -21,4 +19,4 @@ g .*. f = \x y -> g (f x y)
 
 capitalize :: String -> String
 capitalize []       = []
-capitalize (h:tail) = toUpper h : fmap toLower tail
+capitalize (h:end) = toUpper h : fmap toLower end
