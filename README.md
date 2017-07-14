@@ -11,6 +11,12 @@ that it's easier to work across two computers.
 0. Google scraper + parser
 1. Include `&num=100` in params of google query (100 == limiter)
 2. Consider tagsoup dependency
+3. Consider parallelizing the request, keeping an MVar within SO state, and
+   just pushing to it from requests, then issuing a custom event and updating
+   brick state with new QAs!
+   ^^ THIS IS THE RIGHT WAY TO DO THIS:
+   https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
+4. take a look at https://github.com/egonSchiele/HandsomeSoup
 
 ### stack exchange
 0. actually conduit (or some other lazy method) might be good for this.
@@ -56,3 +62,7 @@ that it's easier to work across two computers.
    results in possibly too many API requests)
 2. Investigate whether GADTs / TypeFamilies can solve my problem with Text vs
    Site representation in the Options datatype
+   Look [here](https://github.com/aviaviavi/confetti/blob/master/src/Lib.hs) for a simple GADT example
+3. consider adding --verbose flag. this would be easy, but unclear how useful.
+   one use case would be when google returns no results indicate that it may
+   have detected non browser
