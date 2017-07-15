@@ -6,14 +6,14 @@ module StackOverflow.Google
   ) where
 
 import           Control.Monad.IO.Class     (liftIO)
+import           Data.Maybe                 (fromJust)
 import           Data.String                (fromString)
 
 import           Control.Monad.State.Strict
 import           Data.ByteString.Lazy       (ByteString)
+import           Data.ByteString.Lazy.Char8 (readInt)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
-import qualified Data.Text.Lazy             as TL
-import qualified Data.Text.Lazy.Encoding    as TL
 import           Lens.Micro
 import qualified Network.Wreq               as W
 import           Text.HTML.Scalpel.Core
@@ -28,7 +28,7 @@ import           Utils
 -- TODO see if we can determine particular errors, if so use Either instead of Maybe
 -- TODO determination between empty results and user agent error
 -- TODO finalize return type (ByteString, Text, Lazy, Strict..)
-google :: App (Maybe [Text])
+google :: App (Maybe [Int])
 google = do
   url   <- gets (sUrl . oSite . soOptions)
   num   <- gets (oLimit . soOptions)
@@ -46,12 +46,12 @@ mkRequest url limit q = do
   return $ r ^. W.responseBody
 
 -- | Parse html bytestring into a list of stack exchange question IDs
-parseIds :: ByteString -> Maybe [Text]
+parseIds :: ByteString -> Maybe [Int]
 parseIds bs = idFromUrl <$$> scrapeStringLike bs scraper
   where
-    -- Note: we've already filtered for question links, so (!! 1) doesnt fail
-    idFromUrl = bsToText . (!! 1) . getAllTextSubmatches . (=~ matchQStr)
-    bsToText  = TL.toStrict . TL.decodeUtf8
+    -- Note: we've already filtered for question IDs, so (!! 1) and fromJust don't fail
+    idFromUrl = toInt . (!! 1) . getAllTextSubmatches . (=~ matchQStr)
+    toInt     = fst . fromJust . readInt
 
 -- | As observed by wreq result
 scraper :: Scraper ByteString [ByteString]
@@ -69,4 +69,4 @@ re :: String -> Regex
 re = makeRegex
 
 matchQStr :: String
-matchQStr = ".com\\/questions\\/(.*)\\/."
+matchQStr = ".com\\/questions\\/([[:digit:]]*)\\/."
