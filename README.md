@@ -7,17 +7,6 @@ that it's easier to work across two computers.
 
 # todo
 
-### google
-0. Google scraper + parser
-1. Include `&num=100` in params of google query (100 == limiter)
-2. Consider tagsoup dependency
-3. Consider parallelizing the request, keeping an MVar within SO state, and
-   just pushing to it from requests, then issuing a custom event and updating
-   brick state with new QAs!
-   ^^ THIS IS THE RIGHT WAY TO DO THIS:
-   https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
-4. take a look at https://github.com/egonSchiele/HandsomeSoup
-
 ### stack exchange
 0. actually conduit (or some other lazy method) might be good for this.
    loading questions + answers for 50+ questions is a lot of text to load into
@@ -44,6 +33,12 @@ that it's easier to work across two computers.
 6. in addition to vim h,j,k,l bindings for scrolling current viewport,
    shift+h,j,k,l for resizing sections
 7. can set up themes named in configuration and then keep attrmap within app state
+3. Consider parallelizing the request, keeping an MVar within SO state, and
+   just pushing to it from requests, then issuing a custom event and updating
+   brick state with new QAs!
+   ^^ THIS IS THE RIGHT WAY TO DO THIS:
+   https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
+4. TODO update ID types to Text instead of Int
 
 ### config
 1. xdga data to save `--filter` string
@@ -53,9 +48,7 @@ that it's easier to work across two computers.
    into SO?
 
 ### general
-0. maybe start this thing off with StateT ??? or choose a new extension to
-   learn and run with it?
-  read: http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
+0. read: http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
 1. in the future, maybe --site defaults to Nothing (so long as --google is
    used) and we parse out any known URLs from google search and perform
    multiple stack exchange requests to each site (this is a nice to have and
