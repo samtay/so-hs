@@ -1,0 +1,20 @@
+sites:
+
+  - url: https://stackoverflow.com
+    shortcode: stackoverflow
+
+  - &defaultSite
+    url: https://serverfault.com
+    shortcode: serverfault
+
+  - url: https://superuser.com
+    shortcode: superuser
+
+  - url: https://askubuntu.com
+    shortcode: askubuntu
+
+defaultOptions:
+  google: yes
+  lucky: no
+  ui: unxpected_value
+  site: *defaultSite

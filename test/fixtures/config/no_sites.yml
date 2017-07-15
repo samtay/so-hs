@@ -1,0 +1,5 @@
+# default CLI options (see `so --help` for info)
+defaultOptions:
+  google: yes
+  lucky: no
+  ui: brick # options: brick, prompt

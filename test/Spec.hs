@@ -3,7 +3,9 @@ module Main where
 
 import qualified Data.Aeson           as A
 import qualified Data.Aeson.Types     as AT
-import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString      as BS
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Yaml            as Y
 import           Test.Hspec
 
 import           StackOverflow
@@ -15,7 +17,7 @@ main = hspec $ do
 
   describe "Google Scraper" $ do
     it "parses english.meta question links" $
-      parseIds <$> englishMetaBS
+      parseIds <$> englishMetaBSL
         `shouldReturn` Just ["4453", "2867", "2002", "3404"]
     it "fails gracefully on botched parse" $
       pending
@@ -37,30 +39,49 @@ main = hspec $ do
 
   describe "Configuration" $ do
     it "handles bad yaml configuration" $
-      pending
+      decodeCfgFromFile siteStringFile
+        `shouldReturn` Left "Error in $.defaultOptions.site: expected site, encountered String"
     it "reads site configuration properly" $
-      pending
+      sApiParam . oSite . cDefaultOpts <$$> decodeCfgFromFile serverfaultFile
+        `shouldReturn` Right "serverfault"
     it "always allows stackoverflow search" $
-      pending
+      sApiParam <$$> cSites <$$> decodeCfgFromFile noSitesFile
+        `shouldReturn` Right ["stackoverflow"]
     it "handles bad custom ui command gracefully" $
-      pending
+      decodeCfgFromFile badUIFile
+        `shouldReturn` Left "Error in $.defaultOptions.ui: invalid interface"
 
 allAnswerIds :: [Question] -> [Int]
 allAnswerIds = concatMap ((fmap aId) . qAnswers)
 
 decodeQFromFile :: FilePath -> IO (Either String [Question])
 decodeQFromFile f = do
-  b <- BS.readFile f
+  b <- BSL.readFile f
   return $ A.eitherDecode b >>= AT.parseEither questionsParser
 
+decodeCfgFromFile :: FilePath -> IO (Either String Config)
+decodeCfgFromFile = fmap Y.decodeEither . BS.readFile
+
 validQuestionsFile2 :: FilePath
-validQuestionsFile2 = "test/fixtures/valid_questions_api_response_2.json"
+validQuestionsFile2 = "test/fixtures/stackexchange/valid_questions_api_response_2.json"
 
 validQuestionsFile30 :: FilePath
-validQuestionsFile30 = "test/fixtures/valid_questions_api_response_30.json"
+validQuestionsFile30 = "test/fixtures/stackexchange/valid_questions_api_response_30.json"
 
 invalidQuestionsFile :: FilePath
-invalidQuestionsFile = "test/fixtures/invalid_questions_api_response.json"
+invalidQuestionsFile = "test/fixtures/stackexchange/invalid_questions_api_response.json"
 
-englishMetaBS :: IO BS.ByteString
-englishMetaBS = BS.readFile "test/fixtures/google_english_meta.html"
+siteStringFile :: FilePath
+siteStringFile = "test/fixtures/config/site_as_string.yml"
+
+serverfaultFile :: FilePath
+serverfaultFile = "test/fixtures/config/serverfault_default.yml"
+
+noSitesFile :: FilePath
+noSitesFile = "test/fixtures/config/no_sites.yml"
+
+badUIFile :: FilePath
+badUIFile = "test/fixtures/config/bad_ui.yml"
+
+englishMetaBSL :: IO BSL.ByteString
+englishMetaBSL = BSL.readFile "test/fixtures/google/english_meta.html"

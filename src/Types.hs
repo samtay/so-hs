@@ -1,21 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Types
   ( module Types
   , module Types.StackOverflow
   ) where
 
-import Data.Maybe (fromMaybe)
-import Text.Read (readMaybe)
+import           Data.Maybe                 (fromMaybe)
+import           Text.Read                  (readMaybe)
 
-import Control.Monad.State.Strict
-import qualified Data.Text as T
-import Data.Text (Text)
-import Data.Yaml
+import           Control.Monad.State.Strict
+import           Data.Text                  (Text)
+import qualified Data.Text                  as T
+import           Data.Yaml
 
-import Types.StackOverflow
-import Utils
+import           Types.StackOverflow
+import           Utils
 
 type App = StateT SO IO
 
@@ -23,13 +23,13 @@ data SO = SO
   { soQuery     :: Text
   , soQuestions :: [Question]
   , soOptions   :: Options
-  } deriving (Show)
+  } deriving (Eq, Show)
 
 data Config = Config
   { cDefaultOpts :: Options      -- ^ Default CLI options
   , cSites       :: [Site]       -- ^ Available SE sites
   , cEditor      :: Maybe Editor -- ^ Custom editor to view answer
-  } deriving (Show)
+  } deriving (Eq, Show)
 
 data Options = Options
   { oGoogle :: Bool
@@ -37,14 +37,14 @@ data Options = Options
   , oLimit  :: Int
   , oSite   :: Site
   , oUi     :: Interface
-  } deriving (Show)
+  } deriving (Eq, Show)
 
 data Interface = Brick | Prompt
-  deriving (Show, Read)
+  deriving (Eq, Show, Read)
 
 -- Note emacs requires process substitution, check if possible with shelly/turtle
 data Editor = Less | More | Vim | CustomEditor Text
-  deriving (Show, Read)
+  deriving (Eq, Show, Read)
 
 instance FromJSON Config where
   parseJSON = withObject "config" $ \o -> do

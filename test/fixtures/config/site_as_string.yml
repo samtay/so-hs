@@ -1,0 +1,15 @@
+sites:
+
+  - &defaultSite
+    url: https://stackoverflow.com
+    shortcode: stackoverflow
+
+  - url: https://serverfault.com
+    shortcode: serverfault
+
+# default CLI options (see `so --help` for info)
+defaultOptions:
+  google: yes
+  lucky: no
+  ui: brick # options: brick, prompt
+  site: serverfault # this is not allowed

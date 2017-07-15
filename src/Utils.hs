@@ -5,11 +5,12 @@ module Utils
   , (.*.)
   ) where
 
-import Data.Char (toUpper, toLower)
+import           Data.Char   (toLower, toUpper)
 
-import Brick.Types (suffixLenses)
+import           Brick.Types (suffixLenses)
 
 -- | Lift twice
+infixl 3 <$$>
 (<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 (<$$>) = fmap . fmap
 
@@ -18,5 +19,5 @@ import Brick.Types (suffixLenses)
 g .*. f = \x y -> g (f x y)
 
 capitalize :: String -> String
-capitalize []       = []
+capitalize []      = []
 capitalize (h:end) = toUpper h : fmap toLower end
