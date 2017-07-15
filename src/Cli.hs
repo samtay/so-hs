@@ -175,7 +175,7 @@ readSite sites =
 
 -- | Takes 1 or more text arguments and returns them as single sentence argument
 multiTextArg :: Mod ArgumentFields Text -> Parser Text
-multiTextArg mods = T.unwords <$> many (strArgument mods)
+multiTextArg mods = T.unwords <$> some (strArgument mods)
 
 -- | Align and alphabetically order sites
 prettifiedSites :: [Site] -> String
