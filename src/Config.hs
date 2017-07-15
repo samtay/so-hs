@@ -1,17 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE QuasiQuotes       #-}
 module Config where
 
-import Control.Monad (unless)
+import           Control.Monad     (unless)
 
-import qualified Data.ByteString as BS
-import Data.ByteString (ByteString)
-import Data.Yaml (decode, decodeEither)
-import qualified System.Directory as D
-import System.FilePath ((</>))
-import Text.RawString.QQ
+import           Data.ByteString   (ByteString)
+import qualified Data.ByteString   as BS
+import           Data.Yaml         (decode, decodeEither)
+import qualified System.Directory  as D
+import           System.FilePath   ((</>))
+import           Text.RawString.QQ
 
-import Types
+import           Types
 
 getConfigWith :: Monad m => (ByteString -> m Config) -> IO (m Config)
 getConfigWith decoder = do

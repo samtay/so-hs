@@ -1,13 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Types.StackOverflow where
 
-import Data.Aeson
-import Data.Aeson.Types (Parser)
-import Data.Text (Text)
+import           Data.Aeson
+import           Data.Aeson.Types (Parser)
+import           Data.Text        (Text)
 
-import Utils
+import           Utils
 
 data Question = Question
   { qId      :: Int
@@ -25,7 +25,7 @@ data Answer = Answer
   } deriving (Show)
 
 data Site = Site
-  { sUrl :: Text
+  { sUrl      :: Text
   , sApiParam :: Text
   } deriving (Eq, Show)
 

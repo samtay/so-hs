@@ -1,29 +1,29 @@
+{-# LANGUAGE MultiWayIf        #-}
+{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE MultiWayIf #-}
 module Cli
   ( run
   ) where
 
-import Data.Function (on)
-import Data.List (sortBy)
-import Data.Maybe (listToMaybe)
-import Data.Semigroup (Semigroup, (<>))
-import Data.String (IsString, fromString)
-import System.Exit (exitFailure)
-import System.IO (stderr)
+import           Data.Function         (on)
+import           Data.List             (sortBy)
+import           Data.Maybe            (listToMaybe)
+import           Data.Semigroup        (Semigroup, (<>))
+import           Data.String           (IsString, fromString)
+import           System.Exit           (exitFailure)
+import           System.IO             (stderr)
 
-import Lens.Micro ((^.))
 import qualified Data.ByteString.Char8 as BS
-import Data.Text (Text)
-import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
-import Data.Yaml (decode)
-import Options.Applicative
-import qualified System.Console.ANSI as A
+import           Data.Text             (Text)
+import qualified Data.Text             as T
+import qualified Data.Text.IO          as TIO
+import           Data.Yaml             (decode)
+import           Lens.Micro            ((^.))
+import           Options.Applicative
+import qualified System.Console.ANSI   as A
 
-import Config
-import Types
+import           Config
+import           Types
 
 data Cli = Cli
   { options :: Options

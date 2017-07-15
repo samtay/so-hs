@@ -2,13 +2,14 @@
 module StackOverflow
   ( queryG
   , querySE
-  , module StackOverflow.Google
   ) where
 
-import Data.Text (Text)
+import           Data.Text            (Text)
 
-import StackOverflow.Google
-import Types
+import qualified Network.Wreq         as W
+import           StackOverflow.Google
+import           Types
+
 
 -- | Google query
 --
