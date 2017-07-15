@@ -6,7 +6,7 @@ module StackOverflow.Google
   ) where
 
 import           Control.Monad.IO.Class     (liftIO)
-import           Data.Maybe                 (fromJust)
+import           Data.Maybe                 (catMaybes)
 import           Data.String                (fromString)
 
 import           Control.Monad.State.Strict
@@ -47,11 +47,16 @@ mkRequest url limit q = do
 
 -- | Parse html bytestring into a list of stack exchange question IDs
 parseIds :: ByteString -> Maybe [Int]
-parseIds bs = idFromUrl <$$> scrapeStringLike bs scraper
+parseIds bs = fmap catMaybes $ idFromUrl <$$> scrapeStringLike bs scraper
   where
-    -- Note: we've already filtered for question IDs, so (!! 1) and fromJust don't fail
-    idFromUrl = toInt . (!! 1) . getAllTextSubmatches . (=~ matchQStr)
-    toInt     = fst . fromJust . readInt
+    idFromUrl :: ByteString -> Maybe Int
+    idFromUrl = toInt <=< matchQuestionId
+
+    matchQuestionId :: ByteString -> Maybe ByteString
+    matchQuestionId = (!? 1) . getAllTextSubmatches . (=~ matchQStr)
+
+    toInt :: ByteString -> Maybe Int
+    toInt     = fmap fst . readInt
 
 -- | As observed by wreq result
 scraper :: Scraper ByteString [ByteString]
