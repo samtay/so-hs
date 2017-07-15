@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module StackOverflow.Google
   ( google
+  , parseIds
+  , mkRequest
   ) where
 
 import           Control.Monad.IO.Class     (liftIO)

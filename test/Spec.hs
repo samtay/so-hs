@@ -1,21 +1,22 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Control.Monad ((<=<))
-
-import qualified Data.Aeson as A
-import qualified Data.Aeson.Types as AT
+import qualified Data.Aeson           as A
+import qualified Data.Aeson.Types     as AT
 import qualified Data.ByteString.Lazy as BS
-import Test.Hspec
+import           Test.Hspec
 
-import Types
-import Utils
+import           StackOverflow
+import           Types
+import           Utils
 
 main :: IO ()
 main = hspec $ do
 
   describe "Google Scraper" $ do
     it "parses english.meta question links" $
-      pending
+      parseIds <$> englishMetaBS
+        `shouldReturn` Just ["4453", "2867", "2002", "3404"]
     it "fails gracefully on botched parse" $
       pending
     it "fails gracefully on no connection" $
@@ -60,3 +61,6 @@ validQuestionsFile30 = "test/fixtures/valid_questions_api_response_30.json"
 
 invalidQuestionsFile :: FilePath
 invalidQuestionsFile = "test/fixtures/invalid_questions_api_response.json"
+
+englishMetaBS :: IO BS.ByteString
+englishMetaBS = BS.readFile "test/fixtures/google_english_meta.html"
