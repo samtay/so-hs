@@ -1,6 +1,9 @@
 module Main where
 
-import Cli
+import           Control.Monad.State.Strict (runStateT)
+
+import           Cli                        (run)
+import           StackOverflow              (google)
 
 main :: IO ()
-main = run >>= print
+main = run >>= runStateT google >>= print
