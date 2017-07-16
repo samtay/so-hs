@@ -7,16 +7,15 @@ that it's easier to work across two computers.
 
 # todo
 
+### google
+1. Detect botched scrape and return `Either` instead of `Maybe`
+
 ### stack exchange
-0. actually conduit (or some other lazy method) might be good for this.
-   loading questions + answers for 50+ questions is a lot of text to load into
-   memory.
 1. filters are finicky but work -- remember to make filter unsafe to not worry
    about printing weird chars
 2. add a `--update-filters` sub command to update xdga data with named filter.
    in fact, maybe this ships without hardcoded filters and on first run, creates new
    filter and stores in xdga data.
-3. apparently i need to accept gzip?
 4. template haskell or makefile to replace `@@STACKEXCHANGE_API_KEY@@` with my
    own, but allow it to be overridable with envvar `$STACKEXCHANGE_API_KEY` and
    add to field to Config as well.
@@ -41,11 +40,8 @@ that it's easier to work across two computers.
    https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
 
 ### config
-1. xdga data to save `--filter` string
+1. xdga data to save `filter` param
 2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
-3. need to keep track of "editor" option from config through cli parser; does this
-   become a cli option as well? or does it get forwarded with possibly many other things
-   into SO?
 
 ### general
 0. read: http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
@@ -59,3 +55,7 @@ that it's easier to work across two computers.
 3. consider adding --verbose flag. this would be easy, but unclear how useful.
    one use case would be when google returns no results indicate that it may
    have detected non browser
+4. propogate new Types.Error values through Either values
+5. successfully catching ConnectionFailure exception at the top of request
+   chain, but need to catch non-200 specifically at google level to throw
+   ScrapingError

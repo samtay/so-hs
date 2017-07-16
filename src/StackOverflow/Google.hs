@@ -24,10 +24,6 @@ import           Types
 import           Utils
 
 -- | Scrape google for a list of question IDs
---
--- TODO see if we can determine particular errors, if so use Either instead of Maybe
--- TODO determination between empty results and user agent error
--- TODO finalize return type (ByteString, Text, Lazy, Strict..)
 google :: App (Maybe [Int])
 google = do
   url   <- gets (sUrl . oSite . soOptions)
@@ -56,7 +52,7 @@ parseIds bs = fmap catMaybes $ idFromUrl <$$> scrapeStringLike bs scraper
     matchQuestionId = (!? 1) . getAllTextSubmatches . (=~ matchQStr)
 
     toInt :: ByteString -> Maybe Int
-    toInt     = fmap fst . readInt
+    toInt = fmap fst . readInt
 
 -- | As observed by wreq result
 scraper :: Scraper ByteString [ByteString]

@@ -46,6 +46,14 @@ data Interface = Brick | Prompt
 data Editor = Less | More | Vim | CustomEditor Text
   deriving (Eq, Show, Read)
 
+data Error
+  = ConnectionFailure
+  | ScrapingError
+  | JSONError Text
+  | YAMLError Text
+  | UnknownError Text
+  deriving (Show)
+
 instance FromJSON Config where
   parseJSON = withObject "config" $ \o -> do
     cDefaultOpts <- o .:? "defaultOptions" .!= mempty

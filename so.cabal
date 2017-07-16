@@ -29,7 +29,9 @@ library
                      , brick
                      , bytestring
                      , directory
+                     , exceptions
                      , filepath
+                     , http-client
                      , microlens
                      , microlens-th
                      , mtl
@@ -48,6 +50,7 @@ executable so
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , mtl
+                     , exceptions
                      , so
   default-language:    Haskell2010
 
