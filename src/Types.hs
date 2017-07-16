@@ -20,9 +20,8 @@ import           Utils
 type App = StateT SO IO
 
 data SO = SO
-  { soQuery     :: Text
-  , soQuestions :: [Question]
-  , soOptions   :: Options
+  { soQuery   :: Text
+  , soOptions :: Options
   } deriving (Eq, Show)
 
 data Config = Config

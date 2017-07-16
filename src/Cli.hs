@@ -39,7 +39,7 @@ run = getConfigE >>= either exitConfigError execCliParser >>= cliToSO
     execCliParser = execParser . cliParserInfo
 
     cliToSO :: Cli -> IO SO
-    cliToSO Cli{options, query} = return $ SO query [] options
+    cliToSO Cli{options, query} = return $ SO query options
 
 exitConfigError :: String -> IO a
 exitConfigError e = do
