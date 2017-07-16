@@ -19,10 +19,10 @@ library
   exposed-modules:     Cli
                      , Config
                      , StackOverflow
+                     , StackOverflow.Google
                      , Types
                      , Utils
   other-modules:       Types.StackOverflow
-                     , StackOverflow.Google
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , ansi-terminal

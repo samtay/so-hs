@@ -8,7 +8,7 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Yaml            as Y
 import           Test.Hspec
 
-import           StackOverflow
+import           StackOverflow.Google
 import           Types
 import           Utils
 

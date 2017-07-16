@@ -20,6 +20,7 @@ that it's easier to work across two computers.
 4. template haskell or makefile to replace `@@STACKEXCHANGE_API_KEY@@` with my
    own, but allow it to be overridable with envvar `$STACKEXCHANGE_API_KEY` and
    add to field to Config as well.
+5. handle and write tests for error responses: https://api.stackexchange.com/docs/types/error
 
 ### interface
 0. both sophisticated brick column interface and basic prompting (haskeline or
@@ -38,7 +39,6 @@ that it's easier to work across two computers.
    brick state with new QAs!
    ^^ THIS IS THE RIGHT WAY TO DO THIS:
    https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
-4. TODO update ID types to Text instead of Int
 
 ### config
 1. xdga data to save `--filter` string

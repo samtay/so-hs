@@ -9,12 +9,12 @@ import           Control.Monad.IO.Class     (liftIO)
 import           Data.Maybe                 (catMaybes)
 import           Data.String                (fromString)
 
-import           Control.Monad.State.Strict
+import           Control.Monad.State.Strict (gets, (<=<))
 import           Data.ByteString.Lazy       (ByteString)
 import           Data.ByteString.Lazy.Char8 (readInt)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
-import           Lens.Micro
+import           Lens.Micro                 ((&), (.~), (^.))
 import qualified Network.Wreq               as W
 import           Text.HTML.Scalpel.Core
 import           Text.Regex.TDFA            (Regex, getAllTextSubmatches,
