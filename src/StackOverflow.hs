@@ -5,7 +5,8 @@ module StackOverflow
   , querySE
   ) where
 
-import           Data.List                  (intercalate)
+import           Data.List                  (elemIndex, intercalate, sortOn)
+import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 
 import           Control.Monad.State.Strict (gets, liftIO)
@@ -31,11 +32,15 @@ query = do
 -- TODO sort SE api results by initial google results
 queryG :: App (Either String [Question])
 queryG = do
-  mIds <- intercalate ";" . map show <$$> google
-  maybe
-    (return . Left $ "Failed to scrape Google results")
-    (\ids -> seRequest ("questions/" <> ids) [])
-    mIds
+  mIds <- google
+  case mIds of
+    Nothing  -> return . Left $ "Failed to scrape Google results"
+    Just ids -> sortByIds ids <$$> seRequest ("questions/" <> mkQString ids) []
+  where
+    mkQString     = intercalate ";" . map show
+    position      = fromMaybe maxBound .*. elemIndex
+    sortByIds ids = sortOn (flip position ids . qId)
+
 
 -- | Query stack exchange via advanced search API
 querySE :: App (Either String [Question])
