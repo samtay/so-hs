@@ -59,3 +59,5 @@ that it's easier to work across two computers.
 5. successfully catching ConnectionFailure exception at the top of request
    chain, but need to catch non-200 specifically at google level to throw
    ScrapingError
+6. exception catching helpers that log to App, etc.
+7. add reader to monad stack for xdga config/data/cache?

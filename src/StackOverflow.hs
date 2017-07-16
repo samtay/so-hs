@@ -5,14 +5,16 @@ module StackOverflow
   , querySE
   ) where
 
-import           Control.Monad.Catch        (try)
+import           Control.Monad              (join)
 import           Data.List                  (elemIndex, intercalate, sortOn)
 import           Data.Maybe                 (fromMaybe)
 import           Data.Semigroup             ((<>))
 
+import           Control.Monad.Catch        (tryJust)
 import           Control.Monad.State.Strict (gets, liftIO)
 import           Data.Aeson                 (eitherDecode)
 import           Data.Aeson.Types           (parseEither)
+import           Data.Bifunctor             (first)
 import           Data.Text                  (Text)
 import qualified Data.Text                  as T
 import           Lens.Micro                 ((&), (.~), (^.))
@@ -26,21 +28,19 @@ import           Utils
 -- | Query for stack exchange 'Question's based on 'SO' state options
 query :: App (Either Error [Question])
 query = do
-  useG <- gets (oGoogle . soOptions)
-  res <- try $ if useG then queryG else querySE
-  return $ either (Left . toError) id res
+  useG    <- gets (oGoogle . soOptions)
+  fmap join . tryJust toError $ if useG then queryG else querySE
 
 -- | Query stack exchange by first scraping Google for relevant question links
 --
 -- Maybe in the future either propogate Left error or add to debug log, etc.
--- TODO sort SE api results by initial google results
 queryG :: App (Either Error [Question])
 queryG = do
   mIds <- google
   case mIds of
-    Nothing  -> return . Left $ ScrapingError
-    Just []  -> return . Right $ []
-    Just ids -> sortByIds ids <$$> seRequest ("questions/" <> mkQString ids) []
+    Left e  -> return . Left $ e
+    Right []  -> return . Right $ []
+    Right ids -> sortByIds ids <$$> seRequest ("questions/" <> mkQString ids) []
   where
     mkQString     = intercalate ";" . map show
     position      = fromMaybe maxBound .*. elemIndex
@@ -66,19 +66,20 @@ appDefaults = do
                       & W.param "site"    .~ [siteParam]
 
 -- | Make SE API request
+-- | TODO catch non-200 or allow non-200 and return Left error text
 seRequest
-  :: String                         -- ^ API resource to append to base URL
-  -> [W.Options -> W.Options]       -- ^ Options in addition to 'seDefaults'
+  :: String                        -- ^ API resource to append to base URL
+  -> [W.Options -> W.Options]      -- ^ Options in addition to 'seDefaults'
   -> App (Either Error [Question]) -- ^ Decoded question data
 seRequest resource optMods = do
   baseOpts <- appDefaults
   let opts = foldr (.) id optMods baseOpts
       url  = seApiUrl <> resource
   r <- liftIO $ W.getWith opts url
-  let parseResult = eitherDecode (r ^. W.responseBody) >>= parseEither questionsParser
   return
-    . either (Left . JSONError . T.pack) Right
-    $ parseResult
+    . first (JSONError . T.pack)
+    $ eitherDecode (r ^. W.responseBody)
+        >>= parseEither questionsParser
 
 -- | SE API URL
 seApiUrl :: String
@@ -90,6 +91,6 @@ seFilter :: Text
 seFilter = "0euqgThy5XMKqGfXzPS_nVSuunbQUZLlX7OuNJSlfvlW4"
 
 -- | Transform to custom error types
-toError :: H.HttpException -> Error
-toError (H.HttpExceptionRequest _ (H.ConnectionFailure _)) = ConnectionFailure
-toError e                                                  = UnknownError . T.pack . show $ e
+toError :: H.HttpException -> Maybe Error
+toError (H.HttpExceptionRequest _ (H.ConnectionFailure _)) = Just ConnectionFailure
+toError e                                                  = Just . UnknownError . T.pack . show $ e
