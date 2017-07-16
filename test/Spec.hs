@@ -18,7 +18,7 @@ main = hspec $ do
   describe "Google Scraper" $ do
     it "parses english.meta question links" $
       parseIds <$> englishMetaBSL
-        `shouldReturn` Just [4453, 2867, 2002, 3404]
+        `shouldReturn` Right [4453, 2867, 2002, 3404]
     it "fails gracefully on botched parse" $
       pending
     it "fails gracefully on no connection" $

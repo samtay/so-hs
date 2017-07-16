@@ -51,7 +51,7 @@ data Error
   | JSONError Text
   | YAMLError Text
   | UnknownError Text
-  deriving (Show)
+  deriving (Eq, Show)
 
 instance FromJSON Config where
   parseJSON = withObject "config" $ \o -> do
