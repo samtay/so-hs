@@ -28,7 +28,7 @@ import           Utils
 -- | Query for stack exchange 'Question's based on 'SO' state options
 query :: App (Either Error [Question])
 query = do
-  useG    <- gets (oGoogle . soOptions)
+  useG <- gets (oGoogle . soOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
 
 -- | Query stack exchange by first scraping Google for relevant question links
@@ -38,7 +38,7 @@ queryG :: App (Either Error [Question])
 queryG = do
   mIds <- google
   case mIds of
-    Left e  -> return . Left $ e
+    Left e    -> return . Left $ e
     Right []  -> return . Right $ []
     Right ids -> sortByIds ids <$$> seRequest ("questions/" <> mkQString ids) []
   where
@@ -50,7 +50,7 @@ queryG = do
 -- | Query stack exchange via advanced search API
 querySE :: App (Either Error [Question])
 querySE = do
-  q        <- gets soQuery
+  q <- gets soQuery
   seRequest "search/advanced" [ W.param "q"       .~ [q]
                               , W.param "answers" .~ ["1"]
                               , W.param "order"   .~ ["desc"]
