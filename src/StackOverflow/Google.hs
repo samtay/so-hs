@@ -10,7 +10,7 @@ import           Data.Maybe                 (catMaybes)
 import           Data.String                (fromString)
 
 import           Control.Monad.Catch        (tryJust)
-import           Control.Monad.State.Strict (gets, (<=<))
+import           Control.Monad.State        (gets, (<=<))
 import           Data.ByteString.Lazy       (ByteString)
 import           Data.ByteString.Lazy.Char8 (readInt)
 import           Data.Text                  (Text)
@@ -28,9 +28,9 @@ import           Utils
 -- | Scrape google for a list of question IDs
 google :: App (Either Error [Int])
 google = do
-  url   <- gets (sUrl . oSite . soOptions)
-  num   <- gets (oLimit . soOptions)
-  q     <- gets (soQuery)
+  url   <- gets (sUrl . oSite . sOptions)
+  num   <- gets (oLimit . sOptions)
+  q     <- gets (sQuery)
   eHtml <- tryJust toError. liftIO $ mkRequest url num q
   return $ eHtml >>= parseIds
 

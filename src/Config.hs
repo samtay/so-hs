@@ -13,7 +13,7 @@ import           Text.RawString.QQ
 
 import           Types
 
-getConfigWith :: Monad m => (ByteString -> m Config) -> IO (m Config)
+getConfigWith :: Monad m => (ByteString -> m AppConfig) -> IO (m AppConfig)
 getConfigWith decoder = do
   f <- getConfigFile
   exists <- D.doesFileExist f
@@ -21,10 +21,10 @@ getConfigWith decoder = do
   yml <- BS.readFile f
   return $ decoder yml
 
-getConfigM :: IO (Maybe Config)
+getConfigM :: IO (Maybe AppConfig)
 getConfigM = getConfigWith decode
 
-getConfigE :: IO (Either String Config)
+getConfigE :: IO (Either String AppConfig)
 getConfigE = getConfigWith decodeEither
 
 resetConfig :: IO ()
@@ -41,7 +41,7 @@ getXdgaFilePath d f = do
   D.createDirectoryIfMissing True xdg
   return (xdg </> f)
 
--- Kept as ByteString instead of Config so that end users can see comments
+-- Kept as 'ByteString' instead of 'AppConfig' so that end users can see comments
 defaultConfigFileContent :: ByteString
 defaultConfigFileContent = [r|# stack exchange sites available for searching
 # you can find more at https://api.stackexchange.com/docs/sites

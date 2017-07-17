@@ -59,7 +59,7 @@ decodeQFromFile f = do
   b <- BSL.readFile f
   return $ A.eitherDecode b >>= AT.parseEither questionsParser
 
-decodeCfgFromFile :: FilePath -> IO (Either String Config)
+decodeCfgFromFile :: FilePath -> IO (Either String AppConfig)
 decodeCfgFromFile = fmap Y.decodeEither . BS.readFile
 
 validQuestionsFile2 :: FilePath

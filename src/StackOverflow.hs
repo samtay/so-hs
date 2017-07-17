@@ -5,21 +5,21 @@ module StackOverflow
   , querySE
   ) where
 
-import           Control.Monad              (join)
-import           Data.List                  (elemIndex, intercalate, sortOn)
-import           Data.Maybe                 (fromMaybe)
-import           Data.Semigroup             ((<>))
+import           Control.Monad        (join)
+import           Data.List            (elemIndex, intercalate, sortOn)
+import           Data.Maybe           (fromMaybe)
+import           Data.Semigroup       ((<>))
 
-import           Control.Monad.Catch        (tryJust)
-import           Control.Monad.State.Strict (gets, liftIO)
-import           Data.Aeson                 (eitherDecode)
-import           Data.Aeson.Types           (parseEither)
-import           Data.Bifunctor             (first)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import           Lens.Micro                 ((&), (.~), (^.))
-import qualified Network.HTTP.Client        as H
-import qualified Network.Wreq               as W
+import           Control.Monad.Catch  (tryJust)
+import           Control.Monad.State  (gets, liftIO)
+import           Data.Aeson           (eitherDecode)
+import           Data.Aeson.Types     (parseEither)
+import           Data.Bifunctor       (first)
+import           Data.Text            (Text)
+import qualified Data.Text            as T
+import           Lens.Micro           ((&), (.~), (^.))
+import qualified Network.HTTP.Client  as H
+import qualified Network.Wreq         as W
 
 import           StackOverflow.Google
 import           Types
@@ -28,7 +28,7 @@ import           Utils
 -- | Query for stack exchange 'Question's based on 'SO' state options
 query :: App (Either Error [Question])
 query = do
-  useG <- gets (oGoogle . soOptions)
+  useG <- gets (oGoogle . sOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
 
 -- | Query stack exchange by first scraping Google for relevant question links
@@ -50,7 +50,7 @@ queryG = do
 -- | Query stack exchange via advanced search API
 querySE :: App (Either Error [Question])
 querySE = do
-  q <- gets soQuery
+  q <- gets sQuery
   seRequest "search/advanced" [ W.param "q"       .~ [q]
                               , W.param "answers" .~ ["1"]
                               , W.param "order"   .~ ["desc"]
@@ -60,7 +60,7 @@ querySE = do
 -- TODO add api keys and whatnot
 appDefaults :: App W.Options
 appDefaults = do
-  siteParam <- gets (sApiParam . oSite . soOptions)
+  siteParam <- gets (sApiParam . oSite . sOptions)
   return $ W.defaults & W.header "Accept" .~ ["application/json"]
                       & W.param "filter"  .~ [seFilter] -- In the future get this from App
                       & W.param "site"    .~ [siteParam]

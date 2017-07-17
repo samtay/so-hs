@@ -6,28 +6,30 @@ module Types
   , module Types.StackOverflow
   ) where
 
-import           Data.Maybe                 (fromMaybe)
-import           Text.Read                  (readMaybe)
+import           Data.Maybe           (fromMaybe)
+import           Text.Read            (readMaybe)
 
-import           Control.Monad.State.Strict
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
+import           Control.Monad.Reader (ReaderT)
+import           Control.Monad.State  (StateT)
+import           Data.Text            (Text)
+import qualified Data.Text            as T
 import           Data.Yaml
 
 import           Types.StackOverflow
 import           Utils
 
-type App = StateT SO IO
+type App = ReaderT AppConfig (StateT AppState IO)
 
-data SO = SO
-  { soQuery   :: Text
-  , soOptions :: Options
+data AppState = AppState
+  { sQuery   :: Text
+  , sOptions :: Options
   } deriving (Eq, Show)
 
-data Config = Config
+data AppConfig = AppConfig
   { cDefaultOpts :: Options      -- ^ Default CLI options
   , cSites       :: [Site]       -- ^ Available SE sites
   , cEditor      :: Maybe Editor -- ^ Custom editor to view answer
+  , cApiKey      :: Maybe Text
   } deriving (Eq, Show)
 
 data Options = Options
@@ -53,13 +55,14 @@ data Error
   | UnknownError Text
   deriving (Eq, Show)
 
-instance FromJSON Config where
+instance FromJSON AppConfig where
   parseJSON = withObject "config" $ \o -> do
     cDefaultOpts <- o .:? "defaultOptions" .!= mempty
     cSites'      <- o .:? "sites"          .!= []
     cEditor      <- o .:? "editor"
+    cApiKey      <- o .:? "apiKey"
     let cSites = if null cSites' then [defSite] else site <$> cSites'
-    return Config{..}
+    return AppConfig{..}
 
 instance FromJSON Options where
   parseJSON = withObject "options" $ \o -> do
@@ -110,5 +113,5 @@ defSite = Site
   { sUrl = "https://stackoverflow.com"
   , sApiParam = "stackoverflow" }
 
-suffixLenses ''Config
+suffixLenses ''AppConfig
 suffixLenses ''Options
