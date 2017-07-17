@@ -7,19 +7,14 @@ that it's easier to work across two computers.
 
 # todo
 
-### google
-1. Detect botched scrape and return `Either` instead of `Maybe`
-
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry
    about printing weird chars
 2. add a `--update-filters` sub command to update xdga data with named filter.
    in fact, maybe this ships without hardcoded filters and on first run, creates new
    filter and stores in xdga data.
-4. template haskell or makefile to replace `@@STACKEXCHANGE_API_KEY@@` with my
-   own, but allow it to be overridable with envvar `$STACKEXCHANGE_API_KEY` and
-   add to field to Config as well.
 5. handle and write tests for error responses: https://api.stackexchange.com/docs/types/error
+   easy to test by setting bogus api key. need to catch `StatusCodeException` with code 400
 
 ### interface
 0. both sophisticated brick column interface and basic prompting (haskeline or
@@ -55,9 +50,3 @@ that it's easier to work across two computers.
 3. consider adding --verbose flag. this would be easy, but unclear how useful.
    one use case would be when google returns no results indicate that it may
    have detected non browser
-4. propogate new Types.Error values through Either values
-5. successfully catching ConnectionFailure exception at the top of request
-   chain, but need to catch non-200 specifically at google level to throw
-   ScrapingError
-6. exception catching helpers that log to App, etc.
-7. add reader to monad stack for xdga config/data/cache?
