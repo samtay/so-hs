@@ -1,22 +1,31 @@
 module Main where
 
-import           Data.Semigroup       ((<>))
-import           System.Exit          (exitFailure)
-import           System.IO            (hPutStrLn, stderr)
+import           Control.Monad          (void)
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Semigroup         ((<>))
+import           System.Exit            (exitFailure)
+import           System.IO              (hPutStrLn, stderr)
 
-import           Control.Monad.Reader (runReaderT)
-import           Control.Monad.State  (runStateT)
+import           Control.Monad.Reader   (runReaderT)
+import           Control.Monad.State    (gets, runStateT)
 
-import           Cli                  (runCli)
-import           Config               (getConfigE, getConfigFile)
-import           StackOverflow        (query)
-import           Types                (AppConfig)
-import           Utils                (code, err)
+import           Cli                    (runCli)
+import           Config                 (getConfigE, getConfigFile)
+import           StackOverflow          (query)
+import           Types
+import           Utils                  (code, err)
 
 main :: IO ()
 main = withConfig $ \cfg -> do
   initialState <- runCli cfg
-  runStateT (runReaderT query cfg) initialState >>= print
+  void $ runStateT (runReaderT runApp cfg) initialState
+
+runApp :: App ()
+runApp = do
+  qs <- query
+  i  <- gets (oUi . sOptions)
+  liftIO . putStrLn $ show i <> " is not yet implemented... here are the raw questions:"
+  liftIO $ print qs
 
 withConfig :: (AppConfig -> IO a) -> IO a
 withConfig action = getConfigE >>= either exitConfigError action
