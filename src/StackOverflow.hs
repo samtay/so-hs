@@ -64,6 +64,7 @@ appDefaults = do
   return $ W.defaults & W.header "Accept" .~ ["application/json"]
                       & W.param "filter"  .~ [seFilter] -- In the future get this from App
                       & W.param "site"    .~ [siteParam]
+                      & W.param "key"     .~ [seKey]
 
 -- | Make SE API request
 -- | TODO catch non-200 or allow non-200 and return Left error text
@@ -89,6 +90,10 @@ seApiUrl = "http://api.stackexchange.com/2.2/"
 -- TODO figure out how to handle this, maybe XDGA data with auto refresh
 seFilter :: Text
 seFilter = "0euqgThy5XMKqGfXzPS_nVSuunbQUZLlX7OuNJSlfvlW4"
+
+-- | API key (allows higher quota)
+seKey :: Text
+seKey = "8o9g7WcfwnwbB*Qp4VsGsw(("
 
 -- | Transform to custom error types
 toError :: H.HttpException -> Maybe Error
