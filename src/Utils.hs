@@ -14,7 +14,6 @@ import           Data.Semigroup      (Semigroup, (<>))
 import           Data.String         (IsString, fromString)
 
 import           Brick.Types         (suffixLenses)
-import           Data.Text           (Text)
 import           Lens.Micro          (ix, (^?))
 import qualified System.Console.ANSI as A
 
@@ -39,7 +38,7 @@ capitalize (h:end) = toUpper h : fmap toLower end
 ---- ANSI helpers
 
 -- | Style code
-code :: Text -> Text
+code :: (Semigroup s, IsString s) => s -> s
 code = color A.Vivid A.Cyan
 
 -- | Style errors with vivid red

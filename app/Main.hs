@@ -1,14 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import           Data.Semigroup       ((<>))
 import           System.Exit          (exitFailure)
-import           System.IO            (stderr)
+import           System.IO            (hPutStrLn, stderr)
 
 import           Control.Monad.Reader (runReaderT)
 import           Control.Monad.State  (runStateT)
-import qualified Data.Text            as T
-import qualified Data.Text.IO         as TIO
 
 import           Cli                  (runCli)
 import           Config               (getConfigE, getConfigFile)
@@ -26,8 +23,8 @@ withConfig action = getConfigE >>= either exitConfigError action
 
 exitConfigError :: String -> IO a
 exitConfigError e = do
-  f <- T.pack <$> getConfigFile
-  TIO.hPutStrLn stderr . T.concat
+  f <- getConfigFile
+  hPutStrLn stderr . concat
     $ [ "It looks like there is an error in your configuration. "
       , "If you're having trouble fixing it, you can always run:"
       , "\n\n"
@@ -36,5 +33,5 @@ exitConfigError e = do
       , "to reset to defaults. "
       , "For reference, the yaml parsing error was:"
       , "\n\n"
-      , T.pack (err e) ]
+      , err e ]
   exitFailure
