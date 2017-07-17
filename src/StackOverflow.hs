@@ -11,6 +11,7 @@ import           Data.Maybe           (fromMaybe)
 import           Data.Semigroup       ((<>))
 
 import           Control.Monad.Catch  (tryJust)
+import           Control.Monad.Reader (asks)
 import           Control.Monad.State  (gets, liftIO)
 import           Data.Aeson           (eitherDecode)
 import           Data.Aeson.Types     (parseEither)
@@ -60,11 +61,12 @@ querySE = do
 -- TODO add api keys and whatnot
 appDefaults :: App W.Options
 appDefaults = do
+  key <- fromMaybe seKey <$> asks cApiKey
   siteParam <- gets (sApiParam . oSite . sOptions)
   return $ W.defaults & W.header "Accept" .~ ["application/json"]
                       & W.param "filter"  .~ [seFilter] -- In the future get this from App
                       & W.param "site"    .~ [siteParam]
-                      & W.param "key"     .~ [seKey]
+                      & W.param "key"     .~ [key]
 
 -- | Make SE API request
 -- | TODO catch non-200 or allow non-200 and return Left error text
