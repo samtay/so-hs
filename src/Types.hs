@@ -113,5 +113,6 @@ defSite = Site
   { sUrl = "https://stackoverflow.com"
   , sApiParam = "stackoverflow" }
 
+suffixLenses ''AppState
 suffixLenses ''AppConfig
 suffixLenses ''Options

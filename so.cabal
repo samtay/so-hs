@@ -18,6 +18,7 @@ library
   ghc-options:         -Wall -fwarn-unused-binds -fwarn-unused-imports -fno-warn-type-defaults
   exposed-modules:     Cli
                      , Config
+                     , Prompt
                      , StackOverflow
                      , StackOverflow.Google
                      , Types
@@ -28,6 +29,7 @@ library
                      , ansi-terminal
                      , bifunctors
                      , brick
+                     , byline
                      , bytestring
                      , directory
                      , exceptions

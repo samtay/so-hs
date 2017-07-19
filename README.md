@@ -7,6 +7,10 @@ that it's easier to work across two computers.
 
 # todo
 
+1. Decide whether new queries can be run from prompt/brick interfaces, or are
+   they purely for viewing results and then exiting?
+2. Stop flip flopping on keeping [Question] in AppState. (1) might depend on this.
+
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry
    about printing weird chars
@@ -40,16 +44,12 @@ that it's easier to work across two computers.
 2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
 
 ### general
-0. read:
-   http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
 1. in the future, maybe --site defaults to Nothing (so long as --google is
    used) and we parse out any known URLs from google search and perform
    multiple stack exchange requests to each site (this is a nice to have and
    results in possibly too many API requests)
 2. Investigate whether GADTs / TypeFamilies can solve my problem with Text vs
    Site representation in the Options datatype Look
-   [here](https://github.com/aviaviavi/confetti/blob/master/src/Lib.hs) for a
-   simple GADT example
 3. consider adding --verbose flag. this would be easy, but unclear how useful.
    one use case would be when google returns no results indicate that it may
    have detected non browser
