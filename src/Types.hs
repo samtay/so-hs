@@ -9,8 +9,8 @@ module Types
 import           Data.Maybe           (fromMaybe)
 import           Text.Read            (readMaybe)
 
-import           Control.Monad.Reader (ReaderT)
-import           Control.Monad.State  (StateT)
+import           Control.Monad.Reader (ReaderT, runReaderT)
+import           Control.Monad.State  (StateT, evalStateT)
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Data.Yaml
@@ -19,6 +19,9 @@ import           Types.StackOverflow
 import           Utils
 
 type App = ReaderT AppConfig (StateT AppState IO)
+
+runAppT :: AppConfig -> AppState -> App a -> IO a
+runAppT c s app = evalStateT (runReaderT app c) s
 
 data AppState = AppState
   { sQuery   :: Text

@@ -11,10 +11,11 @@ import           Control.Monad.State    (gets, runStateT)
 
 import           Cli                    (runCli)
 import           Config                 (getConfigE, getConfigFile)
-import           Prompt                 (runLuckyPrompt, runPrompt)
+import           Interface.Brick        (runBrick)
+import           Interface.Prompt       (runLuckyPrompt, runPrompt)
 import           StackOverflow          (query)
 import           Types
-import           Utils                  (code, err)
+import           Utils                  (code, err, exitWithError)
 
 main :: IO ()
 main = withConfig $ \cfg -> do
@@ -24,16 +25,15 @@ main = withConfig $ \cfg -> do
 runApp :: App ()
 runApp = do
   eQs <- query
-  either handleError runInterface eQs
-  where
-    handleError e  = liftIO $ print e
-    runInterface qs = do
+  case eQs of
+    Left e   -> liftIO $ exitWithError (show e)
+    Right [] -> liftIO $ exitWithError "No questions found"
+    Right qs -> do
+      when (null qs) handleNoResults
       i  <- gets (oUi . sOptions)
-      when (i == Brick) $ do
-        liftIO . putStrLn $ show i <> " is not yet implemented... here are the raw questions:"
-        liftIO $ print qs
-      when (i == Prompt) $
-        void $ runPrompt qs
+      case i of
+        Brick  -> runBrick qs
+        Prompt -> liftIO $ exitWithError "Prompt interface not yet implemented"
 
 withConfig :: (AppConfig -> IO a) -> IO a
 withConfig action = getConfigE >>= either exitConfigError action
@@ -41,7 +41,7 @@ withConfig action = getConfigE >>= either exitConfigError action
 exitConfigError :: String -> IO a
 exitConfigError e = do
   f <- getConfigFile
-  hPutStrLn stderr . concat
+  exitWithError . concat
     $ [ "It looks like there is an error in your configuration. "
       , "If you're having trouble fixing it, you can always run:"
       , "\n\n"
@@ -51,4 +51,3 @@ exitConfigError e = do
       , "For reference, the yaml parsing error was:"
       , "\n\n"
       , err e ]
-  exitFailure

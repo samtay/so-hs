@@ -10,6 +10,8 @@ that it's easier to work across two computers.
 1. Decide whether new queries can be run from prompt/brick interfaces, or are
    they purely for viewing results and then exiting?
 2. Stop flip flopping on keeping [Question] in AppState. (1) might depend on this.
+3. Also related, possibly split `runApp` right at the start into brick/prompt executions,
+   in case they handle querying (and more specifically, synch/asynch requests) differently.
 
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry
@@ -48,11 +50,6 @@ that it's easier to work across two computers.
    used) and we parse out any known URLs from google search and perform
    multiple stack exchange requests to each site (this is a nice to have and
    results in possibly too many API requests)
-2. Investigate whether GADTs / TypeFamilies can solve my problem with Text vs
-   Site representation in the Options datatype Look
 3. consider adding --verbose flag. this would be easy, but unclear how useful.
    one use case would be when google returns no results indicate that it may
    have detected non browser
-4. this app is like mine:
-   https://robots.thoughtbot.com/refactoring-to-a-monad-transformer-stack but
-   uses ExceptT, might be interesting to compare

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Prompt where
+module Interface.Prompt where
 
 import           Control.Monad.Trans   (liftIO)
 import           Data.Text             (Text)

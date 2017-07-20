@@ -4,6 +4,7 @@ module Utils
   , (<$$>)
   , (!?)
   , (.*.)
+  , exitWithError
   , color
   , code
   , err
@@ -12,6 +13,8 @@ module Utils
 import           Data.Char           (toLower, toUpper)
 import           Data.Semigroup      (Semigroup, (<>))
 import           Data.String         (IsString, fromString)
+import           System.Exit         (exitFailure)
+import           System.IO           (hPutStrLn, stderr)
 
 import           Brick.Types         (suffixLenses)
 import           Lens.Micro          (ix, (^?))
@@ -36,6 +39,9 @@ capitalize []      = []
 capitalize (h:end) = toUpper h : fmap toLower end
 
 ---- ANSI helpers
+
+exitWithError :: String -> IO ()
+exitWithError e = hPutStrLn stderr (err e) >> exitFailure
 
 -- | Style code
 code :: (Semigroup s, IsString s) => s -> s
