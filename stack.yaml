@@ -3,7 +3,7 @@ extra-package-dbs: []
 packages:
   - location: '.'
   - location:
-      git: git@github.com:samtay/byline.git
+      git: https://github.com/samtay/byline.git
       commit: 0c614726b33d59d64eba11cc0d94d5696b33c858
     extra-dep: true
 extra-deps:
