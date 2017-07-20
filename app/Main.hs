@@ -1,10 +1,8 @@
 module Main where
 
-import           Control.Monad          (void, when)
+import           Control.Monad          (void)
 import           Control.Monad.IO.Class (liftIO)
 import           Data.Semigroup         ((<>))
-import           System.Exit            (exitFailure)
-import           System.IO              (hPutStrLn, stderr)
 
 import           Control.Monad.Reader   (runReaderT)
 import           Control.Monad.State    (gets, runStateT)
@@ -12,28 +10,23 @@ import           Control.Monad.State    (gets, runStateT)
 import           Cli                    (runCli)
 import           Config                 (getConfigE, getConfigFile)
 import           Interface.Brick        (runBrick)
-import           Interface.Prompt       (runLuckyPrompt, runPrompt)
-import           StackOverflow          (query)
 import           Types
 import           Utils                  (code, err, exitWithError)
 
 main :: IO ()
 main = withConfig $ \cfg -> do
   initialState <- runCli cfg
+  evalAppT cfg initialState runApp
   void $ runStateT (runReaderT runApp cfg) initialState
 
 runApp :: App ()
 runApp = do
-  eQs <- query
-  case eQs of
-    Left e   -> liftIO $ exitWithError (show e)
-    Right [] -> liftIO $ exitWithError "No questions found"
-    Right qs -> do
-      when (null qs) handleNoResults
-      i  <- gets (oUi . sOptions)
-      case i of
-        Brick  -> runBrick qs
-        Prompt -> liftIO $ exitWithError "Prompt interface not yet implemented"
+  -- TODO handle lucky case (queries with limit == 1 (withAppT) and hit SPACE for more)
+  -- lucky <- gets (oLucky . sOptions)
+  i <- gets (oUi . sOptions)
+  case i of
+    Brick  -> runBrick
+    Prompt -> liftIO $ exitWithError "Prompt interface not yet implemented"
 
 withConfig :: (AppConfig -> IO a) -> IO a
 withConfig action = getConfigE >>= either exitConfigError action

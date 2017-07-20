@@ -2,7 +2,10 @@ module Interface.Brick
   ( runBrick
   ) where
 
-import Types
+import           Control.Monad.Trans (liftIO)
+
+import           StackOverflow
+import           Types
 
 data BState = BState
   { aState    :: AppState
@@ -10,8 +13,10 @@ data BState = BState
   , questions :: [Question]
   }
 
-runBrick :: [Question] -> App ()
-runBrick qs = do
-
-app :: App (May
-
+runBrick :: App ()
+runBrick = query >>= liftIO . print
+  -- two empty MVars
+  --    one for querying and retrieving questions
+  --    one for --verbose logging window (maybe AppState has logger mvar?)
+  -- when query is done, need to tell BChan to retrieve it...
+  --    OR questions sent directly to BChan

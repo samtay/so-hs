@@ -12,6 +12,7 @@ that it's easier to work across two computers.
 2. Stop flip flopping on keeping [Question] in AppState. (1) might depend on this.
 3. Also related, possibly split `runApp` right at the start into brick/prompt executions,
    in case they handle querying (and more specifically, synch/asynch requests) differently.
+4. Test --no-google flag
 
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry

@@ -10,7 +10,8 @@ import           Data.Maybe           (fromMaybe)
 import           Text.Read            (readMaybe)
 
 import           Control.Monad.Reader (ReaderT, runReaderT)
-import           Control.Monad.State  (StateT, evalStateT)
+import           Control.Monad.State  (StateT, evalStateT, execStateT,
+                                       runStateT)
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Data.Yaml
@@ -20,12 +21,22 @@ import           Utils
 
 type App = ReaderT AppConfig (StateT AppState IO)
 
-runAppT :: AppConfig -> AppState -> App a -> IO a
-runAppT c s app = evalStateT (runReaderT app c) s
+runAppWith :: (StateT AppState IO a -> AppState -> b) -> AppConfig -> AppState -> App a -> b
+runAppWith runner c s app = runner (runReaderT app c) s
+
+runAppT :: AppConfig -> AppState -> App a -> IO (a, AppState)
+runAppT = runAppWith runStateT
+
+evalAppT :: AppConfig -> AppState -> App a -> IO a
+evalAppT = runAppWith evalStateT
+
+execAppT :: AppConfig -> AppState -> App a -> IO AppState
+execAppT = runAppWith execStateT
+
 
 data AppState = AppState
-  { sQuery   :: Text
-  , sOptions :: Options
+  { sQuery     :: Text
+  , sOptions   :: Options
   } deriving (Eq, Show)
 
 data AppConfig = AppConfig

@@ -40,7 +40,7 @@ capitalize (h:end) = toUpper h : fmap toLower end
 
 ---- ANSI helpers
 
-exitWithError :: String -> IO ()
+exitWithError :: String -> IO a
 exitWithError e = hPutStrLn stderr (err e) >> exitFailure
 
 -- | Style code
