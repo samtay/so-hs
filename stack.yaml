@@ -3,8 +3,8 @@ extra-package-dbs: []
 packages:
   - location: '.'
   - location:
-      git: https://github.com/samtay/byline.git
-      commit: 0c614726b33d59d64eba11cc0d94d5696b33c858
+      git: https://github.com/pjones/byline.git
+      commit: 6cc4fbfe32c1d69692cb409ac12350474a63772c
     extra-dep: true
 extra-deps:
 - optparse-applicative-0.14.0.0
