@@ -7,12 +7,15 @@ that it's easier to work across two computers.
 
 # todo
 
+0. idea: implement an extensible handler combinator that handles modal based input
 1. Decide whether new queries can be run from prompt/brick interfaces, or are
    they purely for viewing results and then exiting?
 2. Stop flip flopping on keeping [Question] in AppState. (1) might depend on this.
 3. Also related, possibly split `runApp` right at the start into brick/prompt executions,
    in case they handle querying (and more specifically, synch/asynch requests) differently.
 4. Test --no-google flag
+5. If we dont ever use 'set' or 'modify', just remove StateT combine it all into ReaderT
+6. freeze dependency versions
 
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry
