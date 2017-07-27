@@ -3,9 +3,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Cli
   ( runCli
+  , Cli(..)
   ) where
 
-import           Control.Monad         ((<=<))
 import           Data.Function         (on)
 import           Data.List             (sortBy)
 import           Data.Maybe            (listToMaybe)
@@ -28,14 +28,8 @@ data Cli = Cli
 
 -- | Parse args from command line and return resulting `SO` type
 -- Exits with failure info on invalid args
-runCli :: AppConfig -> IO AppState
-runCli = cliToState <=< execCliParser
-  where
-    execCliParser :: AppConfig -> IO Cli
-    execCliParser = execParser . cliParserInfo
-
-    cliToState :: Cli -> IO AppState
-    cliToState Cli{options, query} = return $ AppState query options
+runCli :: AppConfig -> IO Cli
+runCli = execParser . cliParserInfo
 
 -- | Full parser info with --help and --print-sites options
 cliParserInfo :: AppConfig -> ParserInfo Cli

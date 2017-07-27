@@ -6,6 +6,7 @@ module Types
   , module Types.StackOverflow
   ) where
 
+import           Control.Concurrent   (MVar)
 import           Data.Maybe           (fromMaybe)
 import           Text.Read            (readMaybe)
 
@@ -19,6 +20,7 @@ import           Data.Yaml
 import           Types.StackOverflow
 import           Utils
 
+-- TODO newtype this
 type App = ReaderT AppConfig (StateT AppState IO)
 
 runAppWith :: (StateT AppState IO a -> AppState -> b) -> AppConfig -> AppState -> App a -> b
@@ -35,9 +37,11 @@ execAppT = runAppWith execStateT
 
 
 data AppState = AppState
-  { sQuery     :: Text
-  , sOptions   :: Options
-  } deriving (Eq, Show)
+  { sQuery       :: Text
+  , sOptions     :: Options
+  , sQuestions   :: MVar (Either Error [Question])
+  , sLuckyAnswer :: MVar (Either Error Answer)
+  }
 
 data AppConfig = AppConfig
   { cDefaultOpts :: Options      -- ^ Default CLI options

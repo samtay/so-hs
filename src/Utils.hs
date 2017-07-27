@@ -4,6 +4,8 @@ module Utils
   , (<$$>)
   , (!?)
   , (.*.)
+  , whenDef
+  , unlessDef
   , exitWithError
   , color
   , code
@@ -32,6 +34,20 @@ l !? i = l ^? ix i
 -- | Double composition (allow first function to accept two arguments)
 (.*.) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
 g .*. f = \x y -> g (f x y)
+
+whenDef :: Monad m
+  => a -- ^ Default value
+  -> Bool -- ^ Predicate
+  -> m a  -- ^ Action to run when predicate is 'True'
+  -> m a
+whenDef def b action = if b then action else return def
+
+unlessDef :: Monad m
+  => a -- ^ Default value
+  -> Bool -- ^ Predicate
+  -> m a  -- ^ Action to run when predicate is 'False'
+  -> m a
+unlessDef def b action = if not b then action else return def
 
 -- | Capitalize first letter of string, lowercase rest
 capitalize :: String -> String

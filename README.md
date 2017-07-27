@@ -7,6 +7,7 @@ that it's easier to work across two computers.
 
 # todo
 
+0. NEXT UP: handle concurrency throughout app, including while user viewing --lucky result. (stand up basic brick interface to test this out)
 0. idea: implement an extensible handler combinator that handles modal based input
 1. Decide whether new queries can be run from prompt/brick interfaces, or are
    they purely for viewing results and then exiting?

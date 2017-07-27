@@ -4,7 +4,7 @@ module Interface.Brick
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Concurrent   (MVar, forkIO, newEmptyMVar, takeMVar)
+import           Control.Concurrent   (MVar, newEmptyMVar, takeMVar, forkIO)
 import           Control.Monad        (forever)
 
 --------------------------------------------------------------------------------
@@ -61,18 +61,20 @@ data FetchCommand = FetchCommand { fcState :: AppState }
 --------------------------------------------------------------------------------
 -- Executtion
 
-runBrick :: App ()
-runBrick = do
+runBrick :: Maybe [Question] -> App ()
+runBrick mQs = do
   state <- get
   conf  <- ask
   chan  <- liftIO $ newBChan 10
   fet   <- liftIO $ initFetcher conf chan
-  let initialBState = BState { _bAppState  = state
+  let initQs = maybe (Left StillInProgress) Right mQs
+      initialBState = BState { _bAppState  = state
                              , _bAppConfig = conf
-                             , _bQuestions = Left StillInProgress
+                             , _bQuestions = initQs
                              , _bFetcher   = fet
                              }
-  finalState <- liftIO $ customMain (V.mkVty V.defaultConfig) (Just chan) app initialBState
+  finalState <- liftIO
+    $ customMain (V.mkVty V.defaultConfig) (Just chan) app initialBState
   return () -- TODO figure out end game
 
 --------------------------------------------------------------------------------

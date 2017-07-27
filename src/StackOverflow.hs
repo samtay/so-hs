@@ -1,15 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 module StackOverflow
   ( query
+  , query'
+  , queryLucky'
   , queryG
   , querySE
   ) where
 
+--------------------------------------------------------------------------------
+-- Base imports:
+import           Control.Concurrent   (putMVar)
 import           Control.Monad        (join)
 import           Data.List            (elemIndex, intercalate, sortOn)
 import           Data.Maybe           (fromMaybe)
 import           Data.Semigroup       ((<>))
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import           Control.Monad.Catch  (tryJust)
 import           Control.Monad.Reader (asks)
 import           Control.Monad.State  (gets, liftIO)
@@ -22,15 +29,28 @@ import           Lens.Micro           ((&), (.~), (^.))
 import qualified Network.HTTP.Client  as H
 import qualified Network.Wreq         as W
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           StackOverflow.Google
 import           Types
 import           Utils
 
--- | Query for stack exchange 'Question's based on 'SO' state options
+-- | Get question results
 query :: App (Either Error [Question])
 query = do
   useG <- gets (oGoogle . sOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
+
+-- | Unlike 'query' which returns query results directly, this function will
+-- block on 'putMVar'.
+query' :: App ()
+query' = do
+  qResult <- query
+  qMvar   <- gets sQuestions
+  liftIO $ putMVar qMvar qResult
+
+queryLucky' :: App ()
+queryLucky' = undefined
 
 -- | Query stack exchange by first scraping Google for relevant question links
 --
