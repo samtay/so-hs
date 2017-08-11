@@ -1,18 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Interface.Prompt where
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import           Control.Monad.Trans   (liftIO)
 import           Data.Text             (Text)
 import qualified Data.Text             as T
 import           Lens.Micro
 import           System.Console.Byline
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           Types
 
 
 -- | Show single answer, return whether or not to run full interface
-runLuckyPrompt :: App Bool
-runLuckyPrompt = undefined
+runLuckyPrompt :: Question -> IO ()
+runLuckyPrompt q = undefined
 
 -- | Run prompt with questions
 runPrompt :: [Question] -> App (Maybe ())

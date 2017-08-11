@@ -3,10 +3,14 @@
 {-# LANGUAGE TemplateHaskell   #-}
 module Types.StackOverflow where
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
 import           Data.Text        (Text)
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           Utils
 
 data Question = Question

@@ -6,11 +6,15 @@ module Cli
   , Cli(..)
   ) where
 
+--------------------------------------------------------------------------------
+-- Base imports:
 import           Data.Function         (on)
 import           Data.List             (sortBy)
 import           Data.Maybe            (listToMaybe)
 import           Data.Semigroup        ((<>))
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import qualified Data.ByteString.Char8 as BS
 import           Data.Text             (Text)
 import qualified Data.Text             as T
@@ -18,12 +22,14 @@ import           Data.Yaml             (decode)
 import           Lens.Micro            ((^.))
 import           Options.Applicative
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           Types
 import           Utils
 
 data Cli = Cli
-  { options :: Options
-  , query   :: Text
+  { cOptions :: Options
+  , cQuery   :: Text
   }
 
 -- | Parse args from command line and return resulting `SO` type

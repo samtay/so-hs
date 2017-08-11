@@ -28,6 +28,7 @@ library
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , ansi-terminal
+                     , async
                      , bifunctors
                      , brick
                      , byline
@@ -54,10 +55,12 @@ executable so
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
+                     , async
                      , exceptions
                      , microlens
                      , mtl
                      , so
+                     , text
   default-language:    Haskell2010
 
 test-suite so-test

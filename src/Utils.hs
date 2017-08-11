@@ -12,12 +12,16 @@ module Utils
   , err
   ) where
 
+--------------------------------------------------------------------------------
+-- Base imports:
 import           Data.Char           (toLower, toUpper)
 import           Data.Semigroup      (Semigroup, (<>))
 import           Data.String         (IsString, fromString)
 import           System.Exit         (exitFailure)
 import           System.IO           (hPutStrLn, stderr)
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import           Brick.Types         (suffixLenses)
 import           Lens.Micro          (ix, (^?))
 import qualified System.Console.ANSI as A

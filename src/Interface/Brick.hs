@@ -4,19 +4,20 @@ module Interface.Brick
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Concurrent   (MVar, newEmptyMVar, takeMVar, forkIO)
-import           Control.Monad        (forever)
+import           Control.Concurrent       (forkIO)
+import           Control.Monad            (void)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Brick                hiding (App)
+import           Brick                    hiding (App)
 import qualified Brick
-import           Brick.BChan          (BChan, newBChan)
-import           Control.Monad.Reader (ask)
-import           Control.Monad.State  (get)
-import           Control.Monad.Trans  (liftIO)
-import           Data.Bifunctor       (first)
-import qualified Graphics.Vty         as V
+import           Brick.BChan              (BChan, newBChan, writeBChan)
+import           Control.Concurrent.Async (Async, async, wait)
+import           Control.Monad.Reader     (ask)
+import           Control.Monad.State      (get)
+import           Control.Monad.Trans      (liftIO)
+import           Data.Bifunctor           (first)
+import qualified Graphics.Vty             as V
 
 --------------------------------------------------------------------------------
 -- Local imports:
@@ -42,39 +43,32 @@ data BState = BState
   }
 
 -- | Events that we pipe to the event handler asynchronously
-data BEvent = NewQuestions [Question]
+data BEvent = NewQueryResult (Either Error [Question])
 
 -- | Resource names
 type Name = ()
 
 -- | Fetcher provides a way to communicate with a service to
 -- fetch new questions and asynchronously pipe them to the brick event channel
-data Fetcher = Fetcher
-  { _fCmd  :: (MVar FetchCommand)
-  , _fChan :: BChan BEvent
-  , _fCfg  :: AppConfig
-  }
-
-data FetchCommand = FetchCommand { fcState :: AppState }
+data Fetcher = Fetcher { _fChan  :: BChan BEvent }
 
 
 --------------------------------------------------------------------------------
 -- Executtion
 
-runBrick :: Maybe [Question] -> App ()
-runBrick mQs = do
+runBrick :: Async (Either Error [Question]) -> App ()
+runBrick aQuestions = do
   state <- get
   conf  <- ask
-  chan  <- liftIO $ newBChan 10
-  fet   <- liftIO $ initFetcher conf chan
-  let initQs = maybe (Left StillInProgress) Right mQs
-      initialBState = BState { _bAppState  = state
-                             , _bAppConfig = conf
-                             , _bQuestions = initQs
-                             , _bFetcher   = fet
-                             }
-  finalState <- liftIO
-    $ customMain (V.mkVty V.defaultConfig) (Just chan) app initialBState
+  _ <- liftIO $ do
+    chan  <- newBChan 10
+    passToChannel aQuestions chan
+    let initialBState = BState { _bAppState  = state
+                               , _bAppConfig = conf
+                               , _bQuestions = Left StillInProgress
+                               , _bFetcher   = Fetcher chan
+                               }
+    customMain (V.mkVty V.defaultConfig) (Just chan) app initialBState
   return () -- TODO figure out end game
 
 --------------------------------------------------------------------------------
@@ -91,25 +85,19 @@ app = Brick.App { appDraw         = drawUI
 --------------------------------------------------------------------------------
 -- Fetcher
 
--- | Initializes the "fetcher" service which can listen for
--- a supplied query and send the new questions to the given brick channel
-initFetcher :: AppConfig -> (BChan BEvent) -> IO Fetcher
-initFetcher cfg chan = do
-  m <- newEmptyMVar
-  let f = Fetcher m chan cfg
-  forkIO (fetcher f)
-  return f
+-- add --verbose logging window (maybe AppState has logger mvar?)
 
--- | This is the "fetcher" services that 'initFetcher' forks off. It repeatedly
--- blocks when waiting for more fetch commands, and when it receives them,
--- it runs a query and sends the 'Question' results to the supplied channel.
---
--- add one for --verbose logging window (maybe AppState has logger mvar?)
-fetcher :: Fetcher -> IO ()
-fetcher (Fetcher mvar chan cfg) = forever $ do
-  (FetchCommand state) <- takeMVar mvar
-  eResult <- evalAppT cfg state query
-  return $ first AppError eResult
+-- | Fetch new questions
+fetch :: Fetcher -> AppConfig -> AppState -> IO ()
+fetch (Fetcher chan) config state = do
+  aQuestions <- async $ evalAppT config state query
+  passToChannel aQuestions chan
+
+-- | Fork a process that will wait for async result and pass to BChan
+passToChannel :: Async (Either Error [Question]) -> BChan BEvent -> IO ()
+passToChannel aQuestions chan = void . forkIO $ do
+  qResult <- wait aQuestions
+  writeBChan chan $ NewQueryResult qResult
 
 --------------------------------------------------------------------------------
 -- Event Handling

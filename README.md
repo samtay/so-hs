@@ -7,15 +7,10 @@ that it's easier to work across two computers.
 
 # todo
 
-0. NEXT UP: handle concurrency throughout app, including while user viewing --lucky result. (stand up basic brick interface to test this out)
+0. Implement --lucky prompt and set it as default.
+1. Finish up brick UI.
 0. idea: implement an extensible handler combinator that handles modal based input
-1. Decide whether new queries can be run from prompt/brick interfaces, or are
-   they purely for viewing results and then exiting?
-2. Stop flip flopping on keeping [Question] in AppState. (1) might depend on this.
-3. Also related, possibly split `runApp` right at the start into brick/prompt executions,
-   in case they handle querying (and more specifically, synch/asynch requests) differently.
 4. Test --no-google flag
-5. If we dont ever use 'set' or 'modify', just remove StateT combine it all into ReaderT
 6. freeze dependency versions
 
 ### stack exchange
@@ -29,8 +24,6 @@ that it's easier to work across two computers.
    api key. need to catch `StatusCodeException` with code 400
 
 ### interface
-0. both sophisticated brick column interface and basic prompting (haskeline or
-   plain)
 1. maybe custom widget holder to maintain column ratios
 2. extents might be useful for rendering previews efficiently
 3. vty supports reverseVideo style (mappend with selected item - see ListDemo)
@@ -41,17 +34,14 @@ that it's easier to work across two computers.
    shift+h,j,k,l for resizing sections
 7. can set up themes named in configuration and then keep attrmap within app
    state
-3. Consider parallelizing the request, keeping an MVar within SO state, and
-   just pushing to it from requests, then issuing a custom event and updating
-   brick state with new QAs!  ^^ THIS IS THE RIGHT WAY TO DO THIS:
-   https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
+8. reference: https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
 
 ### config
 1. xdga data to save `filter` param
 2. split `defaultOptions` and `sites` into `defaults.yml` and `sites.yml`
 
-### general
-1. in the future, maybe --site defaults to Nothing (so long as --google is
+### future
+1. maybe --site defaults to Nothing (so long as --google is
    used) and we parse out any known URLs from google search and perform
    multiple stack exchange requests to each site (this is a nice to have and
    results in possibly too many API requests)

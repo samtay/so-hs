@@ -5,10 +5,14 @@ module StackOverflow.Google
   , mkRequest
   ) where
 
+--------------------------------------------------------------------------------
+-- Base imports:
 import           Control.Monad.IO.Class     (liftIO)
 import           Data.Maybe                 (catMaybes)
 import           Data.String                (fromString)
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import           Control.Monad.Catch        (tryJust)
 import           Control.Monad.State        (gets, (<=<))
 import           Data.ByteString.Lazy       (ByteString)
@@ -22,6 +26,8 @@ import           Text.HTML.Scalpel.Core
 import           Text.Regex.TDFA            (Regex, getAllTextSubmatches,
                                              makeRegex, (=~))
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           Types
 import           Utils
 

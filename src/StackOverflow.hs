@@ -1,15 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 module StackOverflow
   ( query
-  , query'
-  , queryLucky'
+  , queryLucky
   , queryG
   , querySE
   ) where
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Concurrent   (putMVar)
 import           Control.Monad        (join)
 import           Data.List            (elemIndex, intercalate, sortOn)
 import           Data.Maybe           (fromMaybe)
@@ -41,16 +39,8 @@ query = do
   useG <- gets (oGoogle . sOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
 
--- | Unlike 'query' which returns query results directly, this function will
--- block on 'putMVar'.
-query' :: App ()
-query' = do
-  qResult <- query
-  qMvar   <- gets sQuestions
-  liftIO $ putMVar qMvar qResult
-
-queryLucky' :: App ()
-queryLucky' = undefined
+queryLucky :: App (Either Error Question)
+queryLucky = undefined
 
 -- | Query stack exchange by first scraping Google for relevant question links
 --

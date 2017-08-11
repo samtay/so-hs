@@ -2,8 +2,12 @@
 {-# LANGUAGE QuasiQuotes       #-}
 module Config where
 
+--------------------------------------------------------------------------------
+-- Base imports:
 import           Control.Monad     (unless)
 
+--------------------------------------------------------------------------------
+-- Library imports:
 import           Data.ByteString   (ByteString)
 import qualified Data.ByteString   as BS
 import           Data.Yaml         (decode, decodeEither)
@@ -11,6 +15,8 @@ import qualified System.Directory  as D
 import           System.FilePath   ((</>))
 import           Text.RawString.QQ
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           Types
 
 getConfigWith :: Monad m => (ByteString -> m AppConfig) -> IO (m AppConfig)

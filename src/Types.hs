@@ -1,30 +1,42 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE RecordWildCards            #-}
+{-# LANGUAGE TemplateHaskell            #-}
 module Types
   ( module Types
   , module Types.StackOverflow
   ) where
 
-import           Control.Concurrent   (MVar)
-import           Data.Maybe           (fromMaybe)
-import           Text.Read            (readMaybe)
+--------------------------------------------------------------------------------
+-- Base imports:
+import           Control.Monad.IO.Class   (MonadIO, liftIO)
+import           Data.Maybe               (fromMaybe)
+import           Text.Read                (readMaybe)
 
-import           Control.Monad.Reader (ReaderT, runReaderT)
-import           Control.Monad.State  (StateT, evalStateT, execStateT,
-                                       runStateT)
-import           Data.Text            (Text)
-import qualified Data.Text            as T
+--------------------------------------------------------------------------------
+-- Library imports:
+import           Control.Concurrent.Async (Async, async)
+import           Control.Monad.Catch      (MonadCatch, MonadMask, MonadThrow)
+import           Control.Monad.Reader     (MonadReader, ReaderT, ask,
+                                           runReaderT)
+import           Control.Monad.State      (MonadState, StateT, evalStateT,
+                                           execStateT, get, runStateT)
+import           Data.Text                (Text)
+import qualified Data.Text                as T
 import           Data.Yaml
 
+--------------------------------------------------------------------------------
+-- Local imports:
 import           Types.StackOverflow
 import           Utils
 
--- TODO newtype this
-type App = ReaderT AppConfig (StateT AppState IO)
+newtype App a = App { unApp :: ReaderT AppConfig (StateT AppState IO) a }
+  deriving (Functor, Applicative, Monad,
+            MonadReader AppConfig, MonadState AppState,
+            MonadIO, MonadThrow, MonadCatch, MonadMask)
 
 runAppWith :: (StateT AppState IO a -> AppState -> b) -> AppConfig -> AppState -> App a -> b
-runAppWith runner c s app = runner (runReaderT app c) s
+runAppWith runner c s app = runner (runReaderT (unApp app) c) s
 
 runAppT :: AppConfig -> AppState -> App a -> IO (a, AppState)
 runAppT = runAppWith runStateT
@@ -35,12 +47,16 @@ evalAppT = runAppWith evalStateT
 execAppT :: AppConfig -> AppState -> App a -> IO AppState
 execAppT = runAppWith execStateT
 
+appAsync :: App a -> App (Async a)
+appAsync action = do
+  cfg <- ask
+  st  <- get
+  liftIO . async . evalAppT cfg st $ action
+
 
 data AppState = AppState
-  { sQuery       :: Text
-  , sOptions     :: Options
-  , sQuestions   :: MVar (Either Error [Question])
-  , sLuckyAnswer :: MVar (Either Error Answer)
+  { sQuery   :: Text
+  , sOptions :: Options
   }
 
 data AppConfig = AppConfig
