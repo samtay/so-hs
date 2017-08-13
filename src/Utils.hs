@@ -9,7 +9,9 @@ module Utils
   , exitWithError
   , color
   , code
+  , info
   , err
+  , noBuffer
   ) where
 
 --------------------------------------------------------------------------------
@@ -18,7 +20,8 @@ import           Data.Char           (toLower, toUpper)
 import           Data.Semigroup      (Semigroup, (<>))
 import           Data.String         (IsString, fromString)
 import           System.Exit         (exitFailure)
-import           System.IO           (hPutStrLn, stderr)
+import           System.IO           (BufferMode (..), hGetBuffering, hPutStrLn,
+                                      hSetBuffering, stderr, stdin)
 
 --------------------------------------------------------------------------------
 -- Library imports:
@@ -71,8 +74,21 @@ code = color A.Vivid A.Cyan
 err :: (Semigroup s, IsString s) => s -> s
 err = color A.Vivid A.Red
 
+-- | Style info with dull yellow
+info :: (Semigroup s, IsString s) => s -> s
+info = color A.Dull A.Yellow
+
 -- | Style strings with given intensity, color
 color :: (Semigroup s, IsString s) => A.ColorIntensity -> A.Color -> s -> s
 color i c s = start <> s <> reset
   where start = fromString . A.setSGRCode $ [A.SetColor A.Foreground i c]
         reset = fromString . A.setSGRCode $ [A.Reset]
+
+-- | Allow retrieval from stdin with a temporary NoBuffering mode
+noBuffer :: IO a -> IO a
+noBuffer action = do
+  mode <- hGetBuffering stdin
+  hSetBuffering stdin NoBuffering
+  result <- action
+  hSetBuffering stdin mode
+  return result

@@ -7,6 +7,7 @@ that it's easier to work across two computers.
 
 # todo
 
+0. Consider moving question back into AppState, but kept as TMVar...
 0. Implement --lucky prompt and set it as default.
 1. Finish up brick UI.
 0. idea: implement an extensible handler combinator that handles modal based input

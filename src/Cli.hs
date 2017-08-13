@@ -25,7 +25,7 @@ import           Options.Applicative
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Types
-import           Utils
+import           Utils                 hiding (info)
 
 data Cli = Cli
   { cOptions :: Options

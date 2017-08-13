@@ -14,10 +14,6 @@ import           System.Console.Byline
 import           Types
 
 
--- | Show single answer, return whether or not to run full interface
-runLuckyPrompt :: Question -> IO ()
-runLuckyPrompt q = undefined
-
 -- | Run prompt with questions
 runPrompt :: [Question] -> App (Maybe ())
 runPrompt qs =

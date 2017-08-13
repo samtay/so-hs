@@ -17,7 +17,7 @@ import           Data.Semigroup       ((<>))
 -- Library imports:
 import           Control.Monad.Catch  (tryJust)
 import           Control.Monad.Reader (asks)
-import           Control.Monad.State  (gets, liftIO)
+import           Control.Monad.State  (get, gets, liftIO, put)
 import           Data.Aeson           (eitherDecode)
 import           Data.Aeson.Types     (parseEither)
 import           Data.Bifunctor       (first)
@@ -39,8 +39,18 @@ query = do
   useG <- gets (oGoogle . sOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
 
+-- | Get a single question result (hopefully decent performance boost)
 queryLucky :: App (Either Error Question)
-queryLucky = undefined
+queryLucky = do
+  initialState <- get
+  let modifiedState = initialState & sOptionsL . oLimitL .~ 1
+  put modifiedState
+  result <- query
+  put initialState
+  return $ case result of
+    Right []    -> Left NoResultsError
+    Right (q:_) -> Right q
+    Left e      -> Left e
 
 -- | Query stack exchange by first scraping Google for relevant question links
 --

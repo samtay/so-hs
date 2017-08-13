@@ -86,6 +86,7 @@ data Error
   | ScrapingError
   | JSONError Text
   | YAMLError Text
+  | NoResultsError
   | UnknownError Text
   deriving (Eq, Show)
 
