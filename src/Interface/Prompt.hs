@@ -41,11 +41,11 @@ noResultsPrompt :: Byline App ()
 noResultsPrompt = undefined
 
 mkPrompt :: Text -> Stylized
-mkPrompt p = let arrow = ("==> " <> fg yellow)
-                 len   = T.length p
-              in arrow <> text p <> "\n"
-              <> arrow <> text (T.replicate len "-") <> "\n"
-              <> arrow
+mkPrompt p =
+  let arrow = ("==> " <> fg yellow)
+      len = T.length p
+  in arrow <> text p <> "\n" <> arrow <> text (T.replicate len "-") <> "\n" <>
+     arrow
 
 onError :: Stylized
 onError = "invalid selection derp"

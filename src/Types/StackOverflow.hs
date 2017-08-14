@@ -70,4 +70,5 @@ instance FromJSON Site where
 --    which works if Parser is instance of Alternative
 questionsParser :: Value -> Parser [Question]
 questionsParser = filter answered <$$> withObject "questions" (.: "items")
-  where answered = not . null . qAnswers
+  where
+    answered = not . null . qAnswers

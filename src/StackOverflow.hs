@@ -120,4 +120,4 @@ seKey = "8o9g7WcfwnwbB*Qp4VsGsw(("
 -- | Transform to custom error types
 toError :: H.HttpException -> Maybe Error
 toError (H.HttpExceptionRequest _ (H.ConnectionFailure _)) = Just ConnectionFailure
-toError e                                                  = Just . UnknownError . T.pack . show $ e
+toError e = Just . UnknownError . T.pack . show $ e

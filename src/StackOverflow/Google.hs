@@ -87,4 +87,4 @@ matchQStr = ".com\\/questions\\/([[:digit:]]*)\\/."
 -- | Transform to custom error types
 toError :: H.HttpException -> Maybe Error
 toError (H.HttpExceptionRequest _ (H.StatusCodeException _ _)) = Just ScrapingError
-toError _                                                      = Nothing
+toError _ = Nothing

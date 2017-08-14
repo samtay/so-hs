@@ -41,13 +41,9 @@ runApp :: App ()
 runApp = do
   -- Start fetching questions asynchronously
   aQuestions <- appAsync query
-
   opts <- gets (sOptions)
-
   -- If @--lucky@, show single answer prompt
-  when (opts ^. oLuckyL)
-    $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
-
+  when (opts ^. oLuckyL) $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
   -- Execute chosen interface
   case opts ^. oUiL of
     Brick  -> runBrick aQuestions
@@ -86,13 +82,14 @@ exitConfigError e = do
 
 exitOnError :: (a -> IO b) -> Either Error a -> IO b
 exitOnError rightHandler (Right a) = rightHandler a
-exitOnError _            (Left e)  = case e of
-  ConnectionFailure ->
-    exitWithError "Connection failure: are you connected to the internet?"
-  ScrapingError ->
-    exitWithError $ "Error scraping Google. Try " <> code "so --no-google" <> "."
-  JSONError errMsg ->
-    exitWithError $ "Error parsing StackOverflow API:\n\n" <> errMsg
-  UnknownError errMsg ->
-    exitWithError $ "Unknown error:\n\n" <> errMsg
-  _ -> exitWithError "Unknown error"
+exitOnError _ (Left e) =
+  case e of
+    ConnectionFailure ->
+      exitWithError "Connection failure: are you connected to the internet?"
+    ScrapingError ->
+      exitWithError $
+      "Error scraping Google. Try " <> code "so --no-google" <> "."
+    JSONError errMsg ->
+      exitWithError $ "Error parsing StackOverflow API:\n\n" <> errMsg
+    UnknownError errMsg -> exitWithError $ "Unknown error:\n\n" <> errMsg
+    _ -> exitWithError "Unknown error"
