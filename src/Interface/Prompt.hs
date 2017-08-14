@@ -5,13 +5,13 @@ module Interface.Prompt
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Concurrent       (threadDelay)
-import           Control.Exception        (throwIO)
+import           Control.Concurrent       (forkIO, killThread, threadDelay)
 import           Control.Monad            (void)
+import           System.IO                (stdout)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Concurrent.Async (Async, poll)
+import           Control.Concurrent.Async (Async, wait)
 import           Control.Monad.Trans      (liftIO)
 import           Data.Text                (Text)
 import qualified Data.Text                as T
@@ -59,18 +59,29 @@ onError :: Stylized
 onError = "invalid selection derp"
 
 waitWithLoading :: Async a -> IO a
-waitWithLoading a = go 1
+waitWithLoading a = do
+  loadingThreadId <- forkIO showLoadingAnimation
+  res <- wait a
+  killThread loadingThreadId
+  A.clearLine
+  A.showCursor
+  return res
+
+showLoadingAnimation :: IO ()
+showLoadingAnimation =
+  noBufferOn stdout $ do
+    A.hideCursor
+    A.clearLine
+    TIO.putStr loadingPrefix
+    go 1
   where
+    loadingPrefix = "Loading"
     go n
-      | n > 3     = go 1
+      | n < 7 = do
+        threadDelay 200000
+        TIO.putStr "."
+        go (n + 1)
       | otherwise = do
-          A.clearLine
-          currentA <- poll a
-          case currentA of
-            Nothing -> do
-              TIO.putStr ("Loading" <> T.replicate n ".")
-              A.setCursorColumn 0
-              A.clearFromCursorToLineEnd
-              go (n + 1)
-            Just (Left e)  -> throwIO e
-            Just (Right r) -> return r
+        A.setCursorColumn (T.length loadingPrefix)
+        A.clearFromCursorToLineEnd
+        go 1

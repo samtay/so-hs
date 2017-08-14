@@ -14,6 +14,7 @@ module Utils.LowLevel
   , promptChar
   , promptLine
   , noBuffer
+  , noBufferOn
   ) where
 
 --------------------------------------------------------------------------------
@@ -22,7 +23,7 @@ import           Data.Char           (toLower, toUpper)
 import           Data.Semigroup      (Semigroup, (<>))
 import           Data.String         (IsString, fromString)
 import           System.Exit         (exitFailure)
-import           System.IO           (BufferMode (..), hGetBuffering,
+import           System.IO           (BufferMode (..), Handle, hGetBuffering,
                                       hSetBuffering, stderr, stdin)
 
 --------------------------------------------------------------------------------
@@ -106,10 +107,16 @@ prompt action txt = do
   action
 
 -- | Allow retrieval from stdin with a temporary NoBuffering mode
+--
+-- Specialized version of 'noBufferOn', such that @noBufferOn == noBuffer stdin@
 noBuffer :: IO a -> IO a
-noBuffer action = do
-  mode <- hGetBuffering stdin
-  hSetBuffering stdin NoBuffering
+noBuffer = noBufferOn stdin
+
+-- | Run an action with temporary NoBuffering mode on given handle
+noBufferOn :: Handle -> IO a -> IO a
+noBufferOn handle action = do
+  mode <- hGetBuffering handle
+  hSetBuffering handle NoBuffering
   result <- action
-  hSetBuffering stdin mode
+  hSetBuffering handle mode
   return result
