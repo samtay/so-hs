@@ -26,8 +26,7 @@ import           Interface.Brick        (runBrick)
 import           Interface.Prompt       (runPrompt)
 import           StackOverflow          (query, queryLucky)
 import           Types
-import           Utils                  (code, err, exitWithError, info,
-                                         noBuffer)
+import           Utils                  (code, err, exitWithError, promptChar)
 
 main :: IO ()
 main = withConfig $ \cfg -> do
@@ -52,7 +51,7 @@ runApp = do
   -- Execute chosen interface
   case opts ^. oUiL of
     Brick  -> runBrick aQuestions
-    Prompt -> liftIO $ exitWithError "Prompt interface not yet implemented"
+    Prompt -> runPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
 runLuckyPrompt :: Question -> IO ()
@@ -63,8 +62,7 @@ runLuckyPrompt question = do
     Nothing     -> exitWithError "No answers found. Try a different question."
     Just answer -> do
       TIO.putStrLn (answer ^. aBodyL)
-      putStrLn ("\n" <> info "Press [SPACE] to see more results, or any other key to exit.")
-      c <- noBuffer getChar
+      c <- promptChar "Press [SPACE] to see more results, or any other key to exit."
       case c of
         ' ' -> return ()
         _   -> exitSuccess
@@ -74,8 +72,8 @@ withConfig action = getConfigE >>= either exitConfigError action
 
 exitConfigError :: String -> IO a
 exitConfigError e = do
-  f <- getConfigFile
-  exitWithError . concat
+  f <- T.pack <$> getConfigFile
+  exitWithError . T.concat
     $ [ "It looks like there is an error in your configuration. "
       , "If you're having trouble fixing it, you can always run:"
       , "\n\n"
@@ -84,7 +82,7 @@ exitConfigError e = do
       , "to reset to defaults. "
       , "For reference, the yaml parsing error was:"
       , "\n\n"
-      , err e ]
+      , err (T.pack e) ]
 
 exitOnError :: (a -> IO b) -> Either Error a -> IO b
 exitOnError rightHandler (Right a) = rightHandler a
@@ -94,7 +92,7 @@ exitOnError _            (Left e)  = case e of
   ScrapingError ->
     exitWithError $ "Error scraping Google. Try " <> code "so --no-google" <> "."
   JSONError errMsg ->
-    exitWithError $ "Error parsing StackOverflow API:\n\n" <> T.unpack errMsg
+    exitWithError $ "Error parsing StackOverflow API:\n\n" <> errMsg
   UnknownError errMsg ->
-    exitWithError $ "Unknown error:\n\n" <> T.unpack errMsg
+    exitWithError $ "Unknown error:\n\n" <> errMsg
   _ -> exitWithError "Unknown error"

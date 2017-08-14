@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Utils
   ( suffixLenses
   , capitalize
@@ -11,6 +12,8 @@ module Utils
   , code
   , info
   , err
+  , promptChar
+  , promptLine
   , noBuffer
   ) where
 
@@ -20,12 +23,14 @@ import           Data.Char           (toLower, toUpper)
 import           Data.Semigroup      (Semigroup, (<>))
 import           Data.String         (IsString, fromString)
 import           System.Exit         (exitFailure)
-import           System.IO           (BufferMode (..), hGetBuffering, hPutStrLn,
+import           System.IO           (BufferMode (..), hGetBuffering,
                                       hSetBuffering, stderr, stdin)
 
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Brick.Types         (suffixLenses)
+import           Data.Text           (Text)
+import qualified Data.Text.IO        as TIO
 import           Lens.Micro          (ix, (^?))
 import qualified System.Console.ANSI as A
 
@@ -63,8 +68,8 @@ capitalize (h:end) = toUpper h : fmap toLower end
 
 ---- ANSI helpers
 
-exitWithError :: String -> IO a
-exitWithError e = hPutStrLn stderr (err e) >> exitFailure
+exitWithError :: Text -> IO a
+exitWithError e = TIO.hPutStrLn stderr (err e) >> exitFailure
 
 -- | Style code
 code :: (Semigroup s, IsString s) => s -> s
@@ -83,6 +88,24 @@ color :: (Semigroup s, IsString s) => A.ColorIntensity -> A.Color -> s -> s
 color i c s = start <> s <> reset
   where start = fromString . A.setSGRCode $ [A.SetColor A.Foreground i c]
         reset = fromString . A.setSGRCode $ [A.Reset]
+
+-- | Prompt for line of text
+promptLine :: Text -> IO String
+promptLine = prompt getLine
+
+-- | Prompt for a single char without waiting for newline
+promptChar :: Text -> IO Char
+promptChar = prompt (noBuffer getChar)
+
+-- | Prompt utility
+prompt
+  :: IO a  -- ^ Retrieval method
+  -> Text  -- ^ Text to show as prompt
+  -> IO a  -- ^ Return from retrieval method
+prompt action txt = do
+  A.setSGR [A.SetColor A.Foreground A.Dull A.Yellow]
+  TIO.putStrLn $ "\n" <> txt
+  action
 
 -- | Allow retrieval from stdin with a temporary NoBuffering mode
 noBuffer :: IO a -> IO a

@@ -3,9 +3,10 @@ module Interface.Prompt where
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Monad.Trans   (liftIO)
-import           Data.Text             (Text)
-import qualified Data.Text             as T
+import           Control.Concurrent.Async (Async, wait)
+import           Control.Monad.Trans      (liftIO)
+import           Data.Text                (Text)
+import qualified Data.Text                as T
 import           Lens.Micro
 import           System.Console.Byline
 
@@ -15,11 +16,11 @@ import           Types
 
 
 -- | Run prompt with questions
-runPrompt :: [Question] -> App (Maybe ())
-runPrompt qs =
-  if null qs
-     then runByline noResultsPrompt
-     else runByline (questionsPrompt qs)
+runPrompt :: Async (Either Error [Question]) -> App ()
+runPrompt aQuestions = do
+  liftIO $ showLoading aQuestions
+  qResult <- liftIO $ wait aQuestions
+  undefined
 
 questionsPrompt :: [Question] -> Byline App ()
 questionsPrompt qs = do
@@ -48,3 +49,6 @@ mkPrompt p = let arrow = ("==> " <> fg yellow)
 
 onError :: Stylized
 onError = "invalid selection derp"
+
+showLoading :: Async a -> IO ()
+showLoading = undefined
