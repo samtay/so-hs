@@ -1,117 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Utils
-  ( suffixLenses
-  , capitalize
-  , (<$$>)
-  , (!?)
-  , (.*.)
-  , whenDef
-  , unlessDef
-  , exitWithError
-  , color
-  , code
-  , info
-  , err
-  , promptChar
-  , promptLine
-  , noBuffer
+  ( exitOnError
+  , module Utils.LowLevel
   ) where
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Data.Char           (toLower, toUpper)
-import           Data.Semigroup      (Semigroup, (<>))
-import           Data.String         (IsString, fromString)
-import           System.Exit         (exitFailure)
-import           System.IO           (BufferMode (..), hGetBuffering,
-                                      hSetBuffering, stderr, stdin)
+import           Data.Semigroup ((<>))
 
 --------------------------------------------------------------------------------
--- Library imports:
-import           Brick.Types         (suffixLenses)
-import           Data.Text           (Text)
-import qualified Data.Text.IO        as TIO
-import           Lens.Micro          (ix, (^?))
-import qualified System.Console.ANSI as A
+-- Local imports:
+import           Types
+import           Utils.LowLevel
 
--- | Lift twice
-infixl 3 <$$>
-(<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
-(<$$>) = fmap . fmap
 
--- | Safe !!
-(!?) :: [a] -> Int -> Maybe a
-l !? i = l ^? ix i
-
--- | Double composition (allow first function to accept two arguments)
-(.*.) :: (c -> d) -> (a -> b -> c) -> a -> b -> d
-g .*. f = \x y -> g (f x y)
-
-whenDef :: Monad m
-  => a -- ^ Default value
-  -> Bool -- ^ Predicate
-  -> m a  -- ^ Action to run when predicate is 'True'
-  -> m a
-whenDef def b action = if b then action else return def
-
-unlessDef :: Monad m
-  => a -- ^ Default value
-  -> Bool -- ^ Predicate
-  -> m a  -- ^ Action to run when predicate is 'False'
-  -> m a
-unlessDef def b action = if not b then action else return def
-
--- | Capitalize first letter of string, lowercase rest
-capitalize :: String -> String
-capitalize []      = []
-capitalize (h:end) = toUpper h : fmap toLower end
-
----- ANSI helpers
-
-exitWithError :: Text -> IO a
-exitWithError e = TIO.hPutStrLn stderr (err e) >> exitFailure
-
--- | Style code
-code :: (Semigroup s, IsString s) => s -> s
-code = color A.Vivid A.Cyan
-
--- | Style errors with vivid red
-err :: (Semigroup s, IsString s) => s -> s
-err = color A.Vivid A.Red
-
--- | Style info with dull yellow
-info :: (Semigroup s, IsString s) => s -> s
-info = color A.Dull A.Yellow
-
--- | Style strings with given intensity, color
-color :: (Semigroup s, IsString s) => A.ColorIntensity -> A.Color -> s -> s
-color i c s = start <> s <> reset
-  where start = fromString . A.setSGRCode $ [A.SetColor A.Foreground i c]
-        reset = fromString . A.setSGRCode $ [A.Reset]
-
--- | Prompt for line of text
-promptLine :: Text -> IO String
-promptLine = prompt getLine
-
--- | Prompt for a single char without waiting for newline
-promptChar :: Text -> IO Char
-promptChar = prompt (noBuffer getChar)
-
--- | Prompt utility
-prompt
-  :: IO a  -- ^ Retrieval method
-  -> Text  -- ^ Text to show as prompt
-  -> IO a  -- ^ Return from retrieval method
-prompt action txt = do
-  A.setSGR [A.SetColor A.Foreground A.Dull A.Yellow]
-  TIO.putStrLn $ "\n" <> txt
-  action
-
--- | Allow retrieval from stdin with a temporary NoBuffering mode
-noBuffer :: IO a -> IO a
-noBuffer action = do
-  mode <- hGetBuffering stdin
-  hSetBuffering stdin NoBuffering
-  result <- action
-  hSetBuffering stdin mode
-  return result
+exitOnError :: (a -> IO b) -> Either Error a -> IO b
+exitOnError rightHandler (Right a) = rightHandler a
+exitOnError _ (Left e) =
+  case e of
+    ConnectionFailure ->
+      exitWithError "Connection failure: are you connected to the internet?"
+    ScrapingError ->
+      exitWithError $
+      "Error scraping Google. Try " <> code "so --no-google" <> "."
+    JSONError errMsg ->
+      exitWithError $ "Error parsing StackOverflow API:\n\n" <> errMsg
+    UnknownError errMsg -> exitWithError $ "Unknown error:\n\n" <> errMsg
+    _ -> exitWithError "Unknown error"

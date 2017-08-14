@@ -21,15 +21,20 @@ import           Control.Monad.Reader     (MonadReader, ReaderT, ask,
                                            runReaderT)
 import           Control.Monad.State      (MonadState, StateT, evalStateT,
                                            execStateT, get, runStateT)
+import           Data.Default
 import           Data.Text                (Text)
 import qualified Data.Text                as T
 import           Data.Yaml
+import           Lens.Micro               ((^.))
+import           Lens.Micro.TH            (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Types.StackOverflow
-import           Utils
+import           Utils.LowLevel
 
+--------------------------------------------------------------------------------
+-- App
 newtype App a = App { unApp :: ReaderT AppConfig (StateT AppState IO) a }
   deriving (Functor, Applicative, Monad,
             MonadReader AppConfig, MonadState AppState,
@@ -53,33 +58,38 @@ appAsync action = do
   st  <- get
   liftIO . async . evalAppT cfg st $ action
 
-
-data AppState = AppState
-  { sQuery   :: Text
-  , sOptions :: Options
-  }
-
-data AppConfig = AppConfig
-  { cDefaultOpts :: Options      -- ^ Default CLI options
-  , cSites       :: [Site]       -- ^ Available SE sites
-  , cEditor      :: Maybe Editor -- ^ Custom editor to view answer
-  , cApiKey      :: Maybe Text
-  } deriving (Eq, Show)
-
-data Options = Options
-  { oGoogle :: Bool
-  , oLucky  :: Bool
-  , oLimit  :: Int
-  , oSite   :: Site
-  , oUi     :: Interface
-  } deriving (Eq, Show)
-
+--------------------------------------------------------------------------------
+-- Types
 data Interface = Brick | Prompt
   deriving (Eq, Show, Read)
 
 -- Note emacs requires process substitution, check if possible with shelly/turtle
 data Editor = Less | More | Vim | CustomEditor Text
   deriving (Eq, Show, Read)
+
+data AppState = AppState
+  { _sQuery   :: Text
+  , _sOptions :: Options
+  }
+
+data AppConfig = AppConfig
+  { _cDefaultOpts :: Options      -- ^ Default CLI options
+  , _cSites       :: [Site]       -- ^ Available SE sites
+  , _cEditor      :: Maybe Editor -- ^ Custom editor to view answer
+  , _cApiKey      :: Maybe Text
+  } deriving (Eq, Show)
+
+data Options = Options
+  { _oGoogle :: Bool
+  , _oLucky  :: Bool
+  , _oLimit  :: Int
+  , _oSite   :: Site
+  , _oUi     :: Interface
+  } deriving (Eq, Show)
+
+makeLenses ''AppState
+makeLenses ''AppConfig
+makeLenses ''Options
 
 data Error
   = ConnectionFailure
@@ -92,33 +102,34 @@ data Error
 
 instance FromJSON AppConfig where
   parseJSON = withObject "config" $ \o -> do
-    cDefaultOpts <- o .:? "defaultOptions" .!= mempty
-    cSites'      <- o .:? "sites"          .!= []
-    cEditor      <- o .:? "editor"
-    cApiKey      <- o .:? "apiKey"
-    let cSites = if null cSites' then [defSite] else site <$> cSites'
+    _cDefaultOpts <- o .:? "defaultOptions" .!= def
+    _cSites'      <- o .:? "sites"          .!= []
+    _cEditor      <- o .:? "editor"
+    _cApiKey      <- o .:? "apiKey"
+    let _cSites = if null _cSites' then [def] else site <$> _cSites'
     return AppConfig{..}
 
 instance FromJSON Options where
   parseJSON = withObject "options" $ \o -> do
-    oGoogle <- o .:? "google" .!= oGoogle defaultOptions
-    oLucky  <- o .:? "lucky"  .!= oLucky defaultOptions
-    oLimit  <- o .:? "limit"  .!= oLimit defaultOptions
-    oSite'  <- o .:? "site"   .!= Site' (oSite defaultOptions)
-    oUi     <- o .:? "ui"     .!= oUi defaultOptions
-    let oSite = site oSite'
+    _oGoogle <- o .:? "google" .!= (def ^. oGoogle)
+    _oLucky  <- o .:? "lucky"  .!= (def ^. oLucky)
+    _oLimit  <- o .:? "limit"  .!= (def ^. oLimit)
+    _oSite'  <- o .:? "site"   .!= Site' (def ^. oSite)
+    _oUi     <- o .:? "ui"     .!= (def ^. oUi)
+    let _oSite = site _oSite'
     return Options{..}
 
 -- Allow users to have a more intuitive yaml config than the JSON api
 newtype Site' = Site' { site :: Site }
 instance FromJSON Site' where
   parseJSON = withObject "site" $ \o -> do
-    sUrl      <- o .: "url"
-    sApiParam <- o .: "shortcode"
+    _sUrl      <- o .: "url"
+    _sApiParam <- o .: "shortcode"
     return . Site' $ Site {..}
 
+-- TODO see if still necessary
 instance Monoid Options where
-  mempty         = defaultOptions
+  mempty         = def
   _ `mappend` o2 = o2
 
 instance FromJSON Editor where
@@ -135,19 +146,11 @@ instance FromJSON Interface where
       "prompt" -> return Prompt
       _        -> fail "invalid interface"
 
-defaultOptions :: Options
-defaultOptions = Options
-  { oGoogle = True
-  , oLucky  = False
-  , oLimit  = 25
-  , oSite   = defSite
-  , oUi     = Brick }
-
-defSite :: Site
-defSite = Site
-  { sUrl = "https://stackoverflow.com"
-  , sApiParam = "stackoverflow" }
-
-suffixLenses ''AppState
-suffixLenses ''AppConfig
-suffixLenses ''Options
+instance Default Options where
+  def = Options
+    { _oGoogle = True
+    , _oLucky  = False
+    , _oLimit  = 25
+    , _oSite   = def
+    , _oUi     = Brick
+    }

@@ -7,68 +7,79 @@ module Types.StackOverflow where
 -- Library imports:
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
+import           Data.Default
 import           Data.Text        (Text)
+import           Lens.Micro       ((^.))
+import           Lens.Micro.TH    (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Utils
+import           Utils.LowLevel
 
 data Question = Question
-  { qId      :: Int
-  , qScore   :: Int
-  , qAnswers :: [Answer]
-  , qTitle   :: Text
-  , qBody    :: Text
+  { _qId      :: Int
+  , _qScore   :: Int
+  , _qAnswers :: [Answer]
+  , _qTitle   :: Text
+  , _qBody    :: Text
   } deriving (Show)
 
 data Answer = Answer
-  { aId       :: Int
-  , aScore    :: Int
-  , aBody     :: Text
-  , aAccepted :: Bool
+  { _aId       :: Int
+  , _aScore    :: Int
+  , _aBody     :: Text
+  , _aAccepted :: Bool
   } deriving (Show)
 
 data Site = Site
-  { sUrl      :: Text
-  , sApiParam :: Text
+  { _sUrl      :: Text
+  , _sApiParam :: Text
   } deriving (Eq, Show)
 
-suffixLenses ''Question
-suffixLenses ''Answer
-suffixLenses ''Site
+makeLenses ''Question
+makeLenses ''Answer
+makeLenses ''Site
 
 instance Eq Question where
-  q1 == q2 = qId q1 == qId q2
+  q1 == q2
+    = q1 ^. qId == q2 ^. qId
 
 instance Eq Answer where
-  a1 == a2 = aId a1 == aId a2
+  a1 == a2
+    = a1 ^. aId == a2 ^. aId
 
 instance FromJSON Question where
   parseJSON = withObject "question" $ \o -> do
-    qId      <- o .: "question_id"
-    qScore   <- o .: "score"
-    qAnswers <- o .:? "answers" .!= []
-    qTitle   <- o .: "title"
-    qBody    <- o .: "body_markdown"
+    _qId      <- o .: "question_id"
+    _qScore   <- o .: "score"
+    _qAnswers <- o .:? "answers" .!= []
+    _qTitle   <- o .: "title"
+    _qBody    <- o .: "body_markdown"
     return Question {..}
 
 instance FromJSON Answer where
   parseJSON = withObject "answer" $ \o -> do
-    aId       <- o .: "answer_id"
-    aScore    <- o .: "score"
-    aBody     <- o .: "body_markdown"
-    aAccepted <- o .: "is_accepted"
+    _aId       <- o .: "answer_id"
+    _aScore    <- o .: "score"
+    _aBody     <- o .: "body_markdown"
+    _aAccepted <- o .: "is_accepted"
     return Answer {..}
 
 instance FromJSON Site where
   parseJSON = withObject "site" $ \o -> do
-    sUrl      <- o .: "site_url"
-    sApiParam <- o .: "api_site_parameter"
+    _sUrl      <- o .: "site_url"
+    _sApiParam <- o .: "api_site_parameter"
     return Site {..}
+
+instance Default Site where
+  def = Site
+    { _sUrl = "https://stackoverflow.com"
+    , _sApiParam = "stackoverflow"
+    }
 
 -- TODO handle API errors; maybe data ApiResponse = Error | [Question]
 --    which works if Parser is instance of Alternative
 questionsParser :: Value -> Parser [Question]
 questionsParser = filter answered <$$> withObject "questions" (.: "items")
   where
-    answered = not . null . qAnswers
+    answered q = not . null $ q ^. qAnswers

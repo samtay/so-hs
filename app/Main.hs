@@ -1,5 +1,5 @@
-{-# LANGUAGE NamedFieldPuns    #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 module Main where
 
 --------------------------------------------------------------------------------
@@ -26,13 +26,14 @@ import           Interface.Brick        (runBrick)
 import           Interface.Prompt       (runPrompt)
 import           StackOverflow          (query, queryLucky)
 import           Types
-import           Utils                  (code, err, exitWithError, promptChar)
+import           Utils                  (code, err, exitOnError, exitWithError,
+                                         promptChar)
 
 main :: IO ()
 main = withConfig $ \cfg -> do
   -- Get initial state from CLI
-  (Cli opts qry) <- runCli cfg
-  let initialState = AppState {sQuery = qry, sOptions = opts}
+  (Cli _sOptions _sQuery) <- runCli cfg
+  let initialState = AppState {..}
 
   -- Run App
   void . evalAppT cfg initialState $ runApp
@@ -41,23 +42,23 @@ runApp :: App ()
 runApp = do
   -- Start fetching questions asynchronously
   aQuestions <- appAsync query
-  opts <- gets (sOptions)
+  opts <- gets (_sOptions)
   -- If @--lucky@, show single answer prompt
-  when (opts ^. oLuckyL) $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
+  when (opts ^. oLucky) $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
   -- Execute chosen interface
-  case opts ^. oUiL of
+  case opts ^. oUi of
     Brick  -> runBrick aQuestions
     Prompt -> runPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
 runLuckyPrompt :: Question -> IO ()
 runLuckyPrompt question = do
-  let sortedAnswers = sortOn (negate . aScore) (question ^. qAnswersL)
+  let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
       mAnswer       = listToMaybe sortedAnswers
   case mAnswer of
     Nothing     -> exitWithError "No answers found. Try a different question."
     Just answer -> do
-      TIO.putStrLn (answer ^. aBodyL)
+      TIO.putStrLn (answer ^. aBody)
       c <- promptChar "Press [SPACE] to see more results, or any other key to exit."
       case c of
         ' ' -> return ()
@@ -79,17 +80,3 @@ exitConfigError e = do
       , "For reference, the yaml parsing error was:"
       , "\n\n"
       , err (T.pack e) ]
-
-exitOnError :: (a -> IO b) -> Either Error a -> IO b
-exitOnError rightHandler (Right a) = rightHandler a
-exitOnError _ (Left e) =
-  case e of
-    ConnectionFailure ->
-      exitWithError "Connection failure: are you connected to the internet?"
-    ScrapingError ->
-      exitWithError $
-      "Error scraping Google. Try " <> code "so --no-google" <> "."
-    JSONError errMsg ->
-      exitWithError $ "Error parsing StackOverflow API:\n\n" <> errMsg
-    UnknownError errMsg -> exitWithError $ "Unknown error:\n\n" <> errMsg
-    _ -> exitWithError "Unknown error"

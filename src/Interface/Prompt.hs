@@ -1,27 +1,36 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Interface.Prompt where
+module Interface.Prompt
+  ( runPrompt
+  ) where
+
+--------------------------------------------------------------------------------
+-- Base imports:
+import           Control.Concurrent       (threadDelay)
+import           Control.Exception        (throwIO)
+import           Control.Monad            (void)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Concurrent.Async (Async, wait)
+import           Control.Concurrent.Async (Async, poll)
 import           Control.Monad.Trans      (liftIO)
 import           Data.Text                (Text)
 import qualified Data.Text                as T
-import           Lens.Micro
+import qualified Data.Text.IO             as TIO
+import           Lens.Micro               ((^.))
+import qualified System.Console.ANSI      as A
 import           System.Console.Byline
-
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Types
+import           Utils
 
 
 -- | Run prompt with questions
 runPrompt :: Async (Either Error [Question]) -> App ()
-runPrompt aQuestions =
-  liftIO $
-    waitWithLoading aQuestions >>= questionsPrompt
+runPrompt aQuestions = liftIO $
+  waitWithLoading aQuestions >>= exitOnError (void . runByline . questionsPrompt)
 
-questionsPrompt :: [Question] -> Byline App ()
+questionsPrompt :: [Question] -> Byline IO ()
 questionsPrompt qs = do
   let prompt = mkPrompt "Enter n° of question to view"
   q <- askWithMenuRepeatedly (questionsMenu qs) prompt onError
@@ -31,7 +40,7 @@ questionsMenu :: [Question] -> Menu Question
 questionsMenu = opts . (`menu` styleQuestion)
   where
     opts            = suffix " "
-    styleQuestion q = styleScore (q ^. qScoreL) <> " " <> text (q ^. qTitleL)
+    styleQuestion q = styleScore (q ^. qScore) <> " " <> text (q ^. qTitle)
     styleScore n    =
       ("(" <> (text . T.pack . show) n <> ")")
         <> bold <> fg (if n > 0 then green else red)
@@ -49,12 +58,15 @@ mkPrompt p =
 onError :: Stylized
 onError = "invalid selection derp"
 
-showLoading :: Async a -> (a -> IO b) -> IO b
-showLoading a = go 1
+waitWithLoading :: Async a -> IO a
+waitWithLoading a = go 1
   where
     go n
       | n > 3     = go 1
       | otherwise = do
-          stillLoading <- isNothing <$> poll a
-          case poll a of
-            Nothing -> clearLputStrLn $ "Loading" <> show n
+          clearLine
+          currentA <- poll a
+          case currentA of
+            Nothing -> putStrLn "Loading" <> replicate n '.'
+            Left e  -> throw e
+            Right r -> return r

@@ -36,14 +36,14 @@ import           Utils
 -- | Get question results
 query :: App (Either Error [Question])
 query = do
-  useG <- gets (oGoogle . sOptions)
+  useG <- gets (_oGoogle . _sOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
 
 -- | Get a single question result (hopefully decent performance boost)
 queryLucky :: App (Either Error Question)
 queryLucky = do
   initialState <- get
-  let modifiedState = initialState & sOptionsL . oLimitL .~ 1
+  let modifiedState = initialState & sOptions . oLimit .~ 1
   put modifiedState
   result <- query
   put initialState
@@ -65,13 +65,13 @@ queryG = do
   where
     mkQString     = intercalate ";" . map show
     position      = fromMaybe maxBound .*. elemIndex
-    sortByIds ids = sortOn (flip position ids . qId)
+    sortByIds ids = sortOn (flip position ids . _qId)
 
 
 -- | Query stack exchange via advanced search API
 querySE :: App (Either Error [Question])
 querySE = do
-  q <- gets sQuery
+  q <- gets _sQuery
   seRequest "search/advanced" [ W.param "q"       .~ [q]
                               , W.param "answers" .~ ["1"]
                               , W.param "order"   .~ ["desc"]
@@ -81,8 +81,8 @@ querySE = do
 -- TODO add api keys and whatnot
 appDefaults :: App W.Options
 appDefaults = do
-  key <- fromMaybe seKey <$> asks cApiKey
-  siteParam <- gets (sApiParam . oSite . sOptions)
+  key <- fromMaybe seKey <$> asks _cApiKey
+  siteParam <- gets (_sApiParam . _oSite . _sOptions)
   return $ W.defaults & W.header "Accept" .~ ["application/json"]
                       & W.param "filter"  .~ [seFilter] -- In the future get this from App
                       & W.param "site"    .~ [siteParam]

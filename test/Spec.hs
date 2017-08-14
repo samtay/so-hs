@@ -42,17 +42,17 @@ main = hspec $ do
       decodeCfgFromFile siteStringFile
         `shouldReturn` Left "Error in $.defaultOptions.site: expected site, encountered String"
     it "reads site configuration properly" $
-      sApiParam . oSite . cDefaultOpts <$$> decodeCfgFromFile serverfaultFile
+      _sApiParam . _oSite . _cDefaultOpts <$$> decodeCfgFromFile serverfaultFile
         `shouldReturn` Right "serverfault"
     it "always allows stackoverflow search" $
-      sApiParam <$$> cSites <$$> decodeCfgFromFile noSitesFile
+      _sApiParam <$$> _cSites <$$> decodeCfgFromFile noSitesFile
         `shouldReturn` Right ["stackoverflow"]
     it "handles bad custom ui command gracefully" $
       decodeCfgFromFile badUIFile
         `shouldReturn` Left "Error in $.defaultOptions.ui: invalid interface"
 
 allAnswerIds :: [Question] -> [Int]
-allAnswerIds = concatMap ((fmap aId) . qAnswers)
+allAnswerIds = concatMap ((fmap _aId) . _qAnswers)
 
 decodeQFromFile :: FilePath -> IO (Either String [Question])
 decodeQFromFile f = do

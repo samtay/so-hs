@@ -61,35 +61,35 @@ parseOpts cfg = Options
   <$> enableDisableOpt
       "google"
       "Use google to find relevant question links"
-      (cfg ^. cDefaultOptsL ^. oGoogleL)
+      (cfg ^. cDefaultOpts ^. oGoogle)
       showDefault
   <*> enableDisableOpt
       "lucky"
       "Return the single most relevant answer"
-      (cfg ^. cDefaultOptsL ^. oLuckyL)
+      (cfg ^. cDefaultOpts ^. oLucky)
       showDefault
   <*> option auto
       ( long "limit"
      <> short 'l'
      <> metavar "INT"
      <> help "Upper limit on number of questions to fetch"
-     <> value (cfg ^. cDefaultOptsL ^. oLimitL)
+     <> value (cfg ^. cDefaultOpts ^. oLimit)
      <> showDefault
       )
-  <*> option (readSite (cSites cfg))
+  <*> option (readSite (cfg ^. cSites))
       ( long "site"
      <> short 's'
      <> metavar "CODE"
      <> help "Stack Exchange site to search. See --print-sites for available options."
-     <> value (cfg ^. cDefaultOptsL ^. oSiteL)
-     <> showDefaultWith (T.unpack . sApiParam)
-     <> completeWith (T.unpack . sApiParam <$> cSites cfg)
+     <> value (cfg ^. cDefaultOpts ^. oSite)
+     <> showDefaultWith (T.unpack . _sApiParam)
+     <> completeWith (T.unpack . _sApiParam <$> cfg ^. cSites)
       )
   <*> option readUi
       ( short 'i'
      <> metavar "brick|prompt"
      <> help "Interface for exploring questions and answers"
-     <> value (cfg ^. cDefaultOptsL ^. oUiL)
+     <> value (cfg ^. cDefaultOpts ^. oUi)
      <> showDefault
       )
 
@@ -99,7 +99,7 @@ parseOpts cfg = Options
 -- in that once encountered, regardless of any other args,
 -- the program will spit out sites and exit.
 printSitesOption :: AppConfig -> Parser (a -> a)
-printSitesOption cfg = infoOption (prettifiedSites (cSites cfg))
+printSitesOption cfg = infoOption (prettifiedSites (cfg ^. cSites))
   ( long "print-sites"
  <> help "Print Stack Exchange sites and exit"
   )
@@ -146,7 +146,7 @@ readSite sites =
     findWith p = listToMaybe . filter p
 
     matchSc :: Text -> Site -> Bool
-    matchSc sc site = sc == site ^. sApiParamL
+    matchSc sc site = sc == site ^. sApiParam
 
     throwErr :: Text -> ReadM Site
     throwErr sc = readerError . err . unwords
@@ -162,9 +162,9 @@ multiTextArg mods = T.unwords <$> some (strArgument mods)
 prettifiedSites :: [Site] -> String
 prettifiedSites sites =
   T.unpack . T.unlines
-    $ [T.concat [indent s, sApiParam s, ": ", sUrl s] | s <- ordered]
+    $ [T.concat [indent s, _sApiParam s, ": ", _sUrl s] | s <- ordered]
   where
-    ordered = sortBy (compare `on` sApiParam) sites -- alphabetically ordered
-    maxL = maximum . map (T.length . sApiParam) $ sites -- maximum shortcode length
-    diff s = maxL - T.length (sApiParam s)
+    ordered = sortBy (compare `on` _sApiParam) sites -- alphabetically ordered
+    maxL = maximum . map (T.length . _sApiParam) $ sites -- maximum shortcode length
+    diff s = maxL - T.length (_sApiParam s)
     indent s = T.replicate (diff s) " "

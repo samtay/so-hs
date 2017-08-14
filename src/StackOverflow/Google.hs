@@ -34,9 +34,9 @@ import           Utils
 -- | Scrape google for a list of question IDs
 google :: App (Either Error [Int])
 google = do
-  url   <- gets (sUrl . oSite . sOptions)
-  num   <- gets (oLimit . sOptions)
-  q     <- gets (sQuery)
+  url   <- gets (_sUrl . _oSite . _sOptions)
+  num   <- gets (_oLimit . _sOptions)
+  q     <- gets (_sQuery)
   eHtml <- tryJust toError. liftIO $ mkRequest url num q
   return $ eHtml >>= parseIds
 

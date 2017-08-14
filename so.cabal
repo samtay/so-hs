@@ -25,6 +25,7 @@ library
                      , Types
                      , Utils
   other-modules:       Types.StackOverflow
+                     , Utils.LowLevel
   build-depends:       base >= 4.7 && < 5
                      , aeson
                      , ansi-terminal
@@ -33,6 +34,7 @@ library
                      , brick
                      , byline
                      , bytestring
+                     , data-default
                      , directory
                      , exceptions
                      , filepath
