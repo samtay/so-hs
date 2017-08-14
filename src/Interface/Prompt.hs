@@ -64,9 +64,13 @@ waitWithLoading a = go 1
     go n
       | n > 3     = go 1
       | otherwise = do
-          clearLine
+          A.clearLine
           currentA <- poll a
           case currentA of
-            Nothing -> putStrLn "Loading" <> replicate n '.'
-            Left e  -> throw e
-            Right r -> return r
+            Nothing -> do
+              TIO.putStr ("Loading" <> T.replicate n ".")
+              A.setCursorColumn 0
+              A.clearFromCursorToLineEnd
+              go (n + 1)
+            Just (Left e)  -> throwIO e
+            Just (Right r) -> return r
