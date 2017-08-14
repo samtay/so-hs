@@ -17,10 +17,9 @@ import           Types
 
 -- | Run prompt with questions
 runPrompt :: Async (Either Error [Question]) -> App ()
-runPrompt aQuestions = do
-  liftIO $ showLoading aQuestions
-  qResult <- liftIO $ wait aQuestions
-  undefined
+runPrompt aQuestions =
+  liftIO $
+    waitWithLoading aQuestions >>= questionsPrompt
 
 questionsPrompt :: [Question] -> Byline App ()
 questionsPrompt qs = do
@@ -50,5 +49,12 @@ mkPrompt p =
 onError :: Stylized
 onError = "invalid selection derp"
 
-showLoading :: Async a -> IO ()
-showLoading = undefined
+showLoading :: Async a -> (a -> IO b) -> IO b
+showLoading a = go 1
+  where
+    go n
+      | n > 3     = go 1
+      | otherwise = do
+          stillLoading <- isNothing <$> poll a
+          case poll a of
+            Nothing -> clearLputStrLn $ "Loading" <> show n
