@@ -9,8 +9,11 @@ that it's easier to work across two computers.
 
 0. Consider moving question back into AppState, but kept as TMVar...
 2. Consider removing `Either Error [Question]` and just throwing `Error` as an exception..
-1. Finish up brick UI.
-0. idea: implement an extensible handler combinator that handles modal based input
+3. Consider using container other than `[]` for questions/answers. 
+4. Need to fix formatting in menu when answers have newlines ?
+4. **Need** to lazily parse stackoverflow text into limited markdown doc types,
+   then have renderers for said types in both brick and prompt (i.e. `code text`
+   goes to cyan color, etc.)
 4. Test --no-google flag
 6. freeze dependency versions
 
@@ -25,6 +28,8 @@ that it's easier to work across two computers.
    api key. need to catch `StatusCodeException` with code 400
 
 ### interface
+0. Both interfaces will need parser for markdown. The brick adaptation might be
+   useful for others.
 1. maybe custom widget holder to maintain column ratios
 2. extents might be useful for rendering previews efficiently
 3. vty supports reverseVideo style (mappend with selected item - see ListDemo)

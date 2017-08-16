@@ -22,8 +22,8 @@ import           Lens.Micro
 -- Local imports:
 import           Cli                    (Cli (..), runCli)
 import           Config                 (getConfigE, getConfigFile)
-import           Interface.Brick        (runBrick)
-import           Interface.Prompt       (runPrompt)
+import           Interface.Brick        (execBrick)
+import           Interface.Prompt       (execPrompt)
 import           StackOverflow          (query, queryLucky)
 import           Types
 import           Utils                  (code, err, exitOnError, exitWithError,
@@ -36,10 +36,10 @@ main = withConfig $ \cfg -> do
   let initialState = AppState {..}
 
   -- Run App
-  void . evalAppT cfg initialState $ runApp
+  void . evalAppT cfg initialState $ app
 
-runApp :: App ()
-runApp = do
+app :: App ()
+app = do
   -- Start fetching questions asynchronously
   aQuestions <- appAsync query
   opts <- gets (_sOptions)
@@ -47,8 +47,8 @@ runApp = do
   when (opts ^. oLucky) $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
   -- Execute chosen interface
   case opts ^. oUi of
-    Brick  -> runBrick aQuestions
-    Prompt -> runPrompt aQuestions
+    Brick  -> execBrick aQuestions
+    Prompt -> execPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
 runLuckyPrompt :: Question -> IO ()

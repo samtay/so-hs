@@ -3,10 +3,10 @@ extra-package-dbs: []
 packages:
   - location: '.'
   - location:
-      git: https://github.com/pjones/byline.git
-      commit: 6cc4fbfe32c1d69692cb409ac12350474a63772c
+      git: https://github.com/samtay/byline.git
+      commit: fe6f90aa4fc109b8203a2411e234f81b2ddf7b7b
     extra-dep: true
 extra-deps:
 - optparse-applicative-0.14.0.0
 - terminfo-hs-0.2.1
-resolver: lts-8.21
+resolver: lts-9.0

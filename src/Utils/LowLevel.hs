@@ -104,6 +104,7 @@ prompt
 prompt action txt = do
   A.setSGR [A.SetColor A.Foreground A.Dull A.Yellow]
   TIO.putStrLn $ "\n" <> txt
+  A.setSGR []
   action
 
 -- | Allow retrieval from stdin with a temporary NoBuffering mode

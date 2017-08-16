@@ -1,5 +1,5 @@
 module Interface.Brick
-  ( runBrick
+  ( execBrick
   ) where
 
 --------------------------------------------------------------------------------
@@ -56,8 +56,8 @@ data Fetcher = Fetcher { _fChan  :: BChan BEvent }
 --------------------------------------------------------------------------------
 -- Executtion
 
-runBrick :: Async (Either Error [Question]) -> App ()
-runBrick aQuestions = do
+execBrick :: Async (Either Error [Question]) -> App ()
+execBrick aQuestions = do
   state <- get
   conf  <- ask
   _ <- liftIO $ do
