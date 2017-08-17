@@ -51,6 +51,12 @@ main = hspec $ do
       decodeCfgFromFile badUIFile
         `shouldReturn` Left "Error in $.defaultOptions.ui: invalid interface"
 
+  describe "Markdown Parser" $ do
+    it "parses valid markdown successfuly" $
+      pending
+    it "does not fail for broken-ish markdown" $
+      pending
+
 allAnswerIds :: [Question] -> [Int]
 allAnswerIds = concatMap ((fmap _aId) . _qAnswers)
 
