@@ -227,7 +227,7 @@ check :: Stylized
 check = fg green <> " ✔ "
 
 answerTitle :: Answer -> Text
-answerTitle a = T.replace "\n" ".. " $ T.take 60 $ a ^. aBody
+answerTitle a = (<> "...") $ T.replace "\r\n" ".. " $ T.take 65 $ a ^. aBody
 
 score :: Int -> Stylized
 score n =
@@ -246,8 +246,7 @@ mkPrompt :: Text -> Stylized
 mkPrompt promptText =
   arrow <> text promptText <> "\n" <>
   arrow <> text (T.replicate (T.length promptText) "-") <> "\n" <>
-  arrow <>
-  text (T.pack (A.setSGRCode []))
+  arrow <> text (T.pack (A.setSGRCode []))
 
 commandsToText :: [Command] -> Text
 commandsToText = ("[" <>) . (<> "]") . T.intercalate "," . map (T.singleton . _cKey)
