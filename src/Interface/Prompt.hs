@@ -151,19 +151,20 @@ answersPrompt q = do
 answerPrompt :: Answer -> Byline PromptApp ()
 answerPrompt a = do
   liftIO $ TIO.putStrLn $ "\n" <> a ^. aBody <> "\n"
-  lift $ modify (pMenu . mPromptText .~  "")
-  -- empty menu, kind of a type system sham :/
-  runMenu
-    (allowNoItems True $ defaultFirst False $ mkMenu (const "") [])
-    (const $ return ())
+  runCommandPrompt
 
+-- | Similar to Byline's askWithMenu, except it allows
+-- the current commands within PromptApp menu state
+-- to be matched and executed. Also, in the case of a match
+-- of type 'a' from the byline menu, instead of returning 'a',
+-- a handler for modifying state is passed as the second argument.
 runMenu
   :: Menu a                      -- Byline Menu
   -> (a -> Byline PromptApp ())  -- Action on match
   -> Byline PromptApp ()
 runMenu bylineMenu action = do
   liftIO $ putStrLn ""
-  prompt <- mkPrompt <$> lift (gets _pMenu)
+  prompt <- menuToPrompt <$> lift (gets _pMenu)
   loop bylineMenu prompt
   where
     loop bMenu prompt = do
@@ -180,6 +181,26 @@ runMenu bylineMenu action = do
               lift $ modifyIO op
               runPrompt
         NoItems -> error "This shouldn't happen!"
+
+-- | This is like 'runMenu' but when there are no items, hence the only
+-- available selections are the commands.
+runCommandPrompt :: Byline PromptApp ()
+runCommandPrompt = do
+  cmds <- lift (gets (_mCommands . _pMenu))
+  opKey <- askUntil
+    (mkPrompt $ "Next action: " <> commandsToText cmds)
+    Nothing
+    (confirmer cmds)
+  case findOpByKey opKey cmds of
+    Nothing -> runCommandPrompt
+    Just op -> do
+      lift $ modifyIO op
+      runPrompt
+  where
+    confirmer cmds input = return $
+      case findOpByKey input cmds of
+        Nothing -> Left $ onInvalid input
+        Just _  -> Right input
 
 findOpByKey :: Text -> [Command] -> Maybe Op
 findOpByKey k = fmap _cOp . listToMaybe . filter ((==k) . T.singleton . _cKey)
@@ -212,24 +233,32 @@ score :: Int -> Stylized
 score n =
   let num     = text . T.pack . show $ n
       fgColor = if n > 0 then green else red
-  in bold <> fg fgColor <> "(" <>  num <> ")"
+  in bold <> fg fgColor <> surround "(" num ")"
 
-mkPrompt :: PromptMenu -> Stylized
-mkPrompt pmenu =
-  arrow <> text pTxt <> text cTxt <> "\n" <>
-  arrow <> text (T.replicate len "-") <> "\n" <>
-  arrow
+menuToPrompt :: PromptMenu -> Stylized
+menuToPrompt pmenu = mkPrompt (pTxt <> cTxtSuffix)
   where
-    pTxt        = pmenu ^. mPromptText
-    cTxt        = if T.null pTxt then "Enter action " <> cTxtOnly else cTxtSuffix
-    cTxtSuffix  = " (or " <> cTxtOnly <> ")"
-    cTxtOnly    = "[" <> commandText (pmenu ^. mCommands) <> "]"
-    arrow       = ("==> " <> fg yellow)
-    len         = T.length pTxt + T.length cTxt
-    commandText = T.intercalate "," . map (T.singleton . _cKey)
+    pTxt       = pmenu ^. mPromptText
+    cTxtSuffix = surround " (or " cTxtOnly ")"
+    cTxtOnly   = commandsToText (pmenu ^. mCommands)
+
+mkPrompt :: Text -> Stylized
+mkPrompt promptText =
+  arrow <> text promptText <> "\n" <>
+  arrow <> text (T.replicate (T.length promptText) "-") <> "\n" <>
+  arrow <>
+  text (T.pack (A.setSGRCode []))
+
+commandsToText :: [Command] -> Text
+commandsToText = ("[" <>) . (<> "]") . T.intercalate "," . map (T.singleton . _cKey)
 
 onInvalid :: Text -> Stylized
 onInvalid t = "invalid selection: " <> text t
+
+-- | Using direct rgb because of bug in byline
+-- ref: https://github.com/pjones/byline/issues/1
+arrow :: Stylized
+arrow = ("==> " <> fg (rgb 255 255 0))
 
 --------------------------------------------------------------------------------
 -- Menu commands
@@ -298,3 +327,6 @@ modifyIO modifyOp = do
   s <- get
   newS <- liftIO $ modifyOp s
   put newS
+
+surround :: (Monoid m) => m -> m -> m -> m
+surround l center r = l <> center <> r
