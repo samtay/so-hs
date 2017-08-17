@@ -141,16 +141,22 @@ questionsPrompt qs = do
 
 answersPrompt :: Question -> Byline PromptApp ()
 answersPrompt q = do
-  let answers = q ^. qAnswers
-  liftIO $ TIO.putStrLn $ "\n" <> q ^. qBody <> "\n"
+  liftIO $ do
+    A.setSGR [A.SetItalicized True]
+    TIO.putStrLn $ "\n" <> q ^. qBody <> "\n"
+    A.setSGR []
   lift $ modify (pMenu . mPromptText .~  "Enter n° of answer to view")
+  let answers = q ^. qAnswers
   runMenu
     (answersMenu answers)
     (\a -> lift $ modify (pCurrA .~ ((, a) <$> elemIndex a answers)))
 
 answerPrompt :: Answer -> Byline PromptApp ()
 answerPrompt a = do
-  liftIO $ TIO.putStrLn $ "\n" <> a ^. aBody <> "\n"
+  liftIO $ do
+    A.setSGR [A.SetConsoleIntensity A.BoldIntensity]
+    TIO.putStrLn $ "\n" <> a ^. aBody <> "\n"
+    A.setSGR []
   runCommandPrompt
 
 -- | Similar to Byline's askWithMenu, except it allows
