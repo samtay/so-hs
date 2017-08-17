@@ -277,7 +277,7 @@ move :: (Int -> Int -> Int) -> Op
 move (+/-) ps = return $
   case (ps ^. pCurrQ) of
     Nothing ->
-      ps & pCurrQ .~ Just (1, ps ^. pQuestions ^. to head)
+      ps & pCurrQ .~ Just (0, ps ^. pQuestions ^. to head)
     Just (qIx, currQ) ->
       case (ps ^. pCurrA) of
         Nothing ->
