@@ -1,16 +1,15 @@
 # so [![Build Status](https://travis-ci.org/samtay/so.svg?branch=master)](https://travis-ci.org/samtay/so)
 
-
-This isn't done yet! If you're reading this, feel free to bookmark the repo but
-come back in like a month for the first release. I'm just pushing to GitHub so
-that it's easier to work across two computers.
+**Note: this is under active development.** The prompt interface is fully
+functional, but the more sophisticated brick interface is not finished. Also
+the markdown is currently printed raw, but the finished product will parse this
+and apply the styles possible within a terminal (e.g. bold, coloring code
+sections, etc.)
 
 # todo
 
-0. Consider moving question back into AppState, but kept as TMVar...
 2. Consider removing `Either Error [Question]` and just throwing `Error` as an exception..
 3. Consider using container other than `[]` for questions/answers. 
-4. Need to fix formatting in menu when answers have newlines ?
 4. **Need** to lazily parse stackoverflow text into limited markdown doc types,
    then have renderers for said types in both brick and prompt (i.e. `code text`
    goes to cyan color, etc.)
