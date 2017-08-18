@@ -1,4 +1,5 @@
-sudo: false
+# Uses full VM with 7.5 GB
+sudo: true
 language: generic
 
 # Caching so the next build will be fast too.
