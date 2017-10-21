@@ -17,6 +17,7 @@ import           Control.Monad.Reader     (ask)
 import           Control.Monad.State      (get)
 import           Control.Monad.Trans      (liftIO)
 import           Data.Bifunctor           (first)
+import           Data.Text                (Text)
 import qualified Graphics.Vty             as V
 
 --------------------------------------------------------------------------------
@@ -38,12 +39,12 @@ data BError = StillInProgress | AppError Error
 data BState = BState
   { _bAppState  :: AppState
   , _bAppConfig :: AppConfig
-  , _bQuestions :: Either BError [Question]
+  , _bQuestions :: Either BError [Question Text]
   , _bFetcher   :: Fetcher
   }
 
 -- | Events that we pipe to the event handler asynchronously
-data BEvent = NewQueryResult (Either Error [Question])
+data BEvent = NewQueryResult (Either Error [Question Text])
 
 -- | Resource names
 type Name = ()
@@ -54,9 +55,9 @@ data Fetcher = Fetcher { _fChan  :: BChan BEvent }
 
 
 --------------------------------------------------------------------------------
--- Executtion
+-- Execution
 
-execBrick :: Async (Either Error [Question]) -> App ()
+execBrick :: Async (Either Error [Question Text]) -> App ()
 execBrick aQuestions = do
   state <- get
   conf  <- ask
@@ -94,7 +95,7 @@ fetch (Fetcher chan) config state = do
   passToChannel aQuestions chan
 
 -- | Fork a process that will wait for async result and pass to BChan
-passToChannel :: Async (Either Error [Question]) -> BChan BEvent -> IO ()
+passToChannel :: Async (Either Error [Question Text]) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
   qResult <- wait aQuestions
   writeBChan chan $ NewQueryResult qResult

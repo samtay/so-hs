@@ -14,6 +14,7 @@ import           System.Exit            (exitSuccess)
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Control.Monad.State    (gets)
+import           Data.Text              (Text)
 import qualified Data.Text              as T
 import qualified Data.Text.IO           as TIO
 import           Lens.Micro
@@ -51,7 +52,8 @@ app = do
     Prompt -> execPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
-runLuckyPrompt :: Question -> IO ()
+-- TODO once Prompt module has markdown terminal display, use that!
+runLuckyPrompt :: Question Text -> IO ()
 runLuckyPrompt question = do
   let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
       mAnswer       = listToMaybe sortedAnswers

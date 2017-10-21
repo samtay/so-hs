@@ -38,10 +38,11 @@ import           Utils
 --------------------------------------------------------------------------------
 -- Types
 
+-- TODO by the time we get to prompt state this should be Markdown
 data PromptState = PromptState
-  { _pQuestions :: [Question]
-  , _pCurrQ     :: Maybe (Int, Question) -- TODO remove (Int,) indices, just have inc/dec funcs
-  , _pCurrA     :: Maybe (Int, Answer)
+  { _pQuestions :: [Question Text]
+  , _pCurrQ     :: Maybe (Int, Question Text) -- TODO remove (Int,) indices, just have inc/dec funcs
+  , _pCurrA     :: Maybe (Int, Answer Text)
   , _pMenu      :: PromptMenu
   }
 
@@ -78,7 +79,7 @@ instance Default PromptMenu where
 -- Main execution
 
 -- | Run prompt with questions
-execPrompt :: Async (Either Error [Question]) -> App ()
+execPrompt :: Async (Either Error [Question Text]) -> App ()
 execPrompt aQuestions = liftIO $
   waitWithLoading aQuestions
     >>= exitOnError runner
@@ -122,7 +123,7 @@ showLoadingAnimation =
 --------------------------------------------------------------------------------
 -- Prompt functions
 
-initPromptState :: [Question] -> PromptState
+initPromptState :: [Question Text] -> PromptState
 initPromptState qs = PromptState qs Nothing Nothing def
 
 runPrompt :: Byline PromptApp ()
@@ -132,14 +133,14 @@ runPrompt =
     (PromptState _ (Just (_,q)) Nothing _) -> answersPrompt q
     (PromptState _ _ (Just (_,a)) _)       -> answerPrompt a
 
-questionsPrompt :: [Question] -> Byline PromptApp ()
+questionsPrompt :: [Question Text] -> Byline PromptApp ()
 questionsPrompt qs = do
   lift $ modify (pMenu . mPromptText .~  "Enter n° of question to view")
   runMenu
     (questionsMenu qs)
     (\q -> lift $ modify (pCurrQ .~ ((, q) <$> elemIndex q qs)))
 
-answersPrompt :: Question -> Byline PromptApp ()
+answersPrompt :: Question Text -> Byline PromptApp ()
 answersPrompt q = do
   liftIO $ do
     A.setSGR [A.SetItalicized True]
@@ -151,7 +152,7 @@ answersPrompt q = do
     (answersMenu answers)
     (\a -> lift $ modify (pCurrA .~ ((, a) <$> elemIndex a answers)))
 
-answerPrompt :: Answer -> Byline PromptApp ()
+answerPrompt :: Answer Text -> Byline PromptApp ()
 answerPrompt a = do
   liftIO $ do
     A.setSGR [A.SetConsoleIntensity A.BoldIntensity]
@@ -211,12 +212,12 @@ runCommandPrompt = do
 findOpByKey :: Text -> [Command] -> Maybe Op
 findOpByKey k = fmap _cOp . listToMaybe . filter ((==k) . T.singleton . _cKey)
 
-questionsMenu :: [Question] -> Menu Question
+questionsMenu :: [Question a] -> Menu (Question a)
 questionsMenu = mkMenu styleQ
   where
     styleQ q = score (q ^. qScore) <> " " <> text (q ^. qTitle)
 
-answersMenu :: [Answer] -> Menu Answer
+answersMenu :: [Answer Text] -> Menu (Answer Text)
 answersMenu = mkMenu styleA
   where
     styleA a =
@@ -232,7 +233,7 @@ mkMenu stylizer xs =
 check :: Stylized
 check = fg green <> " ✔ "
 
-answerTitle :: Answer -> Text
+answerTitle :: Answer Text -> Text
 answerTitle a = (<> "...") $ T.replace "\r\n" ".. " $ T.take 65 $ a ^. aBody
 
 score :: Int -> Stylized
@@ -293,7 +294,7 @@ move (+/-) ps = return $
           let ix = nextAIx currQ aIx
           in ps & pCurrA .~ Just (ix, (currQ ^. qAnswers) !! ix)
   where
-    nextAIx :: Question -> Int -> Int
+    nextAIx :: Question a -> Int -> Int
     nextAIx q currIx = (currIx +/- 1) `mod` length (q ^. qAnswers)
 
     nextQIx :: Int -> Int

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -14,20 +15,21 @@ import           Lens.Micro.TH    (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:
+import           Markdown
 import           Utils.LowLevel
 
-data Question = Question
+data Question a = Question
   { _qId      :: Int
   , _qScore   :: Int
-  , _qAnswers :: [Answer]
+  , _qAnswers :: [Answer a]
   , _qTitle   :: Text
-  , _qBody    :: Text
+  , _qBody    :: a
   } deriving (Show)
 
-data Answer = Answer
+data Answer a = Answer
   { _aId       :: Int
   , _aScore    :: Int
-  , _aBody     :: Text
+  , _aBody     :: a
   , _aAccepted :: Bool
   } deriving (Show)
 
@@ -40,15 +42,15 @@ makeLenses ''Question
 makeLenses ''Answer
 makeLenses ''Site
 
-instance Eq Question where
+instance Eq (Question a) where
   q1 == q2
     = q1 ^. qId == q2 ^. qId
 
-instance Eq Answer where
+instance Eq (Answer a) where
   a1 == a2
     = a1 ^. aId == a2 ^. aId
 
-instance FromJSON Question where
+instance FromJSON (Question Text) where
   parseJSON = withObject "question" $ \o -> do
     _qId      <- o .: "question_id"
     _qScore   <- o .: "score"
@@ -57,7 +59,7 @@ instance FromJSON Question where
     _qBody    <- o .: "body_markdown"
     return Question {..}
 
-instance FromJSON Answer where
+instance FromJSON (Answer Text) where
   parseJSON = withObject "answer" $ \o -> do
     _aId       <- o .: "answer_id"
     _aScore    <- o .: "score"
@@ -79,7 +81,7 @@ instance Default Site where
 
 -- TODO handle API errors; maybe data ApiResponse = Error | [Question]
 --    which works if Parser is instance of Alternative
-questionsParser :: Value -> Parser [Question]
+questionsParser :: Value -> Parser [Question Text]
 questionsParser = filter answered <$$> withObject "questions" (.: "items")
   where
     answered q = not . null $ q ^. qAnswers

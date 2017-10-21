@@ -34,13 +34,13 @@ import           Types
 import           Utils
 
 -- | Get question results
-query :: App (Either Error [Question])
+query :: App (Either Error [Question Text])
 query = do
   useG <- gets (_oGoogle . _sOptions)
   fmap join . tryJust toError $ if useG then queryG else querySE
 
 -- | Get a single question result (hopefully decent performance boost)
-queryLucky :: App (Either Error Question)
+queryLucky :: App (Either Error (Question Text))
 queryLucky = do
   initialState <- get
   let modifiedState = initialState & sOptions . oLimit .~ 1
@@ -55,7 +55,7 @@ queryLucky = do
 -- | Query stack exchange by first scraping Google for relevant question links
 --
 -- Maybe in the future either propogate Left error or add to debug log, etc.
-queryG :: App (Either Error [Question])
+queryG :: App (Either Error [Question Text])
 queryG = do
   mIds <- google
   case mIds of
@@ -69,7 +69,7 @@ queryG = do
 
 
 -- | Query stack exchange via advanced search API
-querySE :: App (Either Error [Question])
+querySE :: App (Either Error [Question Text])
 querySE = do
   q <- gets _sQuery
   seRequest "search/advanced" [ W.param "q"       .~ [q]
@@ -93,7 +93,7 @@ appDefaults = do
 seRequest
   :: String                        -- ^ API resource to append to base URL
   -> [W.Options -> W.Options]      -- ^ Options in addition to 'seDefaults'
-  -> App (Either Error [Question]) -- ^ Decoded question data
+  -> App (Either Error [Question Text]) -- ^ Decoded question data
 seRequest resource optMods = do
   baseOpts <- appDefaults
   let opts = foldr (.) id optMods baseOpts
