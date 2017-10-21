@@ -4,7 +4,7 @@ packages:
   - location: '.'
   - location:
       git: https://github.com/samtay/byline.git
-      commit: fe6f90aa4fc109b8203a2411e234f81b2ddf7b7b
+      commit: c51f3de4e674e5de5199a1b7fbf4e8d73ee8ed97
     extra-dep: true
 extra-deps:
 - optparse-applicative-0.14.0.0

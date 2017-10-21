@@ -15,7 +15,6 @@ import           Lens.Micro.TH    (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Markdown
 import           Utils.LowLevel
 
 data Question a = Question

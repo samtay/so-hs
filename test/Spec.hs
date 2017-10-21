@@ -5,6 +5,7 @@ import qualified Data.Aeson           as A
 import qualified Data.Aeson.Types     as AT
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BSL
+import           Data.Text            (Text)
 import qualified Data.Yaml            as Y
 import           Test.Hspec
 
@@ -57,10 +58,10 @@ main = hspec $ do
     it "does not fail for broken-ish markdown" $
       pending
 
-allAnswerIds :: [Question] -> [Int]
+allAnswerIds :: [Question Text] -> [Int]
 allAnswerIds = concatMap ((fmap _aId) . _qAnswers)
 
-decodeQFromFile :: FilePath -> IO (Either String [Question])
+decodeQFromFile :: FilePath -> IO (Either String [Question Text])
 decodeQFromFile f = do
   b <- BSL.readFile f
   return $ A.eitherDecode b >>= AT.parseEither questionsParser
