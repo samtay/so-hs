@@ -92,6 +92,11 @@ parseOpts cfg = Options
      <> value (cfg ^. cDefaultOpts ^. oUi)
      <> showDefault
       )
+  <*> enableDisableOpt
+      "raw"
+      "Display raw markdown text"
+      (cfg ^. cDefaultOpts ^. oRaw)
+      showDefault
 
 -- | Top level info option parser that lives in ParserInfo
 --

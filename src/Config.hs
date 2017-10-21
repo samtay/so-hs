@@ -91,6 +91,7 @@ sites:
 defaultOptions:
   google: yes
   lucky: no
+  raw: no
   ui: brick # options: brick, prompt
   site: *defaultSite
 |]

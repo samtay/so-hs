@@ -85,6 +85,7 @@ data Options = Options
   , _oLimit  :: Int
   , _oSite   :: Site
   , _oUi     :: Interface
+  , _oRaw    :: Bool
   } deriving (Eq, Show)
 
 makeLenses ''AppState
@@ -116,6 +117,7 @@ instance FromJSON Options where
     _oLimit  <- o .:? "limit"  .!= (def ^. oLimit)
     _oSite'  <- o .:? "site"   .!= Site' (def ^. oSite)
     _oUi     <- o .:? "ui"     .!= (def ^. oUi)
+    _oRaw    <- o .:? "raw"    .!= (def ^. oLucky)
     let _oSite = site _oSite'
     return Options{..}
 
@@ -153,4 +155,5 @@ instance Default Options where
     , _oLimit  = 25
     , _oSite   = def
     , _oUi     = Brick
+    , _oRaw    = False
     }
