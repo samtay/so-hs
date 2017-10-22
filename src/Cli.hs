@@ -166,10 +166,8 @@ multiTextArg mods = T.unwords <$> some (strArgument mods)
 -- | Align and alphabetically order sites
 prettifiedSites :: [Site] -> String
 prettifiedSites sites =
-  T.unpack . T.unlines
-    $ [T.concat [indent s, _sApiParam s, ": ", _sUrl s] | s <- ordered]
+  T.unpack . T.unlines $
+    [T.concat [T.justifyRight maxL ' ' (_sApiParam s), ": ", _sUrl s] | s <- ordered]
   where
     ordered = sortBy (compare `on` _sApiParam) sites -- alphabetically ordered
     maxL = maximum . map (T.length . _sApiParam) $ sites -- maximum shortcode length
-    diff s = maxL - T.length (_sApiParam s)
-    indent s = T.replicate (diff s) " "
