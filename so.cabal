@@ -20,6 +20,7 @@ library
                      , Config
                      , Interface.Brick
                      , Interface.Prompt
+                     , Markdown
                      , StackOverflow
                      , StackOverflow.Google
                      , Types
@@ -39,6 +40,7 @@ library
                      , exceptions
                      , filepath
                      , http-client
+                     , megaparsec
                      , microlens
                      , microlens-th
                      , mtl
