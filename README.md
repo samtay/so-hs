@@ -8,14 +8,11 @@ sections, etc.)
 
 # todo
 
-0. Attach body text preview + parsed body datatype to Q/A types instead of raw stuff!!!
+0. Attach body text preview + markdown parsed body datatype to Q/A types instead of raw stuff!!!
 0. Trace evaluations to ensure md parsing happens lazily
 1. Form URL and link to it at the end of showing questions / answers !!!!!
 2. Consider removing `Either Error [Question]` and just throwing `Error` as an exception..
 3. Consider using container other than `[]` for questions/answers. 
-4. **Need** to lazily parse stackoverflow text into limited markdown doc types,
-   then have renderers for said types in both brick and prompt (i.e. `code text`
-   goes to cyan color, etc.)
 4. Test --no-google flag
 6. freeze dependency versions
 

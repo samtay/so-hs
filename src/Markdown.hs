@@ -6,7 +6,6 @@ module Markdown where
 --------------------------------------------------------------------------------
 -- Base imports:
 import           Control.Applicative  (empty)
-import           Control.Monad        (guard)
 import           Data.Foldable        (asum)
 import           Data.Maybe           (fromMaybe)
 
@@ -46,20 +45,25 @@ data Segment
 
 -- | Simple text to markdown function, never fails, worst case scenario the
 -- markdown is kept as a single plain segment
+--
+-- TODO replace html entities (look in tagsoup for functions) either before or after parsing
 markdown :: Text -> Markdown
 markdown raw = fromMaybe (Markdown [SPlain raw]) $ parseMaybe parseMarkdown raw
 
 parseMarkdown :: Parser Markdown
-parseMarkdown = Markdown <$> (many parseSegment) <* eof
+parseMarkdown = Markdown <$> parseSegments <* eof
 
--- TODO use strategy from enclosedBy to gather plain segments
-parseSegment :: Parser Segment
-parseSegment =
-      try (SCode <$> parseCode)
-  <|> try (SQuote <$> parseQuote)
-  <|> try (SBold <$> (enclosedByNoSpace "**" <|> enclosedByNoSpace "__"))
-  <|> try (SItalic <$> (enclosedByNoSpace "*" <|> enclosedByNoSpace "_"))
-  <|> SPlain . T.pack <$> many anyChar
+parseSegments :: Parser [Segment]
+parseSegments = reverse . collapse [] <$> many (eitherP parseFormatted anyChar)
+  where
+    parseFormatted = try (SCode <$> parseCode)
+                 <|> try (SQuote <$> parseQuote)
+                 <|> try (SBold <$> (enclosedByNoSpace "**" <|> enclosedByNoSpace "__"))
+                 <|> try (SItalic <$> (enclosedByNoSpace "*" <|> enclosedByNoSpace "_"))
+    collapse ss                []               = ss
+    collapse ss                ((Left s) : cs)  = collapse (s : ss)                        cs
+    collapse ((SPlain t) : ss) ((Right c) : cs) = collapse ((SPlain $ T.snoc t c) : ss)    cs
+    collapse ss                ((Right c) : cs) = collapse ((SPlain $ T.singleton c) : ss) cs
 
 parseCode :: Parser Text
 parseCode = parseCodeInline <|> fmap T.pack parseCodeBlock
@@ -80,7 +84,7 @@ parseQuote = empty
 -- TODO consider capturing escaped delimiters..
 enclosedByNoSpace :: String -> Parser Text
 enclosedByNoSpace d = T.pack . concat <$> do
-  string d
+  _ <- string d
   notFollowedBy spaceChar
   someTill
     (try ((:) <$> spaceChar <*> string d) <|> pure <$> anyChar) $ do
