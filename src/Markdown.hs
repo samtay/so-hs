@@ -73,38 +73,21 @@ parseCode = parseCodeInline <|> fmap T.pack parseCodeBlock
 parseQuote :: Parser Text
 parseQuote = empty
 
--- | Match any text enclosed by a delimiter, requiring a non-space character
+-- | Match any text enclosed by a delimiter, but requiring a non-space character
 -- directly following and preceding the first and final delimiter, respectively.
 --
 -- For example, **this matches** but ** this doesn't **
 -- TODO consider capturing escaped delimiters..
 enclosedByNoSpace :: String -> Parser Text
-enclosedByNoSpace d = do
-  string d  
+enclosedByNoSpace d = T.pack . concat <$> do
+  string d
   notFollowedBy spaceChar
-  res <- go False []
-  guard . not $ null res
-  return $ T.pack res
-  where
-    go prevSp cs = do
-      res <- eitherP (string d) (anyChar)
-      case (prevSp, res) of
-        (False, Left _) -> return cs
-        (False, Right c) -> go (c == ' ') (cs ++ [c])
-        (True, Left d')  -> go False (cs ++ d')
-        (True, Right c)  -> go (c == ' ') (cs ++ [c])
+  someTill
+    (try ((:) <$> spaceChar <*> string d) <|> pure <$> anyChar) $ do
+      notFollowedBy spaceChar
+      string d
 
 -- | Match any text enclosed by a delimiter
--- TODO see if go is manyTill
 enclosedBy :: String -> Parser Text
-enclosedBy d = do
-  string d
-  res <- go []
-  guard . not $ null res
-  return $ T.pack res
-  where
-    go cs = do
-      res <- eitherP (string d) (anyChar)
-      case res of
-        Left _  -> return cs
-        Right c -> go (cs ++ [c])
+enclosedBy d = fmap T.pack $
+  string d >> someTill anyChar (string d)
