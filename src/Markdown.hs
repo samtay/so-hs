@@ -1,23 +1,27 @@
+{-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
 module Markdown where
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Applicative  (empty)
-import           Data.Foldable        (asum)
-import           Data.Maybe           (fromMaybe)
+import           Control.Applicative      (empty)
+import           Data.Foldable            (asum, fold)
+import           Data.Maybe               (fromMaybe)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Data.Text            (Text)
-import qualified Data.Text            as T
+import           Data.Text                (Text)
+import qualified Data.Text                as T
+import           Text.HTML.TagSoup.Entity (lookupEntity)
 import           Text.Megaparsec
 import           Text.Megaparsec.Text
 
 --------------------------------------------------------------------------------
 -- Local imports:
+import           Types
 
 --------------------------------------------------------------------------------
 -- Types:
@@ -28,32 +32,45 @@ import           Text.Megaparsec.Text
 --
 -- TODO decide if combined text styles is worth implementing
 -- (e.g. ***example*** being italic and bold)
-data Markdown = Markdown [Segment]
+data Markdown = Markdown [Segment Text]
   deriving (Show)
 
 -- | Segment represents a chunk of markdown text in a particular style
-data Segment
-  = SPlain Text
-  | SBold Text
-  | SItalic Text
-  | SCode Text
-  | SQuote Text
-  deriving (Show)
+data Segment a
+  = SPlain a
+  | SBold a
+  | SItalic a
+  | SCode a
+  | SQuote a
+  deriving (Show, Functor)
 
 --------------------------------------------------------------------------------
 -- Parser functions:
 
 -- | Simple text to markdown function, never fails, worst case scenario the
--- markdown is kept as a single plain segment
+-- markdown is kept as a single plain segment. Accepts different levels of parsing.
 --
--- TODO replace html entities (look in tagsoup for functions) either before or after parsing
-markdown :: Text -> Markdown
-markdown raw = fromMaybe (Markdown [SPlain raw]) $ parseMaybe parseMarkdown raw
+-- Note, oddly, that SO API returns html entities even within code sections.
+markdown :: TextDisplay -> Text -> Markdown
+markdown Raw raw          = Markdown [SPlain raw]
+markdown HtmlEntities raw = Markdown [SPlain (replaceEntities raw)]
+markdown Pretty raw       = Markdown . (fmap . fmap) replaceEntities .
+  fromMaybe [SPlain raw] $ parseMaybe parseSegments raw
+
+replaceEntities :: Text -> Text
+replaceEntities raw = fromMaybe raw $ parseMaybe parseEntities raw
+  where
+    parseEntities :: Parser Text
+    parseEntities = fmap fold . many $ fmap T.pack entity <|> fmap T.singleton anyChar
+    entity :: Parser String
+    entity = do
+      e <- char '&' >> someTill anyChar (char ';')
+      return . fromMaybe ('&' : e ++ [';']) $ lookupEntity e
 
 parseMarkdown :: Parser Markdown
 parseMarkdown = Markdown <$> parseSegments <* eof
 
-parseSegments :: Parser [Segment]
+parseSegments :: Parser [Segment Text]
 parseSegments = reverse . collapse [] <$> many (eitherP parseFormatted anyChar)
   where
     parseFormatted = try (SCode <$> parseCode)

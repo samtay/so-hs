@@ -67,6 +67,9 @@ data Interface = Brick | Prompt
 data Editor = Less | More | Vim | CustomEditor Text
   deriving (Eq, Show, Read)
 
+data TextDisplay = Raw | HtmlEntities | Pretty
+  deriving (Eq, Show, Read)
+
 data AppState = AppState
   { _sQuery   :: Text
   , _sOptions :: Options
@@ -80,12 +83,12 @@ data AppConfig = AppConfig
   } deriving (Eq, Show)
 
 data Options = Options
-  { _oGoogle :: Bool
-  , _oLucky  :: Bool
-  , _oLimit  :: Int
-  , _oSite   :: Site
-  , _oUi     :: Interface
-  , _oRaw    :: Bool
+  { _oGoogle      :: Bool
+  , _oLucky       :: Bool
+  , _oLimit       :: Int
+  , _oSite        :: Site
+  , _oUi          :: Interface
+  , _oTextDisplay :: TextDisplay
   } deriving (Eq, Show)
 
 makeLenses ''AppState
@@ -112,12 +115,12 @@ instance FromJSON AppConfig where
 
 instance FromJSON Options where
   parseJSON = withObject "options" $ \o -> do
-    _oGoogle <- o .:? "google" .!= (def ^. oGoogle)
-    _oLucky  <- o .:? "lucky"  .!= (def ^. oLucky)
-    _oLimit  <- o .:? "limit"  .!= (def ^. oLimit)
-    _oSite'  <- o .:? "site"   .!= Site' (def ^. oSite)
-    _oUi     <- o .:? "ui"     .!= (def ^. oUi)
-    _oRaw    <- o .:? "raw"    .!= (def ^. oLucky)
+    _oGoogle         <- o .:? "google"      .!= (def ^. oGoogle)
+    _oLucky          <- o .:? "lucky"       .!= (def ^. oLucky)
+    _oLimit          <- o .:? "limit"       .!= (def ^. oLimit)
+    _oSite'          <- o .:? "site"        .!= Site' (def ^. oSite)
+    _oUi             <- o .:? "ui"          .!= (def ^. oUi)
+    _oTextDisplay    <- o .:? "textDisplay" .!= (def ^. oTextDisplay)
     let _oSite = site _oSite'
     return Options{..}
 
@@ -148,12 +151,23 @@ instance FromJSON Interface where
       "prompt" -> return Prompt
       _        -> fail "invalid interface"
 
+instance FromJSON TextDisplay where
+  parseJSON = withText "textDisplay" $
+    \s -> case (T.toLower s) of
+      "raw"           -> return Raw
+      "pretty"        -> return Pretty
+      "entities"      -> return HtmlEntities
+      "htmlentities"  -> return HtmlEntities
+      "html-entities" -> return HtmlEntities
+      "html entities" -> return HtmlEntities
+      _               -> fail "invalid interface"
+
 instance Default Options where
   def = Options
-    { _oGoogle = True
-    , _oLucky  = False
-    , _oLimit  = 25
-    , _oSite   = def
-    , _oUi     = Brick
-    , _oRaw    = False
+    { _oGoogle      = True
+    , _oLucky       = False
+    , _oLimit       = 25
+    , _oSite        = def
+    , _oUi          = Brick
+    , _oTextDisplay = Pretty
     }

@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Utils.LowLevel
   ( capitalize
+  , ffor
   , (<$$>)
+  , (<$$$>)
+  , (<$$$$>)
   , (!?)
   , (.*.)
   , whenDef
@@ -38,9 +41,23 @@ infixl 3 <$$>
 (<$$>) :: (Functor f, Functor g) => (a -> b) -> f (g a) -> f (g b)
 (<$$>) = fmap . fmap
 
+-- | Lift thrice
+infixl 3 <$$$>
+(<$$$>) :: (Functor f, Functor g, Functor h) => (a -> b) -> f (g (h a)) -> f (g (h b))
+(<$$$>) = fmap . fmap . fmap
+
+-- | Lift quad
+infixl 3 <$$$$>
+(<$$$$>) :: (Functor f, Functor g, Functor h, Functor i) => (a -> b) -> f (g (h (i a))) -> f (g (h (i b)))
+(<$$$$>) = fmap . fmap . fmap . fmap
+
 -- | Safe !!
 (!?) :: [a] -> Int -> Maybe a
 l !? i = l ^? ix i
+
+-- | Flip fmap
+ffor :: Functor f => f a -> (a -> b) -> f b
+ffor = flip fmap
 
 -- | Double composition (allow first function to accept two arguments)
 (.*.) :: (c -> d) -> (a -> b -> c) -> a -> b -> d

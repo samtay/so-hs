@@ -14,53 +14,50 @@ import           System.Exit            (exitSuccess)
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Control.Monad.State    (gets)
-import           Data.Text              (Text)
 import qualified Data.Text              as T
-import qualified Data.Text.IO           as TIO
 import           Lens.Micro
 
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Cli                    (Cli (..), runCli)
 import           Config                 (getConfigE, getConfigFile)
-import           Interface.Brick        (execBrick)
-import           Interface.Prompt       (execPrompt)
+import           Interface.Prompt       (execPrompt, putMdLn)
+import           Markdown               (Markdown, markdown)
 import           StackOverflow          (query, queryLucky)
 import           Types
 import           Utils                  (code, err, exitOnError, exitWithError,
-                                         promptChar)
+                                         promptChar, (<$$$$>), (<$$>))
 
 main :: IO ()
 main = withConfig $ \cfg -> do
   -- Get initial state from CLI
   (Cli _sOptions _sQuery) <- runCli cfg
   let initialState = AppState {..}
-
   -- Run App
   void . evalAppT cfg initialState $ app
 
 app :: App ()
 app = do
+  (Options _ lucky _ _ ui display) <- gets (_sOptions)
   -- Start fetching questions asynchronously
-  aQuestions <- appAsync query
-  opts <- gets (_sOptions)
+  aQuestions <- appAsync $ markdown display <$$$$> query
   -- If @--lucky@, show single answer prompt
-  when (opts ^. oLucky) $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
+  when lucky $ queryLucky >>= liftIO . exitOnError runLuckyPrompt . (markdown display <$$>)
   -- Execute chosen interface
-  case opts ^. oUi of
-    Brick  -> execBrick aQuestions
+  case ui of
+    Brick  -> liftIO $ exitWithError "Brick interface not yet implemented!"
     Prompt -> execPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
 -- TODO once Prompt module has markdown terminal display, use that!
-runLuckyPrompt :: Question Text -> IO ()
+runLuckyPrompt :: Question Markdown -> IO ()
 runLuckyPrompt question = do
   let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
       mAnswer       = listToMaybe sortedAnswers
   case mAnswer of
     Nothing     -> exitWithError "No answers found. Try a different question."
     Just answer -> do
-      TIO.putStrLn (answer ^. aBody)
+      putMdLn (answer ^. aBody)
       c <- promptChar "Press [SPACE] to see more results, or any other key to exit."
       case c of
         ' ' -> return ()

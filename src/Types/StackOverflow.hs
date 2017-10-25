@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
@@ -23,14 +24,14 @@ data Question a = Question
   , _qAnswers :: [Answer a]
   , _qTitle   :: Text
   , _qBody    :: a
-  } deriving (Show)
+  } deriving (Show, Functor)
 
 data Answer a = Answer
   { _aId       :: Int
   , _aScore    :: Int
   , _aBody     :: a
   , _aAccepted :: Bool
-  } deriving (Show)
+  } deriving (Show, Functor)
 
 data Site = Site
   { _sUrl      :: Text

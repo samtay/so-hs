@@ -91,7 +91,7 @@ sites:
 defaultOptions:
   google: yes
   lucky: no
-  raw: no
+  textDisplay: pretty # options: raw, entities (just decode html entities), pretty
   ui: brick # options: brick, prompt
   site: *defaultSite
 |]

@@ -92,11 +92,12 @@ parseOpts cfg = Options
      <> value (cfg ^. cDefaultOpts ^. oUi)
      <> showDefault
       )
-  <*> enableDisableOpt
-      "raw"
-      "Display raw markdown text"
-      (cfg ^. cDefaultOpts ^. oRaw)
-      showDefault
+  <*> option readTextDisplay
+      ( short 't'
+     <> metavar "raw|entities|pretty"
+     <> help "Level of text parsing in StackOverflow content"
+     <> value (cfg ^. cDefaultOpts ^. oTextDisplay)
+      )
 
 -- | Top level info option parser that lives in ParserInfo
 --
@@ -139,6 +140,14 @@ readUi = str >>= \s -> maybe (rError s) return (decode s)
       $ [ BS.unpack s
         , "is not a valid interface. The available options are:"
         , "brick, prompt" ]
+
+readTextDisplay :: ReadM TextDisplay
+readTextDisplay = str >>= \s -> maybe (rError s) return (decode s)
+  where
+    rError s = readerError . err . unwords
+      $ [ BS.unpack s
+        , "is not a valid display value. The available options are:"
+        , "raw, html-entities, pretty" ]
 
 -- | Read site option, compare it against given 'sites' argument
 readSite :: [Site] -> ReadM Site

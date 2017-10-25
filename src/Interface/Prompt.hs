@@ -1,26 +1,29 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TupleSections         #-}
 module Interface.Prompt
   ( execPrompt
+  , putMd
+  , putMdLn
   ) where
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import Data.Maybe (listToMaybe)
-import Data.List (elemIndex)
 import           Control.Concurrent       (forkIO, killThread, threadDelay)
 import           Control.Monad            (forM_, void)
+import           Data.List                (elemIndex)
+import           Data.Maybe               (listToMaybe)
 import           System.Exit              (exitSuccess)
 import           System.IO                (stdout)
 
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Control.Concurrent.Async (Async, wait)
-import           Control.Monad.State      (StateT, get, gets, modify, put,
-                                           runStateT, MonadState)
-import           Control.Monad.Trans      (lift, liftIO, MonadIO)
+import           Control.Monad.State      (MonadState, StateT, get, gets,
+                                           modify, put, runStateT)
+import           Control.Monad.Trans      (MonadIO, lift, liftIO)
 import           Data.Default
 import           Data.Text                (Text)
 import qualified Data.Text                as T
@@ -32,6 +35,7 @@ import           System.Console.Byline
 
 --------------------------------------------------------------------------------
 -- Local imports:
+import           Markdown
 import           Types
 import           Utils
 
@@ -40,9 +44,9 @@ import           Utils
 
 -- TODO by the time we get to prompt state this should be Markdown
 data PromptState = PromptState
-  { _pQuestions :: [Question Text]
-  , _pCurrQ     :: Maybe (Int, Question Text) -- TODO remove (Int,) indices, just have inc/dec funcs
-  , _pCurrA     :: Maybe (Int, Answer Text)
+  { _pQuestions :: [Question Markdown]
+  , _pCurrQ     :: Maybe (Int, Question Markdown) -- TODO remove (Int,) indices, just have inc/dec funcs
+  , _pCurrA     :: Maybe (Int, Answer Markdown)
   , _pMenu      :: PromptMenu
   }
 
@@ -79,7 +83,7 @@ instance Default PromptMenu where
 -- Main execution
 
 -- | Run prompt with questions
-execPrompt :: Async (Either Error [Question Text]) -> App ()
+execPrompt :: Async (Either Error [Question Markdown]) -> App ()
 execPrompt aQuestions = liftIO $
   waitWithLoading aQuestions
     >>= exitOnError runner
@@ -123,7 +127,7 @@ showLoadingAnimation =
 --------------------------------------------------------------------------------
 -- Prompt functions
 
-initPromptState :: [Question Text] -> PromptState
+initPromptState :: [Question Markdown] -> PromptState
 initPromptState qs = PromptState qs Nothing Nothing def
 
 runPrompt :: Byline PromptApp ()
@@ -133,18 +137,19 @@ runPrompt =
     (PromptState _ (Just (_,q)) Nothing _) -> answersPrompt q
     (PromptState _ _ (Just (_,a)) _)       -> answerPrompt a
 
-questionsPrompt :: [Question Text] -> Byline PromptApp ()
+questionsPrompt :: [Question Markdown] -> Byline PromptApp ()
 questionsPrompt qs = do
   lift $ modify (pMenu . mPromptText .~  "Enter n° of question to view")
   runMenu
     (questionsMenu qs)
     (\q -> lift $ modify (pCurrQ .~ ((, q) <$> elemIndex q qs)))
 
-answersPrompt :: Question Text -> Byline PromptApp ()
+answersPrompt :: Question Markdown -> Byline PromptApp ()
 answersPrompt q = do
   liftIO $ do
     A.setSGR [A.SetItalicized True]
-    TIO.putStrLn $ "\n" <> q ^. qBody <> "\n"
+    putStrLn ""
+    putMdLn $ q ^. qBody
     A.setSGR []
   lift $ modify (pMenu . mPromptText .~  "Enter n° of answer to view")
   let answers = q ^. qAnswers
@@ -152,11 +157,12 @@ answersPrompt q = do
     (answersMenu answers)
     (\a -> lift $ modify (pCurrA .~ ((, a) <$> elemIndex a answers)))
 
-answerPrompt :: Answer Text -> Byline PromptApp ()
+answerPrompt :: Answer Markdown -> Byline PromptApp ()
 answerPrompt a = do
   liftIO $ do
     A.setSGR [A.SetConsoleIntensity A.BoldIntensity]
-    TIO.putStrLn $ "\n" <> a ^. aBody <> "\n"
+    putStrLn ""
+    putMdLn $ a ^. aBody
     A.setSGR []
   runCommandPrompt
 
@@ -217,13 +223,13 @@ questionsMenu = mkMenu styleQ
   where
     styleQ q = score (q ^. qScore) <> " " <> text (q ^. qTitle)
 
-answersMenu :: [Answer Text] -> Menu (Answer Text)
+answersMenu :: [Answer Markdown] -> Menu (Answer Markdown)
 answersMenu = mkMenu styleA
   where
     styleA a =
       score (a ^. aScore)
-      <> (if a ^. aAccepted then check else " ")
-      <> text (answerTitle a)
+      <> if a ^. aAccepted then check else " "
+      <> answerTitle a
 
 mkMenu :: (a -> Stylized) -> [a] -> Menu a
 mkMenu stylizer xs =
@@ -233,8 +239,12 @@ mkMenu stylizer xs =
 check :: Stylized
 check = fg green <> " ✔ "
 
-answerTitle :: Answer Text -> Text
-answerTitle a = (<> "...") $ T.replace "\r\n" ".. " $ T.take 65 $ a ^. aBody
+-- TODO can stylized even be granularized in a single value?
+answerTitle :: Answer Markdown -> Stylized
+answerTitle ans = loop 65 (ans ^. aBody) <> "..."
+  where
+    loop :: Int -> Markdown -> Stylized
+    loop = undefined
 
 score :: Int -> Stylized
 score n =
@@ -336,3 +346,9 @@ modifyIO modifyOp = do
 
 surround :: (Monoid m) => m -> m -> m -> m
 surround l center r = l <> center <> r
+
+putMdLn :: Markdown -> IO ()
+putMdLn md = putMd md >> putStrLn ""
+
+putMd :: Markdown -> IO ()
+putMd = undefined

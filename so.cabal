@@ -48,6 +48,7 @@ library
                      , raw-strings-qq
                      , regex-tdfa
                      , scalpel-core
+                     , tagsoup
                      , text
                      , vty
                      , wreq
