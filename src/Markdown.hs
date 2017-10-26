@@ -8,6 +8,7 @@ module Markdown where
 --------------------------------------------------------------------------------
 -- Base imports:
 import           Control.Applicative      (empty)
+import           Control.Monad            (void, unless)
 import           Data.Foldable            (asum, fold)
 import           Data.Maybe               (fromMaybe)
 
@@ -29,6 +30,8 @@ import           Types
 -- | This representation of markdown is purposefully kept simple. Not many
 -- markdown specifications are implemented here because there is only so much
 -- we can render, helpfully, in a terminal.
+--
+-- TODO possibly parse <kbd></kbd> (this is easy anyway)
 --
 -- TODO decide if combined text styles is worth implementing
 -- (e.g. ***example*** being italic and bold)
@@ -87,8 +90,8 @@ parseCode = parseCodeInline <|> fmap T.pack parseCodeBlock
   where
     parseCodeInline = asum $ enclosedBy <$> ["```", "``", "`"]
     parseCodeBlock = unlines <$> do
-      _ <- eol
-      some $ string "    " *> someTill anyChar eol
+      void eol <|> bof
+      some $ string "    " *> someTill anyChar (void eol <|> eof)
 
 -- | If I decide this is useful I'll implement it
 parseQuote :: Parser Text
@@ -112,3 +115,8 @@ enclosedByNoSpace d = T.pack . concat <$> do
 enclosedBy :: String -> Parser Text
 enclosedBy d = fmap T.pack $
   string d >> someTill anyChar (string d)
+
+-- | Match beginning of file
+bof :: Parser ()
+bof = getPosition >>= \(SourcePos _ l c) ->
+  unless (l == c && unPos c == 1) empty

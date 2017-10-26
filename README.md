@@ -8,13 +8,15 @@ sections, etc.)
 
 # todo
 
-0. Attach body text preview + markdown parsed body datatype to Q/A types instead of raw stuff!!!
 0. Trace evaluations to ensure md parsing happens lazily
 1. Form URL and link to it at the end of showing questions / answers !!!!!
 2. Consider removing `Either Error [Question]` and just throwing `Error` as an exception..
 3. Consider using container other than `[]` for questions/answers. 
 4. Test --no-google flag
 6. freeze dependency versions
+
+### parser
+1. bug -- ensure spaces surround underscore delimiters (different than asterisk behavior!)
 
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry
@@ -39,7 +41,6 @@ sections, etc.)
    shift+h,j,k,l for resizing sections
 7. can set up themes named in configuration and then keep attrmap within app
    state
-8. reference: https://nanonaren.wordpress.com/2014/07/23/example-parsing-hackage-with-tagsoup/
 
 ### config
 1. xdga data to save `filter` param
