@@ -97,6 +97,7 @@ parseOpts cfg = Options
      <> metavar "raw|entities|pretty"
      <> help "Level of text parsing in StackOverflow content"
      <> value (cfg ^. cDefaultOpts ^. oTextDisplay)
+     <> showDefault
       )
 
 -- | Top level info option parser that lives in ParserInfo

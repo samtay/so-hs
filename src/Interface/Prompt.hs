@@ -42,7 +42,6 @@ import           Utils
 --------------------------------------------------------------------------------
 -- Types
 
--- TODO by the time we get to prompt state this should be Markdown
 data PromptState = PromptState
   { _pQuestions :: [Question Markdown]
   , _pCurrQ     :: Maybe (Int, Question Markdown) -- TODO remove (Int,) indices, just have inc/dec funcs
@@ -147,10 +146,8 @@ questionsPrompt qs = do
 answersPrompt :: Question Markdown -> Byline PromptApp ()
 answersPrompt q = do
   liftIO $ do
-    A.setSGR [A.SetItalicized True]
     putStrLn ""
     putMdLn $ q ^. qBody
-    A.setSGR []
   lift $ modify (pMenu . mPromptText .~  "Enter n° of answer to view")
   let answers = q ^. qAnswers
   runMenu
@@ -160,10 +157,8 @@ answersPrompt q = do
 answerPrompt :: Answer Markdown -> Byline PromptApp ()
 answerPrompt a = do
   liftIO $ do
-    A.setSGR [A.SetConsoleIntensity A.BoldIntensity]
     putStrLn ""
     putMdLn $ a ^. aBody
-    A.setSGR []
   runCommandPrompt
 
 -- | Similar to Byline's askWithMenu, except it allows
@@ -240,11 +235,13 @@ check :: Stylized
 check = fg green <> " ✔ "
 
 -- TODO can stylized even be granularized in a single value?
+-- TODO finish implementing this !
 answerTitle :: Answer Markdown -> Stylized
 answerTitle ans = loop 65 (ans ^. aBody) <> "..."
   where
     loop :: Int -> Markdown -> Stylized
-    loop = undefined
+    loop _ (Markdown []) = ""
+    loop _ (Markdown (s:segs)) = text $ T.pack $ show s
 
 score :: Int -> Stylized
 score n =
@@ -350,5 +347,24 @@ surround l center r = l <> center <> r
 putMdLn :: Markdown -> IO ()
 putMdLn md = putMd md >> putStrLn ""
 
+-- TODO make a withSGR helper
+-- TODO add color config !!!!!!!
 putMd :: Markdown -> IO ()
-putMd = undefined
+putMd (Markdown segments) = forM_ segments $ \case
+  SPlain t -> TIO.putStr t
+  SBold t -> do
+    A.setSGR [A.SetConsoleIntensity A.BoldIntensity]
+    TIO.putStr t
+    A.setSGR []
+  SItalic t -> do
+    A.setSGR [A.SetItalicized True]
+    TIO.putStr t
+    A.setSGR []
+  SCode t -> do
+    A.setSGR [A.SetColor A.Foreground A.Vivid A.Cyan]
+    TIO.putStr t
+    A.setSGR []
+  SQuote t -> do
+    A.setSGR [A.SetColor A.Foreground A.Dull A.Green]
+    TIO.putStr t
+    A.setSGR []

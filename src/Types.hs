@@ -132,11 +132,6 @@ instance FromJSON Site' where
     _sApiParam <- o .: "shortcode"
     return . Site' $ Site {..}
 
--- TODO see if still necessary
-instance Monoid Options where
-  mempty         = def
-  _ `mappend` o2 = o2
-
 instance FromJSON Editor where
   parseJSON = withText "editor" $ \s -> do
     let c = capitalize . T.unpack $ s

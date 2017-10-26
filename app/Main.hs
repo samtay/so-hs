@@ -49,7 +49,6 @@ app = do
     Prompt -> execPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
--- TODO once Prompt module has markdown terminal display, use that!
 runLuckyPrompt :: Question Markdown -> IO ()
 runLuckyPrompt question = do
   let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
