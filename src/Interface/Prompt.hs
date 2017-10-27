@@ -223,7 +223,7 @@ answersMenu = mkMenu styleA
   where
     styleA a =
       score (a ^. aScore)
-      <> if a ^. aAccepted then check else " "
+      <> (if a ^. aAccepted then check else " ")
       <> answerTitle a
 
 mkMenu :: (a -> Stylized) -> [a] -> Menu a
@@ -237,11 +237,19 @@ check = fg green <> " ✔ "
 -- TODO can stylized even be granularized in a single value?
 -- TODO finish implementing this !
 answerTitle :: Answer Markdown -> Stylized
-answerTitle ans = loop 65 (ans ^. aBody) <> "..."
+answerTitle ans = loop 62 (ans ^. aBody)
   where
     loop :: Int -> Markdown -> Stylized
     loop _ (Markdown []) = ""
-    loop _ (Markdown (s:segs)) = text $ T.pack $ show s
+    loop n (Markdown (s:segs))
+      | n <= 3    = "..."
+      | otherwise =
+        let txt = T.replace "\r\n" "\n" $ fromSegment s
+            showLen = min (T.length txt) (n - 3)
+            showTxt = T.unwords . T.lines $ T.take showLen txt
+            leftover = n - showLen
+            style = case s of SCode _ -> fg cyan ; _ -> mempty
+         in (style <> text showTxt) <> loop leftover (Markdown segs)
 
 score :: Int -> Stylized
 score n =
@@ -347,24 +355,17 @@ surround l center r = l <> center <> r
 putMdLn :: Markdown -> IO ()
 putMdLn md = putMd md >> putStrLn ""
 
--- TODO make a withSGR helper
 -- TODO add color config !!!!!!!
 putMd :: Markdown -> IO ()
 putMd (Markdown segments) = forM_ segments $ \case
   SPlain t -> TIO.putStr t
-  SBold t -> do
-    A.setSGR [A.SetConsoleIntensity A.BoldIntensity]
-    TIO.putStr t
-    A.setSGR []
-  SItalic t -> do
-    A.setSGR [A.SetItalicized True]
-    TIO.putStr t
-    A.setSGR []
-  SCode t -> do
-    A.setSGR [A.SetColor A.Foreground A.Vivid A.Cyan]
-    TIO.putStr t
-    A.setSGR []
-  SQuote t -> do
-    A.setSGR [A.SetColor A.Foreground A.Dull A.Green]
-    TIO.putStr t
-    A.setSGR []
+  SBold t -> withSGR [A.SetConsoleIntensity A.BoldIntensity] $ TIO.putStr t
+  SItalic t -> withSGR [A.SetItalicized True] $ TIO.putStr t
+  SCode t -> withSGR [A.SetColor A.Foreground A.Vivid A.Cyan] $ TIO.putStr t
+  SKbd t -> withSGR [ A.SetColor A.Foreground A.Vivid A.Cyan
+                    , A.SetUnderlining A.SingleUnderline
+                    ] $ TIO.putStr t
+  SQuote t -> withSGR [A.SetColor A.Foreground A.Dull A.Green] $ TIO.putStr t
+
+withSGR :: [A.SGR] -> IO a -> IO a
+withSGR mods a = A.setSGR mods *> a <* A.setSGR []

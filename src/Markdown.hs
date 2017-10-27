@@ -3,12 +3,18 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
-module Markdown where
+module Markdown
+  ( Markdown (..)
+  , markdown
+  , Segment(..)
+  , fromSegment
+  , parseMarkdown
+  ) where
 
 --------------------------------------------------------------------------------
 -- Base imports:
 import           Control.Applicative      (empty)
-import           Control.Monad            (void, unless)
+import           Control.Monad            (unless, void)
 import           Data.Foldable            (asum, fold)
 import           Data.Maybe               (fromMaybe)
 
@@ -44,8 +50,18 @@ data Segment a
   | SBold a
   | SItalic a
   | SCode a
+  | SKbd a
   | SQuote a
   deriving (Show, Functor)
+
+fromSegment :: Segment a -> a
+fromSegment = \case
+  SPlain a -> a
+  SBold a -> a
+  SItalic a -> a
+  SCode a -> a
+  SKbd a -> a
+  SQuote a -> a
 
 --------------------------------------------------------------------------------
 -- Parser functions:
@@ -77,6 +93,7 @@ parseSegments :: Parser [Segment Text]
 parseSegments = reverse . collapse [] <$> many (eitherP parseFormatted anyChar)
   where
     parseFormatted = try (SCode <$> parseCode)
+                 <|> try (SKbd <$> parseKbd)
                  <|> try (SQuote <$> parseQuote)
                  <|> try (SBold <$> (enclosedByNoSpace "**" <|> enclosedByNoSpace "__"))
                  <|> try (SItalic <$> (enclosedByNoSpace "*" <|> enclosedByNoSpace "_"))
@@ -92,6 +109,10 @@ parseCode = parseCodeInline <|> fmap T.pack parseCodeBlock
     parseCodeBlock = unlines <$> do
       void eol <|> bof
       some $ string "    " *> someTill anyChar (void eol <|> eof)
+
+parseKbd :: Parser Text
+parseKbd = fmap T.pack $
+  string "<kbd>" >> someTill anyChar (string "</kbd>")
 
 -- | If I decide this is useful I'll implement it
 parseQuote :: Parser Text
