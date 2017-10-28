@@ -6,10 +6,12 @@ import qualified Data.Aeson.Types     as AT
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Text            (Text)
+import qualified Data.Text.IO         as TIO
 import qualified Data.Yaml            as Y
 import           Test.Hspec
 
 import           StackOverflow.Google
+import           Markdown
 import           Types
 import           Utils
 
@@ -53,8 +55,61 @@ main = hspec $ do
         `shouldReturn` Left "Error in $.defaultOptions.ui: invalid interface"
 
   describe "Markdown Parser" $ do
-    it "parses valid markdown successfuly" $
-      pending
+    it "parses raw mode as an identity op" $
+      markdown Raw <$> validMarkdown
+        `shouldReturn` Markdown [ SPlain "This is some **bold text**, __other bold text__ and\
+                                         \ some _italicized text_.\nBut make sure that if\
+                                         \ spaces_are_not_surrounding the delimiters, then\nthe\
+                                         \ text__is__plain for underscores - but not*for*asterisks.\
+                                         \ But backticks\nwill `always produce` code ``ya know``?\
+                                         \ And if you need two backticks,\nyou can ```do `` within\
+                                         \ three backticks```.\n\n    parseMarkdown :: Parser\
+                                         \ Markdown\n    parseMarkdown = Markdown <$> parseSegments\
+                                         \ <* eof\n\nAnd know that <kbd>z</kbd><kbd>z</kbd> centers\
+                                         \ your cursor location in normal mode.\nAnd make sure that\
+                                         \ &quot;quoted strings&quot; get their damn html entities\
+                                         \ decoded.\n" ]
+    it "replaces html entities" $
+      markdown HtmlEntities <$> validMarkdown
+        `shouldReturn` Markdown [ SPlain "This is some **bold text**, __other bold text__ and\
+                                         \ some _italicized text_.\nBut make sure that if\
+                                         \ spaces_are_not_surrounding the delimiters, then\nthe\
+                                         \ text__is__plain for underscores - but not*for*asterisks.\
+                                         \ But backticks\nwill `always produce` code ``ya know``?\
+                                         \ And if you need two backticks,\nyou can ```do `` within\
+                                         \ three backticks```.\n\n    parseMarkdown :: Parser\
+                                         \ Markdown\n    parseMarkdown = Markdown <$> parseSegments\
+                                         \ <* eof\n\nAnd know that <kbd>z</kbd><kbd>z</kbd> centers\
+                                         \ your cursor location in normal mode.\nAnd make sure that\
+                                         \ \"quoted strings\" get their damn html entities\
+                                         \ decoded.\n" ]
+    it "parses valid markdown to pretty format" $
+      markdown Pretty <$> validMarkdown
+        `shouldReturn` Markdown [ SPlain "This is some "
+                                , SBold "bold text"
+                                , SPlain ", "
+                                , SBold "other bold text"
+                                , SPlain " and some "
+                                , SItalic "italicized text"
+                                , SPlain ".\nBut make sure that if spaces_are_not_surrounding the\
+                                         \ delimiters, then\nthe text__is__plain for underscores\
+                                         \ - but not"
+                                , SItalic "for"
+                                , SPlain "asterisks. But backticks\nwill "
+                                , SCode "always produce"
+                                , SPlain " code "
+                                , SCode "ya know"
+                                , SPlain "? And if you need two backticks,\nyou can "
+                                , SCode "do `` within three backticks"
+                                , SPlain ".\n"
+                                , SCode "parseMarkdown :: Parser Markdown\nparseMarkdown = Markdown\
+                                        \ <$> parseSegments <* eof\n"
+                                , SPlain "\nAnd know that "
+                                , SKbd "z"
+                                , SKbd "z"
+                                , SPlain " centers your cursor location in normal mode.\nAnd make\
+                                        \ sure that \"quoted strings\" get their damn html entities\
+                                        \ decoded.\n" ]
     it "does not fail for broken-ish markdown" $
       pending
 
@@ -89,6 +144,9 @@ noSitesFile = "test/fixtures/config/no_sites.yml"
 
 badUIFile :: FilePath
 badUIFile = "test/fixtures/config/bad_ui.yml"
+
+validMarkdown :: IO Text
+validMarkdown = TIO.readFile "test/fixtures/markdown/valid.md"
 
 englishMetaBSL :: IO BSL.ByteString
 englishMetaBSL = BSL.readFile "test/fixtures/google/english_meta.html"

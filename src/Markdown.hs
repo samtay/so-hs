@@ -42,7 +42,7 @@ import           Types
 -- TODO decide if combined text styles is worth implementing
 -- (e.g. ***example*** being italic and bold)
 data Markdown = Markdown [Segment Text]
-  deriving (Show)
+  deriving (Show, Eq)
 
 -- | Segment represents a chunk of markdown text in a particular style
 data Segment a
@@ -52,7 +52,7 @@ data Segment a
   | SCode a
   | SKbd a
   | SQuote a
-  deriving (Show, Functor)
+  deriving (Show, Eq, Functor)
 
 fromSegment :: Segment a -> a
 fromSegment = \case

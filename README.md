@@ -8,7 +8,7 @@ sections, etc.)
 
 # todo
 
-0. Trace evaluations to ensure md parsing happens lazily
+0. Consider removing the [-no] prefixed cli opts in favor of True/False with yaml boolean parser
 1. Form URL and link to it at the end of showing questions / answers !!!!!
 2. Consider removing `Either Error [Question]` and just throwing `Error` as an exception..
 3. Consider using container other than `[]` for questions/answers. 
