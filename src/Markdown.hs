@@ -17,6 +17,7 @@ import           Control.Applicative      (empty)
 import           Control.Monad            (unless, void)
 import           Data.Foldable            (asum, fold)
 import           Data.Maybe               (fromMaybe)
+import           Data.String              (IsString (..))
 
 --------------------------------------------------------------------------------
 -- Library imports:
@@ -37,12 +38,17 @@ import           Types
 -- markdown specifications are implemented here because there is only so much
 -- we can render, helpfully, in a terminal.
 --
--- TODO possibly parse <kbd></kbd> (this is easy anyway)
---
 -- TODO decide if combined text styles is worth implementing
 -- (e.g. ***example*** being italic and bold)
 data Markdown = Markdown [Segment Text]
   deriving (Show, Eq)
+
+instance IsString Markdown where
+  fromString = Markdown . (: []) . SPlain . T.pack
+
+instance Monoid Markdown where
+  mempty = Markdown mempty
+  mappend (Markdown segsA) (Markdown segsB) = Markdown (mappend segsA segsB)
 
 -- | Segment represents a chunk of markdown text in a particular style
 data Segment a
