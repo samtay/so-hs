@@ -6,12 +6,13 @@ import qualified Data.Aeson.Types     as AT
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Text            (Text)
+import qualified Data.Text            as T
 import qualified Data.Text.IO         as TIO
 import qualified Data.Yaml            as Y
 import           Test.Hspec
 
-import           StackOverflow.Google
 import           Markdown
+import           StackOverflow.Google
 import           Types
 import           Utils
 
@@ -110,8 +111,30 @@ main = hspec $ do
                                 , SPlain " centers your cursor location in normal mode.\nAnd make\
                                         \ sure that \"quoted strings\" get their damn html entities\
                                         \ decoded.\n" ]
-    it "does not fail for broken-ish markdown" $
-      pending
+    it "mimics stackoverflow underscore oddities" $
+      markdown Pretty (T.unwords [ "t_what_ _what_t __what_ !_what_ *what_ _what* _what_ _what_"
+                                 , "snake_case_words _*asterisk* *_underscore_ and__no__bolding" ])
+        `shouldBe` Markdown [ SPlain "t_what_ _what_t __what_ !"
+                            , SItalic "what"
+                            , SPlain " "
+                            , SItalic "what_ _what"
+                            , SPlain " "
+                            , SItalic "what"
+                            , SPlain " "
+                            , SItalic "what"
+                            , SPlain " snake_case_words _"
+                            , SItalic "asterisk"
+                            , SPlain " *"
+                            , SItalic "underscore"
+                            , SPlain " and__no__bolding"
+                            ]
+    it "doesnt nest inner styles" $
+      markdown Pretty (T.unwords [ "t_what_ _what_t __what_ !_what_ *what_ _what* _what_ _what_"
+                                 , "snake_case_words _*asterisk* *_underscore_ and__" ])
+        `shouldBe` Markdown [ SPlain "t_what_ _what_t "
+                            , SBold "what_ !_what_ *what_ _what* _what_ _what_ snake_case_words \
+                                    \_*asterisk* *_underscore_ and"
+                            ]
 
 allAnswerIds :: [Question Text] -> [Int]
 allAnswerIds = concatMap ((fmap _aId) . _qAnswers)

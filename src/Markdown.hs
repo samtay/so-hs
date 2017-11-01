@@ -3,24 +3,30 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TupleSections              #-}
 module Markdown
-  ( Markdown (..)
+  ( Markdown(..)
   , markdown
   , Segment(..)
   , fromSegment
   , parseMarkdown
+  , parseSegments, parseSegmentExcluding, Exclusion(..) -- TODO remove
   ) where
 
 --------------------------------------------------------------------------------
 -- Base imports:
 import           Control.Applicative      (empty)
-import           Control.Monad            (unless, void)
+import           Control.Monad            (guard, unless, void)
+import           Data.Char                (isPunctuation, isSeparator)
 import           Data.Foldable            (asum, fold)
-import           Data.Maybe               (fromMaybe)
+import           Data.Maybe               (fromMaybe, isJust, isNothing)
+import           Data.Monoid              ((<>))
 import           Data.String              (IsString (..))
 
 --------------------------------------------------------------------------------
 -- Library imports:
+import           Data.Set                 (Set)
+import qualified Data.Set                 as Set
 import           Data.Text                (Text)
 import qualified Data.Text                as T
 import           Text.HTML.TagSoup.Entity (lookupEntity)
@@ -44,7 +50,7 @@ data Markdown = Markdown [Segment Text]
   deriving (Show, Eq)
 
 instance IsString Markdown where
-  fromString = Markdown . (: []) . SPlain . T.pack
+  fromString = Markdown . (: []) . fromString
 
 instance Monoid Markdown where
   mempty = Markdown mempty
@@ -60,6 +66,9 @@ data Segment a
   | SQuote a
   deriving (Show, Eq, Functor)
 
+instance IsString a => IsString (Segment a) where
+  fromString = SPlain . fromString
+
 fromSegment :: Segment a -> a
 fromSegment = \case
   SPlain a -> a
@@ -68,6 +77,12 @@ fromSegment = \case
   SCode a -> a
   SKbd a -> a
   SQuote a -> a
+
+-- | This can be used for more complicated things in the future,
+-- especially if handling nested styles.
+data Exclusion
+  = Underscores
+  deriving (Show, Eq, Ord)
 
 --------------------------------------------------------------------------------
 -- Parser functions:
@@ -96,17 +111,41 @@ parseMarkdown :: Parser Markdown
 parseMarkdown = Markdown <$> parseSegments <* eof
 
 parseSegments :: Parser [Segment Text]
-parseSegments = reverse . collapse [] <$> many (eitherP parseFormatted anyChar)
+parseSegments = reverse . collapse [] <$> loop mempty
   where
-    parseFormatted = try (SCode <$> parseCode)
-                 <|> try (SKbd <$> parseKbd)
-                 <|> try (SQuote <$> parseQuote)
-                 <|> try (SBold <$> (enclosedByNoSpace "**" <|> enclosedByNoSpace "__"))
-                 <|> try (SItalic <$> (enclosedByNoSpace "*" <|> enclosedByNoSpace "_"))
-    collapse ss                []               = ss
-    collapse ss                ((Left s) : cs)  = collapse (s : ss)                        cs
-    collapse ((SPlain t) : ss) ((Right c) : cs) = collapse ((SPlain $ T.snoc t c) : ss)    cs
-    collapse ss                ((Right c) : cs) = collapse ((SPlain $ T.singleton c) : ss) cs
+    loop exclusions = do
+      (seg, nextExclusions) <- parseSegmentExcluding exclusions <|> pure ("", mempty)
+      if T.null (fromSegment seg)
+         then return []
+         else (seg:) <$> loop nextExclusions
+
+    collapse ((SPlain t1) : xs) ((SPlain t2) : ys) =
+      collapse ((SPlain $ t1 <> t2) : xs) ys
+    collapse xs (y:ys) = collapse (y : xs) ys
+    collapse xs [] = xs
+
+parseSegmentExcluding :: Set Exclusion -> Parser (Segment Text, Set Exclusion)
+parseSegmentExcluding exclusions =
+      tryPure (SCode <$> parseCode)
+  <|> tryPure (SKbd <$> parseKbd)
+  <|> tryPure (SQuote <$> parseQuote)
+  <|> tryPure (SBold <$> ( (enclosedByNoInnerSpace "**")
+                       <|> (unlessExcluding Underscores >> enclosedByNoInnerSpace' "__")
+                         ))
+  <|> tryPure (SItalic <$> ( (enclosedByNoInnerSpace "*")
+                         <|> (unlessExcluding Underscores >> enclosedByNoInnerSpace'' "_")
+                           ))
+  <|> do plain <- some (noneOf delims) <|> ((:[]) <$> anyChar)
+         let c = last plain
+             nextExclusion = if (isPunctuation c || isSeparator c) && c /= '_'
+                                then mempty
+                                else Set.singleton Underscores
+         return (SPlain $ T.pack plain, nextExclusion)
+  where
+    tryPure = fmap (, mempty) . try
+    unlessExcluding ex = guard $ Set.notMember ex exclusions
+    delims :: [Char]
+    delims = "*_`<\n"
 
 parseCode :: Parser Text
 parseCode = parseCodeInline <|> fmap T.pack parseCodeBlock
@@ -128,15 +167,38 @@ parseQuote = empty
 -- directly following and preceding the first and final delimiter, respectively.
 --
 -- For example, **this matches** but ** this doesn't **
--- TODO consider capturing escaped delimiters..
-enclosedByNoSpace :: String -> Parser Text
-enclosedByNoSpace d = T.pack . concat <$> do
+enclosedByNoInnerSpace :: String -> Parser Text
+enclosedByNoInnerSpace d = T.pack . concat <$> do
   _ <- string d
   notFollowedBy spaceChar
   someTill
-    (try ((:) <$> spaceChar <*> string d) <|> pure <$> anyChar) $ do
+    (try ((:) <$> spaceChar <*> string d) <|> (:[]) <$> anyChar) $ do
       notFollowedBy spaceChar
       string d
+
+-- | Just like 'enclosedByNoInnerSpace', but requires separation/punctuation character
+-- following the final delimiter. This is very specifically used for underscores.
+-- Note that really this is half of a preceding/following separation rule, but the
+-- first half of this rule, by megaparsec design, must be handled in outer scope.
+-- See 'parseSegmentExcluding'.
+--
+-- For example, __this matches__ but __ this doesn't __ and text__this__doesn't__
+enclosedByNoInnerSpace' :: String -> Parser Text
+enclosedByNoInnerSpace' d = do
+  inner <- enclosedByNoInnerSpace d
+  notFollowedBy (char '_')
+  lookAhead $ void separatorChar <|> void punctuationChar <|> eof
+  return inner
+
+-- | Again this is a really specific underscores parser. StackOverflow is just
+-- weird when it comes to underscores. This one ensures that the parsed text
+-- content either has a space or doesn't have an underscore
+-- TODO see if this is all just one big rule ( the first/second halves above)
+enclosedByNoInnerSpace'' :: String -> Parser Text
+enclosedByNoInnerSpace'' d = do
+  inner <- enclosedByNoInnerSpace' d
+  guard $ (isNothing $ T.findIndex (== '_') inner) || (isJust $ T.findIndex isSeparator inner)
+  return inner
 
 -- | Match any text enclosed by a delimiter
 enclosedBy :: String -> Parser Text

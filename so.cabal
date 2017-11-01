@@ -35,6 +35,7 @@ library
                      , brick
                      , byline
                      , bytestring
+                     , containers
                      , data-default
                      , directory
                      , exceptions
