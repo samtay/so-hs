@@ -1,12 +1,15 @@
 flags: {}
 extra-package-dbs: []
 packages:
-  - location: '.'
-  - location:
-      git: https://github.com/samtay/byline.git
-      commit: c51f3de4e674e5de5199a1b7fbf4e8d73ee8ed97
-    extra-dep: true
+- location: .
+- location:
+    git: https://github.com/samtay/byline.git
+    commit: c51f3de4e674e5de5199a1b7fbf4e8d73ee8ed97
+  extra-dep: true
 extra-deps:
+- brick-0.28
+- vty-5.18.1
 - optparse-applicative-0.14.0.0
 - terminfo-hs-0.2.1
+- word-wrap-0.4.1
 resolver: lts-9.0
