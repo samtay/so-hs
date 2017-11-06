@@ -21,12 +21,13 @@ import           Lens.Micro
 -- Local imports:
 import           Cli                    (Cli (..), runCli)
 import           Config                 (getConfigE, getConfigFile)
+import           Interface.Brick        (execBrick)
 import           Interface.Prompt       (execPrompt, putMdLn)
-import           Markdown               (Markdown, markdown)
+import           Markdown               (Markdown)
 import           StackOverflow          (query, queryLucky)
 import           Types
 import           Utils                  (code, err, exitOnError, exitWithError,
-                                         promptChar, (<$$$$>), (<$$>))
+                                         promptChar)
 
 main :: IO ()
 main = withConfig $ \cfg -> do
@@ -38,14 +39,14 @@ main = withConfig $ \cfg -> do
 
 app :: App ()
 app = do
-  (Options _ lucky _ _ ui display) <- gets (_sOptions)
+  (Options _ lucky _ _ ui _) <- gets (_sOptions)
   -- Start fetching questions asynchronously
-  aQuestions <- appAsync $ markdown display <$$$$> query
+  aQuestions <- appAsync query
   -- If @--lucky@, show single answer prompt
-  when lucky $ queryLucky >>= liftIO . exitOnError runLuckyPrompt . (markdown display <$$>)
+  when lucky $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
   -- Execute chosen interface
   case ui of
-    Brick  -> liftIO $ exitWithError "Brick interface not yet implemented!"
+    Brick  -> execBrick aQuestions
     Prompt -> execPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface

@@ -1,36 +1,19 @@
 # so [![Build Status](https://travis-ci.org/samtay/so.svg?branch=master)](https://travis-ci.org/samtay/so)
 
 **Note: this is under active development.** The prompt interface is fully
-functional, but the more sophisticated brick interface is not finished. Also
-the markdown is currently printed raw, but the finished product will parse this
-and apply the styles possible within a terminal (e.g. bold, coloring code
-sections, etc.)
+functional, but the more sophisticated brick interface is not finished.
 
 # todo
 
 0. Consider removing the [-no] prefixed cli opts in favor of True/False with yaml boolean parser
 1. Form URL and link to it at the end of showing questions / answers !!!!!
-2. Consider removing `Either Error [Question]` and just throwing `Error` as an exception..
 3. Consider using container other than `[]` for questions/answers. 
 4. Test --no-google flag
-6. freeze dependency versions
-
-### parser
-1. bug -- ensure spaces surround underscore delimiters (different than asterisk behavior!)
-
-### stack exchange
-1. filters are finicky but work -- remember to make filter unsafe to not worry
-   about printing weird chars
-2. add a `--update-filters` sub command to update xdga data with named filter.
-   in fact, maybe this ships without hardcoded filters and on first run,
-   creates new filter and stores in xdga data.
-5. handle and write tests for error responses:
-   https://api.stackexchange.com/docs/types/error easy to test by setting bogus
-   api key. need to catch `StatusCodeException` with code 400
+5. Write a .nix builder
 
 ### interface
-0. Both interfaces will need parser for markdown. The brick adaptation might be
-   useful for others.
+0. j/k to scroll, Ctrl + j/k/l/h to move, and Ctrl+Shift + j/k/h/l to resize
+   the four panes (e.g. visually moving the vertical and horizontal dividers)
 1. maybe custom widget holder to maintain column ratios
 2. extents might be useful for rendering previews efficiently
 3. vty supports reverseVideo style (mappend with selected item - see ListDemo)
@@ -41,6 +24,16 @@ sections, etc.)
    shift+h,j,k,l for resizing sections
 7. can set up themes named in configuration and then keep attrmap within app
    state
+
+### stack exchange
+1. filters are finicky but work -- remember to make filter unsafe to not worry
+   about printing weird chars
+2. add a `--update-filters` sub command to update xdga data with named filter.
+   in fact, maybe this ships without hardcoded filters and on first run,
+   creates new filter and stores in xdga data.
+5. handle and write tests for error responses:
+   https://api.stackexchange.com/docs/types/error easy to test by setting bogus
+   api key. need to catch `StatusCodeException` with code 400
 
 ### config
 1. xdga data to save `filter` param

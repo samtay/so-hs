@@ -29,18 +29,21 @@ import qualified Network.Wreq         as W
 
 --------------------------------------------------------------------------------
 -- Local imports:
+import           Markdown
 import           StackOverflow.Google
 import           Types
 import           Utils
 
 -- | Get question results
-query :: App (Either Error [Question Text])
+query :: App (Either Error [Question Markdown])
 query = do
   useG <- gets (_oGoogle . _sOptions)
-  fmap join . tryJust toError $ if useG then queryG else querySE
+  display <- gets (_oTextDisplay . _sOptions)
+  qs <- fmap join . tryJust toError $ if useG then queryG else querySE
+  return $ markdown display <$$$> qs
 
 -- | Get a single question result (hopefully decent performance boost)
-queryLucky :: App (Either Error (Question Text))
+queryLucky :: App (Either Error (Question Markdown))
 queryLucky = do
   initialState <- get
   let modifiedState = initialState & sOptions . oLimit .~ 1
