@@ -234,8 +234,6 @@ mkMenu stylizer xs =
 check :: Stylized
 check = fg green <> " ✔ "
 
--- TODO can stylized even be granularized in a single value?
--- TODO finish implementing this !
 answerTitle :: Answer Markdown -> Stylized
 answerTitle ans = loop 62 (ans ^. aBody)
   where
