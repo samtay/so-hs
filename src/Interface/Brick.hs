@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Interface.Brick
   ( execBrick
@@ -26,6 +27,7 @@ import qualified Data.Text                as T
 import qualified Graphics.Vty             as V
 import           Lens.Micro               ((%~), (&), (.~), (^.))
 import           Lens.Micro.TH            (makeLenses)
+import           Text.RawString.QQ        (r)
 
 --------------------------------------------------------------------------------
 -- Local imports:
@@ -35,7 +37,6 @@ import           Types
 
 --------------------------------------------------------------------------------
 -- Types
-
 
 -- | Events that we pipe to the event handler asynchronously
 data BEvent
@@ -50,12 +51,13 @@ data Fetcher = Fetcher { _fChan  :: BChan BEvent }
 -- Remember I might need turtle to pipe stuff to copy-paste command
 -- Also possibly add to util backup defaults, check if pbcopy, xclip, etc. is in PATH.
 data BState = BState
-  { _bQuestions :: [Question Markdown]
-  , _bError     :: Maybe Error
-  , _bLoading   :: Maybe Int
-  , _bAppState  :: AppState
-  , _bAppConfig :: AppConfig
-  , _bFetcher   :: Fetcher
+  { _bQuestions  :: [Question Markdown]
+  , _bError      :: Maybe Error
+  , _bLoading    :: Maybe Int
+  , _bShowSplash :: Bool
+  , _bAppState   :: AppState
+  , _bAppConfig  :: AppConfig
+  , _bFetcher    :: Fetcher
   }
 makeLenses ''BState
 
@@ -78,12 +80,13 @@ execBrick aQuestions = do
     chan  <- newBChan 10
     passToChannel aQuestions chan
     startTimeTicker chan
-    let initialBState = BState { _bQuestions = []
-                               , _bError     = Nothing
-                               , _bLoading   = Just 0
-                               , _bAppState  = state
-                               , _bAppConfig = conf
-                               , _bFetcher   = Fetcher chan
+    let initialBState = BState { _bQuestions  = []
+                               , _bError      = Nothing
+                               , _bLoading    = Just 0
+                               , _bShowSplash = True
+                               , _bAppState   = state
+                               , _bAppConfig  = conf
+                               , _bFetcher    = Fetcher chan
                                }
     customMain (V.mkVty V.defaultConfig) (Just chan) app initialBState
   return () -- TODO figure out end game
@@ -136,13 +139,19 @@ handleEvent bs _                                     = continue bs
 -- Drawing
 
 drawUI :: BState -> [Widget Name]
-drawUI bs = [ maybe emptyWidget drawLoading $ bs ^. bLoading
+drawUI bs = [ case (bs ^. bLoading, bs ^. bShowSplash) of
+                (Just n, False) -> C.centerLayer $ drawLoading n
+                -- TODO decide whether empty panes displayed in background
+                -- if not, replace centerLayer with center
+                (Just n, True)  -> C.centerLayer $ splashWidget <=> drawLoading n
+                _               -> emptyWidget
             , maybe emptyWidget drawError $ bs ^. bError
             , drawQAPanes bs
             ]
 
+-- TODO aesthetic choice - border or no border?
 drawLoading :: Int -> Widget Name
-drawLoading n = C.center . B.border . txt $
+drawLoading n = B.border . txt $
   T.justifyLeft totalSize '.' $ T.replicate leading "." <> loadingString
   where
     leading = if n <= halfCount then n else loadingDotCount - n
@@ -151,10 +160,37 @@ drawLoading n = C.center . B.border . txt $
     totalSize = halfCount + T.length loadingString
 
 loadingDotCount :: Int
-loadingDotCount = 50
+loadingDotCount = 40
 
 drawError :: Error -> Widget Name
 drawError = const emptyWidget
+
+splashWidget :: Widget Name
+splashWidget = padBottom (Pad 1) . txt $ splash1
+splash1 = [r|
+      ___           ___     
+     /\  \         /\  \    
+    /::\  \       /::\  \   
+   /:/\ \  \     /:/\:\  \  
+  _\:\~\ \  \   /:/  \:\  \ 
+ /\ \:\ \ \__\ /:/__/ \:\__\
+ \:\ \:\ \/__/ \:\  \ /:/  /
+  \:\ \:\__\    \:\  /:/  / 
+   \:\/:/  /     \:\/:/  /  
+    \::/  /       \::/  /   
+     \/__/         \/__/    
+|]
+splash2 = [r|
+┌─┐┌─┐
+└─┐│ │
+└─┘└─┘
+|]
+splash3 = [r|
+______________ 
+__  ___/_  __ \
+_(__  ) / /_/ /
+/____/  \____/ 
+|]
 
 drawQAPanes :: BState -> Widget Name
 drawQAPanes = const emptyWidget
