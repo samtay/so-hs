@@ -55,6 +55,7 @@ data BState = BState
   , _bError      :: Maybe Error
   , _bLoading    :: Maybe Int
   , _bShowSplash :: Bool
+  , _bShowHelp   :: Bool
   , _bAppState   :: AppState
   , _bAppConfig  :: AppConfig
   , _bFetcher    :: Fetcher
@@ -84,6 +85,7 @@ execBrick aQuestions = do
                                , _bError      = Nothing
                                , _bLoading    = Just 0
                                , _bShowSplash = True
+                               , _bShowHelp   = False
                                , _bAppState   = state
                                , _bAppConfig  = conf
                                , _bFetcher    = Fetcher chan
@@ -130,24 +132,33 @@ passToChannel aQuestions chan = void . forkIO $ do
 -- Event Handling
 
 handleEvent :: BState -> BrickEvent Name BEvent -> EventM Name (Next BState)
-handleEvent bs (AppEvent TimeTick)                   = continue $ bs & bLoading %~ fmap (+. 1)
-handleEvent bs (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt bs
-handleEvent bs (VtyEvent (V.EvKey V.KEsc []))        = halt bs
-handleEvent bs _                                     = continue bs
+handleEvent bs = \case
+  AppEvent TimeTick                   -> continue $ bs & bLoading %~ fmap (+. 1)
+  VtyEvent (V.EvKey (V.KChar '?') []) -> continue $ bs & bShowHelp .~ True
+  VtyEvent (V.EvKey V.KEsc        []) -> continue $ bs & bShowHelp .~ False
+  VtyEvent (V.EvKey (V.KChar 'q') []) -> halt bs
+  _                                   -> continue bs
 
 --------------------------------------------------------------------------------
 -- Drawing
 
+-- TODO decide whether empty panes displayed in background on startup
+-- if not, replace centerLayer with center
 drawUI :: BState -> [Widget Name]
-drawUI bs = [ case (bs ^. bLoading, bs ^. bShowSplash) of
+drawUI bs = [ case bs ^. bShowHelp of
+                True  -> helpWidget
+                False -> emptyWidget
+            , case (bs ^. bLoading, bs ^. bShowSplash) of
                 (Just n, False) -> C.centerLayer . B.border $ drawLoading n
-                -- TODO decide whether empty panes displayed in background
-                -- if not, replace centerLayer with center
-                (Just n, True)  -> C.centerLayer $ splashWidget <=> padLeft (Pad 1) (drawLoading n)
+                (Just n, True)  -> C.centerLayer $ splashWidget <=> {-padLeft (Pad 1)-} (drawLoading n)
                 _               -> emptyWidget
             , maybe emptyWidget drawError $ bs ^. bError
             , drawQAPanes bs
             ]
+
+helpWidget :: Widget Name
+helpWidget = C.centerLayer . B.borderWithLabel (txt "Help") $
+  txt "Help not yet implemented"
 
 drawLoading :: Int -> Widget Name
 drawLoading n = txt .
@@ -159,13 +170,13 @@ drawLoading n = txt .
     totalSize = halfCount + T.length loadingString
 
 loadingDotCount :: Int
-loadingDotCount = 40
+loadingDotCount = 48
 
 drawError :: Error -> Widget Name
 drawError = const emptyWidget
 
 splashWidget :: Widget Name
-splashWidget = padBottom (Pad 1) . txt $ [r|
+splashWidget = padAll 1 . txt $ [r|
       ___           ___     
      /\  \         /\  \    
     /::\  \       /::\  \   
