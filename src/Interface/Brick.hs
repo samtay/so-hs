@@ -140,18 +140,17 @@ handleEvent bs _                                     = continue bs
 
 drawUI :: BState -> [Widget Name]
 drawUI bs = [ case (bs ^. bLoading, bs ^. bShowSplash) of
-                (Just n, False) -> C.centerLayer $ drawLoading n
+                (Just n, False) -> C.centerLayer . B.border $ drawLoading n
                 -- TODO decide whether empty panes displayed in background
                 -- if not, replace centerLayer with center
-                (Just n, True)  -> C.centerLayer $ splashWidget <=> drawLoading n
+                (Just n, True)  -> C.centerLayer $ splashWidget <=> padLeft (Pad 1) (drawLoading n)
                 _               -> emptyWidget
             , maybe emptyWidget drawError $ bs ^. bError
             , drawQAPanes bs
             ]
 
--- TODO aesthetic choice - border or no border?
 drawLoading :: Int -> Widget Name
-drawLoading n = B.border . txt $
+drawLoading n = txt .
   T.justifyLeft totalSize '.' $ T.replicate leading "." <> loadingString
   where
     leading = if n <= halfCount then n else loadingDotCount - n
@@ -166,8 +165,7 @@ drawError :: Error -> Widget Name
 drawError = const emptyWidget
 
 splashWidget :: Widget Name
-splashWidget = padBottom (Pad 1) . txt $ splash1
-splash1 = [r|
+splashWidget = padBottom (Pad 1) . txt $ [r|
       ___           ___     
      /\  \         /\  \    
     /::\  \       /::\  \   
@@ -179,17 +177,6 @@ splash1 = [r|
    \:\/:/  /     \:\/:/  /  
     \::/  /       \::/  /   
      \/__/         \/__/    
-|]
-splash2 = [r|
-┌─┐┌─┐
-└─┐│ │
-└─┘└─┘
-|]
-splash3 = [r|
-______________ 
-__  ___/_  __ \
-_(__  ) / /_/ /
-/____/  \____/ 
 |]
 
 drawQAPanes :: BState -> Widget Name
