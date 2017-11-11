@@ -51,6 +51,7 @@ library
                      , scalpel-core
                      , tagsoup
                      , text
+                     , vector
                      , vty
                      , wreq
                      , yaml

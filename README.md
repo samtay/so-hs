@@ -23,7 +23,7 @@ functional, but the more sophisticated brick interface is not finished.
 6. in addition to vim h,j,k,l bindings for scrolling current viewport,
    shift+h,j,k,l for resizing sections
 7. can set up themes named in configuration and then keep attrmap within app
-   state
+   state -- HELL YEAH JT JUST ADDED THIS TO BRICK !!!!
 
 ### stack exchange
 1. filters are finicky but work -- remember to make filter unsafe to not worry
