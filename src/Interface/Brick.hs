@@ -44,7 +44,7 @@ import           Types
 
 -- | Events that we pipe to the event handler asynchronously
 data BEvent
-  = NewQueryResult (Either Error [Question Markdown])
+  = NewQueryResult (Either Error [Question [] Markdown])
   | TimeTick
 
 data BError
@@ -75,8 +75,7 @@ data ShiftDirection
 -- Remember I might need turtle to pipe stuff to copy-paste command
 -- Also possibly add to util backup defaults, check if pbcopy, xclip, etc. is in PATH.
 data BState = BState
-  { _bQuestions  :: List Name (Question Markdown)
-  , _bAnswers    :: List Name (Answer Markdown)
+  { _bQuestions  :: List Name (Question (List Name) Markdown)
   , _bError      :: Maybe BError
   , _bLoading    :: Maybe Int
   , _bShowSplash :: Bool
@@ -90,7 +89,7 @@ makeLenses ''BState
 --------------------------------------------------------------------------------
 -- Execution
 
-execBrick :: Async (Either Error [Question Markdown]) -> App ()
+execBrick :: Async (Either Error [Question [] Markdown]) -> App ()
 execBrick aQuestions = do
   state <- get
   conf  <- ask
@@ -100,7 +99,6 @@ execBrick aQuestions = do
     startTimeTicker chan
     -- TODO perhaps extents can help keep track of list & viewport heights ??
     let initialBState = BState { _bQuestions  = L.list QuestionList [] 10
-                               , _bAnswers    = L.list AnswerList [] 10
                                , _bError      = Nothing
                                , _bLoading    = Just 0
                                , _bShowSplash = True
@@ -134,18 +132,17 @@ app = Brick.App { appDraw         = drawUI
 -- add --verbose logging window (maybe AppState has logger mvar?)
 
 -- | Fetch new questions
--- TODO might make sense to have this within transformer and update appstate
--- to show new loading symbol
 fetch :: Fetcher -> AppConfig -> AppState -> IO ()
 fetch (Fetcher chan) config state = do
   aQuestions <- async $ evalAppT config state query
   passToChannel aQuestions chan
 
 -- | Fork a process that will wait for async result and pass to BChan
-passToChannel :: Async (Either Error [Question Markdown]) -> BChan BEvent -> IO ()
+passToChannel :: Async (Either Error [Question [] Markdown]) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
   qResult <- wait aQuestions
-  writeBChan chan $ NewQueryResult qResult
+  writeBChan chan . NewQueryResult $ qResult
+  where
 
 --------------------------------------------------------------------------------
 -- Event Handling
@@ -173,19 +170,19 @@ handleEvent bs = \case
   _                                   -> continue bs
   where
     fetched :: BState -> BState
-    fetched bs = bs & bLoading .~ Nothing
-                    & bShowSplash .~ False
-    replaceQAs :: [Question Markdown] -> BState -> BState
-    replaceQAs [] bs = bs & bError .~ Just NoResults
-    replaceQAs qs@(q:_) bs = bs & bError .~ Nothing
-                                & bQuestions %~ L.listReplace (fromList qs) (Just 0)
-                  -- TODO should there be a list of lists, or recreate ans list everytime ?
-                                & bAnswers %~ L.listReplace (fromList $ q ^. qAnswers) (Just 0)
+    fetched = (bLoading .~ Nothing) .  (bShowSplash .~ False)
+    replaceQAs :: [Question [] Markdown] -> BState -> BState
+    replaceQAs [] bs' = bs' & bError .~ Just NoResults
+    replaceQAs qs bs' =
+      let height = bs' ^. bQuestions ^. L.listItemHeightL
+          qs' = fmap (qAnswers %~ (\as -> L.list AnswerList (fromList as) height)) qs
+       in bs' & bError .~ Nothing
+              & bQuestions %~ L.listReplace (fromList qs') (Just 0)
 
     -- TODO see if resize w,h is helpful here
     -- TODO implement
     adjustView :: Maybe ShiftDirection -> BState -> EventM Name (Next BState)
-    adjustView mdir bs = continue bs
+    adjustView _ = continue
 
 --------------------------------------------------------------------------------
 -- Drawing
@@ -203,7 +200,7 @@ drawUI bs = [ case bs ^. bShowHelp of
             , case bs ^. bError of
                 Just e -> drawError e
                 _      -> emptyWidget
-            , drawQAPanes (bs ^. bQuestions) (bs ^. bAnswers)
+            , drawQAPanes (bs ^. bQuestions)
             ]
 
 helpWidget :: Widget Name
@@ -248,8 +245,10 @@ splashWidget = padAll 1 . txt $ [r|
      \/__/         \/__/
 |]
 
-drawQAPanes :: List Name (Question Markdown) -> List Name (Answer Markdown) -> Widget Name
-drawQAPanes qs as = str (show qs) <+> str (show as)
+drawQAPanes
+  :: List Name (Question (List Name) Markdown)
+  -> Widget Name
+drawQAPanes _ = emptyWidget
 
 --------------------------------------------------------------------------------
 -- Styling

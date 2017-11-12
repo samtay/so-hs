@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 module Types.StackOverflow where
@@ -18,13 +19,13 @@ import           Lens.Micro.TH    (makeLenses)
 -- Local imports:
 import           Utils.LowLevel
 
-data Question a = Question
+data Question t a = Question
   { _qId      :: Int
   , _qScore   :: Int
-  , _qAnswers :: [Answer a]
+  , _qAnswers :: t (Answer a)
   , _qTitle   :: Text
   , _qBody    :: a
-  } deriving (Show, Functor)
+  } deriving (Functor)
 
 data Answer a = Answer
   { _aId       :: Int
@@ -42,7 +43,7 @@ makeLenses ''Question
 makeLenses ''Answer
 makeLenses ''Site
 
-instance Eq (Question a) where
+instance Eq (Question t a) where
   q1 == q2
     = q1 ^. qId == q2 ^. qId
 
@@ -50,7 +51,7 @@ instance Eq (Answer a) where
   a1 == a2
     = a1 ^. aId == a2 ^. aId
 
-instance FromJSON (Question Text) where
+instance FromJSON (Question [] Text) where
   parseJSON = withObject "question" $ \o -> do
     _qId      <- o .: "question_id"
     _qScore   <- o .: "score"
@@ -81,7 +82,7 @@ instance Default Site where
 
 -- TODO handle API errors; maybe data ApiResponse = Error | [Question]
 --    which works if Parser is instance of Alternative
-questionsParser :: Value -> Parser [Question Text]
+questionsParser :: Value -> Parser [Question [] Text]
 questionsParser = filter answered <$$> withObject "questions" (.: "items")
   where
     answered q = not . null $ q ^. qAnswers
