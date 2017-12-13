@@ -136,10 +136,10 @@ main = hspec $ do
                                     \_*asterisk* *_underscore_ and"
                             ]
 
-allAnswerIds :: [Question Text] -> [Int]
+allAnswerIds :: [Question [] Text] -> [Int]
 allAnswerIds = concatMap ((fmap _aId) . _qAnswers)
 
-decodeQFromFile :: FilePath -> IO (Either String [Question Text])
+decodeQFromFile :: FilePath -> IO (Either String [Question [] Text])
 decodeQFromFile f = do
   b <- BSL.readFile f
   return $ A.eitherDecode b >>= AT.parseEither questionsParser

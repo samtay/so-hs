@@ -1,9 +1,10 @@
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes        #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RankNTypes         #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell    #-}
 module Types.StackOverflow where
 
 --------------------------------------------------------------------------------
@@ -42,6 +43,8 @@ data Site = Site
 makeLenses ''Question
 makeLenses ''Answer
 makeLenses ''Site
+
+deriving instance (Show a) => Show (Question [] a)
 
 instance Eq (Question t a) where
   q1 == q2
