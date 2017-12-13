@@ -36,6 +36,7 @@ library
                      , byline
                      , bytestring
                      , containers
+                     , data-clist
                      , data-default
                      , directory
                      , exceptions

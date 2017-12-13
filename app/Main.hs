@@ -50,7 +50,7 @@ app = do
     Prompt -> execPrompt aQuestions
 
 -- | Show single answer, return whether or not to run full interface
-runLuckyPrompt :: Question Markdown -> IO ()
+runLuckyPrompt :: Question [] Markdown -> IO ()
 runLuckyPrompt question = do
   let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
       mAnswer       = listToMaybe sortedAnswers
