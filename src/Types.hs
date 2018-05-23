@@ -71,8 +71,8 @@ data TextDisplay = Raw | HtmlEntities | Pretty
   deriving (Eq, Show, Read)
 
 data AppState = AppState
-  { _sQuery   :: Text
-  , _sOptions :: Options
+  { _sOptions :: Options
+  , _sQuery   :: Text
   }
 
 data AppConfig = AppConfig

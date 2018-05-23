@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# OPTIONS_GHC -fno-warn-unused-top-binds #-} -- we don't use all the generated lenses
 module Interface.Brick
   ( execBrick
   ) where
@@ -235,24 +236,24 @@ handleEvent bs = \case
     handleList ev l = L.handleListEventVi L.handleListEvent ev l
 
     handleScrollKey :: Char -> [V.Modifier] -> ViewportScroll Name -> EventM Name ()
-    handleScrollKey 'k' [] v = vScrollBy v (-1)
-    handleScrollKey 'l' [] v = hScrollBy v 1
-    handleScrollKey 'j' [] v = vScrollBy v 1
-    handleScrollKey 'h' [] v = hScrollBy v (-1)
-    handleScrollKey '^' [] v = hScrollToBeginning v
-    handleScrollKey '0' [] v = hScrollToBeginning v
-    handleScrollKey '$' [] v = hScrollToEnd v
-    handleScrollKey 'g' [] v = vScrollToBeginning v
-    handleScrollKey 'G' [] v = vScrollToEnd v
+    handleScrollKey 'k' [] v        = vScrollBy v (-1)
+    handleScrollKey 'l' [] v        = hScrollBy v 1
+    handleScrollKey 'j' [] v        = vScrollBy v 1
+    handleScrollKey 'h' [] v        = hScrollBy v (-1)
+    handleScrollKey '^' [] v        = hScrollToBeginning v
+    handleScrollKey '0' [] v        = hScrollToBeginning v
+    handleScrollKey '$' [] v        = hScrollToEnd v
+    handleScrollKey 'g' [] v        = vScrollToBeginning v
+    handleScrollKey 'G' [] v        = vScrollToEnd v
     handleScrollKey 'b' [V.MCtrl] v = vScrollPage v Up
     handleScrollKey 'f' [V.MCtrl] v = vScrollPage v Down
-    handleScrollKey 'u' [] v = vScrollPage v Up
-    handleScrollKey 'd' [] v = vScrollPage v Down
-    handleScrollKey _ _ _ = return ()
+    handleScrollKey 'u' [] v        = vScrollPage v Up
+    handleScrollKey 'd' [] v        = vScrollPage v Down
+    handleScrollKey _ _ _           = return ()
 
     viewToVP QuestionView = qViewport
-    viewToVP AnswerView = aViewport
-    viewToVP _ = error "Invalid viewport!"
+    viewToVP AnswerView   = aViewport
+    viewToVP _            = error "Invalid viewport!"
 
 qViewport, aViewport :: ViewportScroll Name
 qViewport = viewportScroll QuestionView

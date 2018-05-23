@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE LambdaCase #-}
 module Main where
 
 --------------------------------------------------------------------------------
@@ -30,12 +30,11 @@ import           Utils                  (code, err, exitOnError, exitWithError,
                                          promptChar)
 
 main :: IO ()
-main = withConfig $ \cfg -> do
-  -- Get initial state from CLI
-  (Cli _sOptions _sQuery) <- runCli cfg
-  let initialState = AppState {..}
-  -- Run App
-  void . evalAppT cfg initialState $ app
+main = getConfigE >>= \case
+  Left e -> exitConfigError e
+  Right cfg -> do
+    Cli opts q <- runCli cfg
+    void . evalAppT cfg (AppState opts q) $ app
 
 app :: App ()
 app = do
@@ -49,7 +48,8 @@ app = do
     Brick  -> execBrick aQuestions
     Prompt -> execPrompt aQuestions
 
--- | Show single answer, return whether or not to run full interface
+-- | Show single answer, returns when user elects to continue from prompt,
+-- otherwise exits.
 runLuckyPrompt :: Question [] Markdown -> IO ()
 runLuckyPrompt question = do
   let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
@@ -62,9 +62,6 @@ runLuckyPrompt question = do
       case c of
         ' ' -> return ()
         _   -> exitSuccess
-
-withConfig :: (AppConfig -> IO a) -> IO a
-withConfig action = getConfigE >>= either exitConfigError action
 
 exitConfigError :: String -> IO a
 exitConfigError e = do

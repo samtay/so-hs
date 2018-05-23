@@ -9,6 +9,10 @@ module Utils
 import           Data.Semigroup ((<>))
 
 --------------------------------------------------------------------------------
+-- Library imports:
+import qualified Data.Text      as T
+
+--------------------------------------------------------------------------------
 -- Local imports:
 import           Types
 import           Utils.LowLevel
@@ -16,14 +20,15 @@ import           Utils.LowLevel
 
 exitOnError :: (a -> IO b) -> Either Error a -> IO b
 exitOnError rightHandler (Right a) = rightHandler a
-exitOnError _ (Left e) =
+exitOnError _ (Left e) = exitWithError $
   case e of
     ConnectionFailure ->
-      exitWithError "Connection failure: are you connected to the internet?"
+      "Connection failure: are you connected to the internet?"
     ScrapingError ->
-      exitWithError $
       "Error scraping Google. Try " <> code "so --no-google" <> "."
     JSONError errMsg ->
-      exitWithError $ "Error parsing StackOverflow API:\n\n" <> errMsg
-    UnknownError errMsg -> exitWithError $ "Unknown error:\n\n" <> errMsg
-    _ -> exitWithError "Unknown error"
+      "Error parsing StackOverflow API:\n\n" <> errMsg
+    UnknownError errMsg ->
+      "Unknown error:\n\n" <> errMsg
+    _ ->
+      "Unknown error:\n\n" <> T.pack (show e)

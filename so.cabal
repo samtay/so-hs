@@ -31,7 +31,6 @@ library
                      , aeson
                      , ansi-terminal
                      , async
-                     , bifunctors
                      , brick
                      , byline
                      , bytestring
@@ -63,8 +62,6 @@ executable so
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , async
-                     , exceptions
                      , microlens
                      , mtl
                      , so

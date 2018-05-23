@@ -90,8 +90,8 @@ sites:
 # default CLI options (see `so --help` for info)
 defaultOptions:
   google: yes
-  lucky: no
+  lucky: yes
   textDisplay: pretty # options: raw, entities (just decode html entities), pretty
-  ui: brick # options: brick, prompt
+  ui: prompt # options: brick, prompt
   site: *defaultSite
 |]
