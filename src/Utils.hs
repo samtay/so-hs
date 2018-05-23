@@ -22,8 +22,10 @@ exitOnError :: (a -> IO b) -> Either Error a -> IO b
 exitOnError rightHandler (Right a) = rightHandler a
 exitOnError _ (Left e) = exitWithError $
   case e of
+    NoResultsError ->
+      "No results found. Try a different question."
     ConnectionFailure ->
-      "Connection failure: are you connected to the internet?"
+      "Connection failure. Are you connected to the internet?"
     ScrapingError ->
       "Error scraping Google. Try " <> code "so --no-google" <> "."
     JSONError errMsg ->

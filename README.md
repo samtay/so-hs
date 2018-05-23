@@ -5,11 +5,13 @@ functional, but the more sophisticated brick interface is not finished.
 
 # todo
 
+7. Why is NoResultError not being used in the general sense, and handled differently in each interface? Oi. What was I thinking? Use NonEmpty over [] and throw NoResultErrors when appropriate.
 0. Consider removing the [-no] prefixed cli opts in favor of True/False with yaml boolean parser
 1. Form URL and link to it at the end of showing questions / answers !!!!!
 3. Consider using container other than `[]` for questions/answers. 
 4. Test --no-google flag
 5. Write a .nix builder
+6. Checkout the latest brick improvements; add theme configuration
 
 ### interface
 0. j/k to scroll, Ctrl + j/k/l/h to move, and Ctrl+Shift + j/k/h/l to resize
