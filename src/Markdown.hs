@@ -22,6 +22,7 @@ import           Data.Foldable            (asum, fold)
 import           Data.Maybe               (fromMaybe, isJust, isNothing)
 import           Data.Monoid              ((<>))
 import           Data.String              (IsString (..))
+import           Data.Void                (Void)
 
 --------------------------------------------------------------------------------
 -- Library imports:
@@ -31,7 +32,7 @@ import           Data.Text                (Text)
 import qualified Data.Text                as T
 import           Text.HTML.TagSoup.Entity (lookupEntity)
 import           Text.Megaparsec
-import           Text.Megaparsec.Text
+import           Text.Megaparsec.Char
 
 --------------------------------------------------------------------------------
 -- Local imports:
@@ -40,21 +41,19 @@ import           Types
 --------------------------------------------------------------------------------
 -- Types:
 
+type Parser = Parsec Void Text
+
 -- | This representation of markdown is purposefully kept simple. Not many
 -- markdown specifications are implemented here because there is only so much
 -- we can render, helpfully, in a terminal.
 --
 -- TODO decide if combined text styles is worth implementing
 -- (e.g. ***example*** being italic and bold)
-data Markdown = Markdown [Segment Text]
-  deriving (Show, Eq)
+newtype Markdown = Markdown [Segment Text]
+  deriving (Show, Eq, Semigroup, Monoid)
 
 instance IsString Markdown where
   fromString = Markdown . (: []) . fromString
-
-instance Monoid Markdown where
-  mempty = Markdown mempty
-  mappend (Markdown segsA) (Markdown segsB) = Markdown (mappend segsA segsB)
 
 -- | Segment represents a chunk of markdown text in a particular style
 data Segment a
@@ -167,12 +166,12 @@ parseQuote = empty
 -- directly following and preceding the first and final delimiter, respectively.
 --
 -- For example, **this matches** but ** this doesn't **
-enclosedByNoInnerSpace :: String -> Parser Text
-enclosedByNoInnerSpace d = T.pack . concat <$> do
+enclosedByNoInnerSpace :: Text -> Parser Text
+enclosedByNoInnerSpace d = T.concat <$> do
   _ <- string d
   notFollowedBy spaceChar
   someTill
-    (try ((:) <$> spaceChar <*> string d) <|> (:[]) <$> anyChar) $ do
+    (try (T.cons <$> spaceChar <*> string d) <|> T.singleton <$> anyChar) $ do
       notFollowedBy spaceChar
       string d
 
@@ -183,7 +182,7 @@ enclosedByNoInnerSpace d = T.pack . concat <$> do
 -- See 'parseSegmentExcluding'.
 --
 -- For example, __this matches__ but __ this doesn't __ and text__this__doesn't__
-enclosedByNoInnerSpace' :: String -> Parser Text
+enclosedByNoInnerSpace' :: Text -> Parser Text
 enclosedByNoInnerSpace' d = do
   inner <- enclosedByNoInnerSpace d
   notFollowedBy (char '_')
@@ -194,14 +193,14 @@ enclosedByNoInnerSpace' d = do
 -- weird when it comes to underscores. This one ensures that the parsed text
 -- content either has a space or doesn't have an underscore
 -- TODO see if this is all just one big rule ( the first/second halves above)
-enclosedByNoInnerSpace'' :: String -> Parser Text
+enclosedByNoInnerSpace'' :: Text -> Parser Text
 enclosedByNoInnerSpace'' d = do
   inner <- enclosedByNoInnerSpace' d
   guard $ (isNothing $ T.findIndex (== '_') inner) || (isJust $ T.findIndex isSeparator inner)
   return inner
 
 -- | Match any text enclosed by a delimiter
-enclosedBy :: String -> Parser Text
+enclosedBy :: Text -> Parser Text
 enclosedBy d = fmap T.pack $
   string d >> someTill anyChar (string d)
 
