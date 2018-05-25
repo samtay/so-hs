@@ -20,7 +20,6 @@ import           Control.Monad.Reader (asks)
 import           Control.Monad.State  (get, gets, liftIO, put)
 import           Data.Aeson           (eitherDecode)
 import           Data.Aeson.Types     (parseEither)
-import           Data.Bifunctor       (first)
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Lens.Micro           ((&), (.~), (^.))
@@ -62,8 +61,8 @@ queryG :: App (Either Error [Question [] Text])
 queryG = do
   mIds <- google
   case mIds of
-    Left e    -> return . Left $ e
-    Right []  -> return . Right $ []
+    Left e    -> return $ Left e
+    Right []  -> return $ Left NoResultsError
     Right ids -> sortByIds ids <$$> seRequest ("questions/" <> mkQString ids) []
   where
     mkQString     = intercalate ";" . map show
@@ -102,10 +101,11 @@ seRequest resource optMods = do
   let opts = foldr (.) id optMods baseOpts
       url  = seApiUrl <> resource
   r <- liftIO $ W.getWith opts url
-  return
-    . first (JSONError . T.pack)
-    $ eitherDecode (r ^. W.responseBody)
-        >>= parseEither questionsParser
+  let decoded = eitherDecode (r ^. W.responseBody) >>= parseEither questionsParser
+  return $ case decoded of
+    Left e -> Left . JSONError $ T.pack e
+    Right [] -> Left NoResultsError
+    Right qs -> Right qs
 
 -- | SE API URL
 seApiUrl :: String
