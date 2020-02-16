@@ -14,5 +14,5 @@ First [get stack](https://docs.haskellstack.org/en/stable/README/#how-to-install
 ```bash
 git clone https://github.com/samtay/so.git
 cd so
-stack install tetris
+stack install so
 ```
