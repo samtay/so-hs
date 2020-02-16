@@ -43,7 +43,7 @@ google = do
 mkRequest :: Text -> Int -> Text -> IO ByteString
 mkRequest url limit q = do
   let query = T.concat ["site:", url, " ", q]
-      opts  = W.defaults & W.param "num" .~ [T.pack . show $ limit]
+      opts  = W.defaults & W.param "num" .~ [tshow limit]
                          & W.param "q"   .~ [query]
   r <- W.getWith opts "http://google.com/search"
   return $ r ^. W.responseBody

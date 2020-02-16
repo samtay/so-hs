@@ -70,11 +70,15 @@ queryG = do
 -- | Query stack exchange via advanced search API
 querySE :: App [Question [] Text]
 querySE = do
-  q <- gets _sQuery
-  seRequest "search/advanced" [ W.param "q"       .~ [q]
-                              , W.param "answers" .~ ["1"]
-                              , W.param "order"   .~ ["desc"]
-                              , W.param "sort"    .~ ["relevance"] ]
+  q   <- gets _sQuery
+  lim <- gets $ _oLimit . _sOptions
+  seRequest "search/advanced" [ W.param "q"        .~ [q]
+                              , W.param "pagesize" .~ [tshow lim]
+                              , W.param "page"     .~ ["1"]
+                              , W.param "answers"  .~ ["1"]
+                              , W.param "order"    .~ ["desc"]
+                              , W.param "sort"     .~ ["relevance"]
+                              ]
 
 -- | Default request options for SE API
 -- TODO add api keys and whatnot
@@ -122,4 +126,3 @@ httpToError :: MonadCatch m => m a -> m a
 httpToError = handle \case
   (H.HttpExceptionRequest _ (H.ConnectionFailure _)) -> throwM ConnectionFailure
   e -> throwM e
---httpToError e = Just . UnknownError . T.pack . show $ e

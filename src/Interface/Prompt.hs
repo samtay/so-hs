@@ -241,7 +241,7 @@ answerTitle ans = loop 62 (ans ^. aBody)
 
 score :: Int -> Stylized
 score n =
-  let num     = text . T.pack . show $ n
+  let num     = text . tshow $ n
       fgColor = if n > 0 then green else red
   in bold <> fg fgColor <> surround "(" num ")"
 

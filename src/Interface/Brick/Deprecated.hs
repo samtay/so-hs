@@ -148,10 +148,8 @@ fetch (Fetcher chan) config state = do
 -- | Fork a process that will wait for async result and pass to BChan
 passToChannel :: Async ([Question [] Markdown]) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
-  writeBChan chan =<< catches (mkRes <$> wait aQuestions)
-    [ Handler \(e :: Error)         -> pure $ NewQueryError e
-    , Handler \(e :: SomeException) -> pure . NewQueryError $ UnknownError (T.pack $ show e)
-    ]
+  writeBChan chan =<< catch (mkRes <$> wait aQuestions)
+    \(e :: Error) -> pure $ NewQueryError e
   where
     mkRes = NewQueryResult . fmap (qAnswers %~ (\as -> list AnswerList (fromList as) 1))
 

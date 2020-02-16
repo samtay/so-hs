@@ -18,6 +18,7 @@ module Utils
   , noBuffer
   , noBufferOn
   , squashLeft
+  , tshow
   ) where
 
 --------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ import           System.IO           (BufferMode (..), Handle, hGetBuffering,
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Data.Text           (Text)
+import qualified Data.Text           as T
 import qualified Data.Text.IO        as TIO
 import           Lens.Micro          (ix, (^?))
 import qualified System.Console.ANSI as A
@@ -82,6 +84,9 @@ unlessDef :: Monad m
   -> m a  -- ^ Action to run when predicate is 'False'
   -> m a
 unlessDef def b action = if not b then action else return def
+
+tshow :: Show a => a -> Text
+tshow = T.pack . show
 
 -- | Capitalize first letter of string, lowercase rest
 capitalize :: String -> String
