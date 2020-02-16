@@ -1,10 +1,3 @@
-{-# LANGUAGE DeriveFunctor      #-}
-{-# LANGUAGE FlexibleInstances  #-}
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE RankNTypes         #-}
-{-# LANGUAGE RecordWildCards    #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell    #-}
 module Types.StackOverflow where
 
 --------------------------------------------------------------------------------
@@ -18,7 +11,7 @@ import           Lens.Micro.TH    (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Utils.LowLevel
+import Utils
 
 data Question t a = Question
   { _qId      :: Int

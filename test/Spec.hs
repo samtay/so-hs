@@ -3,6 +3,7 @@ module Main where
 
 import qualified Data.Aeson           as A
 import qualified Data.Aeson.Types     as AT
+import           Data.Bifunctor       (first)
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BSL
 import           Data.Text            (Text)
@@ -12,7 +13,7 @@ import qualified Data.Yaml            as Y
 import           Test.Hspec
 
 import           Markdown
-import           StackOverflow.Google
+import           StackOverflow.Google.Deprecated
 import           Types
 import           Utils
 
@@ -37,14 +38,14 @@ main = hspec $ do
         `shouldReturn` Right 29
     it "fails gracefully on botched attempt" $
       decodeQFromFile invalidQuestionsFile
-        `shouldReturn` Left "Error in $.items[0]: key \"body_markdown\" not present"
+        `shouldReturn` Left "Error in $.items[0]: key \"body_markdown\" not found"
     it "fails gracefully on no connection" $
       pendingWith "look at other libraries that simulate this by throwing IO exceptions"
 
   describe "Configuration" $ do
     it "handles bad yaml configuration" $
       decodeCfgFromFile siteStringFile
-        `shouldReturn` Left "Error in $.defaultOptions.site: expected site, encountered String"
+        `shouldReturn` Left "Aeson exception:\nError in $.defaultOptions.site: parsing site failed, expected Object, but encountered String"
     it "reads site configuration properly" $
       _sApiParam . _oSite . _cDefaultOpts <$$> decodeCfgFromFile serverfaultFile
         `shouldReturn` Right "serverfault"
@@ -53,7 +54,7 @@ main = hspec $ do
         `shouldReturn` Right ["stackoverflow"]
     it "handles bad custom ui command gracefully" $
       decodeCfgFromFile badUIFile
-        `shouldReturn` Left "Error in $.defaultOptions.ui: invalid interface"
+        `shouldReturn` Left "Aeson exception:\nError in $.defaultOptions.ui: invalid interface"
 
   describe "Markdown Parser" $ do
     it "parses raw mode as an identity op" $
@@ -145,7 +146,7 @@ decodeQFromFile f = do
   return $ A.eitherDecode b >>= AT.parseEither questionsParser
 
 decodeCfgFromFile :: FilePath -> IO (Either String AppConfig)
-decodeCfgFromFile = fmap Y.decodeEither . BS.readFile
+decodeCfgFromFile = fmap (first Y.prettyPrintParseException . Y.decodeEither') . BS.readFile
 
 validQuestionsFile2 :: FilePath
 validQuestionsFile2 = "test/fixtures/stackexchange/valid_questions_api_response_2.json"

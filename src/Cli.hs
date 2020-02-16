@@ -1,6 +1,3 @@
-{-# LANGUAGE MultiWayIf        #-}
-{-# LANGUAGE NamedFieldPuns    #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Cli
   ( runCli
   , Cli(..)
@@ -18,7 +15,7 @@ import           Data.Semigroup        ((<>))
 import qualified Data.ByteString.Char8 as BS
 import           Data.Text             (Text)
 import qualified Data.Text             as T
-import           Data.Yaml             (decode)
+import           Data.Yaml             (decodeEither')
 import           Lens.Micro            ((^.))
 import           Options.Applicative
 
@@ -58,11 +55,7 @@ parseOpts
   :: AppConfig      -- ^ User config (used for default values)
   -> Parser Options -- ^ Returns 'Options' parser
 parseOpts cfg = Options
-  <$> enableDisableOpt
-      "google"
-      "Use google to find relevant question links"
-      (cfg ^. cDefaultOpts ^. oGoogle)
-      showDefault
+  <$> pure False
   <*> enableDisableOpt
       "lucky"
       "Return the single most relevant answer"
@@ -135,7 +128,7 @@ enableDisableOpt name helptxt def mods =
 
 -- | Read interface option (uses same mechanism as FromJSON parser)
 readUi :: ReadM Interface
-readUi = str >>= \s -> maybe (rError s) return (decode s)
+readUi = str >>= \s -> maybe (rError s) return (squashLeft $ decodeEither' s)
   where
     rError s = readerError . err . unwords
       $ [ BS.unpack s
@@ -143,7 +136,7 @@ readUi = str >>= \s -> maybe (rError s) return (decode s)
         , "brick, prompt" ]
 
 readTextDisplay :: ReadM TextDisplay
-readTextDisplay = str >>= \s -> maybe (rError s) return (decode s)
+readTextDisplay = str >>= \s -> maybe (rError s) return (squashLeft $ decodeEither' s)
   where
     rError s = readerError . err . unwords
       $ [ BS.unpack s

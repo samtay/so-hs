@@ -3,11 +3,9 @@ extra-package-dbs: []
 packages:
 - .
 extra-deps:
-- brick-0.37
-- vty-5.20
-- microlens-0.4.8.3
+- ansi-terminal-0.10.3
 - terminfo-hs-0.2.1
 - git: https://github.com/samtay/byline.git
-  commit: 4a78494f0964d27bbe72835ab4bdd9d3bf95fcf5
+  commit: ac64db655f46f55406762e08e5942fb031c41774
 
-resolver: nightly-2018-05-23
+resolver: lts-14.25

@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-module StackOverflow.Google
+module StackOverflow.Google.Deprecated
   ( google
   , parseIds
   , mkRequest

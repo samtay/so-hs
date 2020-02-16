@@ -1,15 +1,12 @@
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE TemplateHaskell   #-}
 {-# OPTIONS_GHC -fno-warn-unused-top-binds #-} -- we don't use all the generated lenses
-module Interface.Brick
+module Interface.Brick.Deprecated
   ( execBrick
   ) where
 
 --------------------------------------------------------------------------------
 -- Base imports:
 import           Control.Concurrent       (forkIO, threadDelay)
+import           Control.Exception
 import           Control.Monad            (forever, void)
 import           Data.Maybe               (fromMaybe)
 import           Data.Monoid              ((<>))
@@ -29,11 +26,10 @@ import           Control.Concurrent.Async (Async, async, wait)
 import           Control.Monad.Reader     (ask)
 import           Control.Monad.State      (get)
 import           Control.Monad.Trans      (liftIO)
-import           Data.Bifunctor           (second)
 import           Data.CircularList        (CList)
 import qualified Data.CircularList        as CL
 import qualified Data.Text                as T
-import           Data.Vector              (fromList)
+import           Data.Vector              (Vector, fromList)
 import qualified Graphics.Vty             as V
 import           Lens.Micro               (to, (%~), (&), (.~), (^.))
 import           Lens.Micro.TH            (makeLenses)
@@ -44,14 +40,15 @@ import           Text.RawString.QQ        (r)
 import           Markdown
 import           StackOverflow
 import           Types
-import           Utils.LowLevel
+import           Utils
 
 --------------------------------------------------------------------------------
 -- Types
 
 -- | Events that we pipe to the event handler asynchronously
 data BEvent
-  = NewQueryResult (Either Error [Question (List Name) Markdown])
+  = NewQueryResult [Question (GenericList Name Vector) Markdown]
+  | NewQueryError Error
   | TimeTick
 
 data BError
@@ -82,7 +79,7 @@ data Direction
 -- Remember I might need turtle to pipe stuff to copy-paste command
 -- Also possibly add to util backup defaults, check if pbcopy, xclip, etc. is in PATH.
 data BState = BState
-  { _bQuestions  :: List Name (Question (List Name) Markdown)
+  { _bQuestions  :: GenericList Name Vector (Question (GenericList Name Vector) Markdown)
   , _bFocusRing  :: FocusRing Name
   , _bError      :: Maybe BError
   , _bLoading    :: Maybe Int
@@ -97,11 +94,11 @@ makeLenses ''BState
 --------------------------------------------------------------------------------
 -- Execution
 
-execBrick :: Async (Either Error [Question [] Markdown]) -> App ()
+execBrick :: Async [Question [] Markdown] -> App ()
 execBrick aQuestions = do
   state <- get
   conf  <- ask
-  _ <- liftIO $ do
+  void . liftIO $ do
     chan  <- newBChan 10
     passToChannel aQuestions chan
     startTimeTicker chan
@@ -116,7 +113,9 @@ execBrick aQuestions = do
                                , _bAppConfig  = conf
                                , _bFetcher    = Fetcher chan
                                }
-    customMain (V.mkVty V.defaultConfig) (Just chan) app initialBState
+    let buildVty = V.mkVty V.defaultConfig
+    initialVty <- buildVty
+    customMain initialVty buildVty (Just chan) app initialBState
   return () -- TODO figure out end game
 
 startTimeTicker :: BChan BEvent -> IO ()
@@ -147,12 +146,14 @@ fetch (Fetcher chan) config state = do
   passToChannel aQuestions chan
 
 -- | Fork a process that will wait for async result and pass to BChan
-passToChannel :: Async (Either Error [Question [] Markdown]) -> BChan BEvent -> IO ()
+passToChannel :: Async ([Question [] Markdown]) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
-  qResult <- wait aQuestions
-  writeBChan chan . NewQueryResult $ second (fmap mkAnswerList) qResult
+  writeBChan chan =<< catches (mkRes <$> wait aQuestions)
+    [ Handler \(e :: Error)         -> pure $ NewQueryError e
+    , Handler \(e :: SomeException) -> pure . NewQueryError $ UnknownError (T.pack $ show e)
+    ]
   where
-    mkAnswerList = qAnswers %~ (\as -> list AnswerList (fromList as) 1)
+    mkRes = NewQueryResult . fmap (qAnswers %~ (\as -> list AnswerList (fromList as) 1))
 
 --------------------------------------------------------------------------------
 -- Event Handling
@@ -160,10 +161,9 @@ passToChannel aQuestions chan = void . forkIO $ do
 handleEvent :: BState -> BrickEvent Name BEvent -> EventM Name (Next BState)
 handleEvent bs = \case
   -- App events
-  AppEvent TimeTick                    -> continue $ bs & bLoading %~ fmap (+. 1)
-  AppEvent (NewQueryResult (Left e))   -> continue $ bs & bError .~ Just (AppError e)
-                                                        & fetched
-  AppEvent (NewQueryResult (Right qs)) -> continue $ replaceQAs qs & fetched
+  AppEvent TimeTick            -> continue $ bs & bLoading %~ fmap (+. 1)
+  AppEvent (NewQueryError e)   -> continue $ bs & bError .~ Just (AppError e) & fetched
+  AppEvent (NewQueryResult qs) -> continue $ replaceQAs qs & fetched
   -- Resize pane events
   VtyEvent (V.EvKey (V.KChar 'k') [V.MCtrl, V.MShift]) -> adjustView (Just North)
   VtyEvent (V.EvKey (V.KChar 'l') [V.MCtrl, V.MShift]) -> adjustView (Just East)
@@ -206,7 +206,7 @@ handleEvent bs = \case
     fetched :: BState -> BState
     fetched = (bLoading .~ Nothing) . (bShowSplash .~ False)
 
-    replaceQAs :: [Question (List Name) Markdown] -> BState
+    replaceQAs :: [Question (GenericList Name Vector) Markdown] -> BState
     replaceQAs [] = bs & bError .~ Just NoResults
     replaceQAs qs = bs & bError .~ Nothing
                        & bQuestions %~ listReplace (fromList qs) (Just 0)
@@ -319,7 +319,7 @@ splashWidget = padAll 1 . txt $ [r|
 |]
 
 drawQAPanes
-  :: List Name (Question (List Name) Markdown)
+  :: List Name (Question (GenericList Name Vector) Markdown)
   -> FocusRing Name
   -> Widget Name
 drawQAPanes qList ring = do
@@ -349,7 +349,7 @@ drawQAPanes qList ring = do
                          else id
     isFocused name = maybe False (== name) (focusGetCurrent ring)
 
-drawQList :: Bool -> List Name (Question (List Name) Markdown) -> Widget Name
+drawQList :: Bool -> List Name (Question (GenericList Name Vector) Markdown) -> Widget Name
 drawQList b l = padRight Max $ L.renderList renderQ b l
   where
     renderQ s q = drawScore s (q ^. qScore) <+> txt (q ^. qTitle)
@@ -371,13 +371,14 @@ drawA :: Maybe (Answer Markdown) -> Widget Name
 drawA = viewport AnswerView Both . maybe emptyWidget (drawMarkdown . _aBody)
 
 drawMarkdown :: Markdown -> Widget Name
-drawMarkdown (Markdown segments) = markup . mconcat . ffor segments $ \case
-  SPlain t -> fromText t
-  SBold t -> t @? boldAttr
-  SItalic t -> t @? italicAttr
-  SCode t -> t @? codeAttr
-  SKbd t -> t @? kbdAttr
-  SQuote t -> t @? quoteAttr
+drawMarkdown (Markdown segments) = markup . mconcat . ffor segments $
+  \case
+    SPlain t -> fromText t
+    SBold t -> t @? boldAttr
+    SItalic t -> t @? italicAttr
+    SCode t -> t @? codeAttr
+    SKbd t -> t @? kbdAttr
+    SQuote t -> t @? quoteAttr
   where
     fromText = (@? "")
 

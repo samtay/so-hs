@@ -1,7 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RecordWildCards            #-}
-{-# LANGUAGE TemplateHaskell            #-}
 module Types
   ( module Types
   , module Types.StackOverflow
@@ -16,7 +12,7 @@ import           Text.Read                (readMaybe)
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Control.Concurrent.Async (Async, async)
-import           Control.Monad.Catch      (MonadCatch, MonadMask, MonadThrow)
+import           Control.Monad.Catch      (Exception, MonadCatch, MonadMask, MonadThrow)
 import           Control.Monad.Reader     (MonadReader, ReaderT, ask,
                                            runReaderT)
 import           Control.Monad.State      (MonadState, StateT, evalStateT,
@@ -31,7 +27,7 @@ import           Lens.Micro.TH            (makeLenses)
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Types.StackOverflow
-import           Utils.LowLevel
+import           Utils
 
 --------------------------------------------------------------------------------
 -- App
@@ -103,6 +99,8 @@ data Error
   | NoResultsError
   | UnknownError Text
   deriving (Eq, Show)
+
+instance Exception Error
 
 instance FromJSON AppConfig where
   parseJSON = withObject "config" $ \o -> do

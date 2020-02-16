@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module StackOverflow
   ( query
   , queryLucky
@@ -8,16 +7,15 @@ module StackOverflow
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Monad        (join)
 import           Data.List            (elemIndex, intercalate, sortOn)
 import           Data.Maybe           (fromMaybe)
 import           Data.Semigroup       ((<>))
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Monad.Catch  (tryJust)
+import           Control.Monad.Catch  (MonadCatch, bracket_, throwM, handle)
 import           Control.Monad.Reader (asks)
-import           Control.Monad.State  (get, gets, liftIO, put)
+import           Control.Monad.State  (get, gets, liftIO, put, modify)
 import           Data.Aeson           (eitherDecode)
 import           Data.Aeson.Types     (parseEither)
 import           Data.Text            (Text)
@@ -29,41 +27,40 @@ import qualified Network.Wreq         as W
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Markdown
-import           StackOverflow.Google
+import qualified StackOverflow.Google.Deprecated as Deprecated
 import           Types
 import           Utils
 
 -- | Get question results
-query :: App (Either Error [Question [] Markdown])
+query :: App [Question [] Markdown]
 query = do
   useG <- gets (_oGoogle . _sOptions)
   display <- gets (_oTextDisplay . _sOptions)
-  qs <- fmap join . tryJust toError $ if useG then queryG else querySE
-  return $ markdown display <$$$> qs
+  qs <- httpToError $ if useG then queryG else querySE
+  return $ markdown display <$$> qs
 
 -- | Get a single question result (hopefully decent performance boost)
-queryLucky :: App (Either Error (Question [] Markdown))
+queryLucky :: App (Question [] Markdown)
 queryLucky = do
   initialState <- get
-  let modifiedState = initialState & sOptions . oLimit .~ 1
-  put modifiedState
-  result <- query
-  put initialState
-  return $ case result of
-    Right []    -> Left NoResultsError
-    Right (q:_) -> Right q
-    Left e      -> Left e
+  res <- bracket_
+    (modify $ sOptions . oLimit .~ 1)
+    (put initialState)
+    query
+  case res of
+    []    -> throwM NoResultsError
+    (q:_) -> pure q
 
 -- | Query stack exchange by first scraping Google for relevant question links
 --
 -- Maybe in the future either propogate Left error or add to debug log, etc.
-queryG :: App (Either Error [Question [] Text])
+queryG :: App [Question [] Text]
 queryG = do
-  mIds <- google
+  mIds <- Deprecated.google
   case mIds of
-    Left e    -> return $ Left e
-    Right []  -> return $ Left NoResultsError
-    Right ids -> sortByIds ids <$$> seRequest ("questions/" <> mkQString ids) []
+    Left e    -> throwM e
+    Right []  -> throwM NoResultsError
+    Right ids -> sortByIds ids <$> seRequest ("questions/" <> mkQString ids) []
   where
     mkQString     = intercalate ";" . map show
     position      = fromMaybe maxBound .*. elemIndex
@@ -71,7 +68,7 @@ queryG = do
 
 
 -- | Query stack exchange via advanced search API
-querySE :: App (Either Error [Question [] Text])
+querySE :: App [Question [] Text]
 querySE = do
   q <- gets _sQuery
   seRequest "search/advanced" [ W.param "q"       .~ [q]
@@ -93,19 +90,19 @@ appDefaults = do
 -- | Make SE API request
 -- | TODO catch non-200 or allow non-200 and return Left error text
 seRequest
-  :: String                        -- ^ API resource to append to base URL
-  -> [W.Options -> W.Options]      -- ^ Options in addition to 'seDefaults'
-  -> App (Either Error [Question [] Text]) -- ^ Decoded question data
+  :: String                   -- ^ API resource to append to base URL
+  -> [W.Options -> W.Options] -- ^ Options in addition to 'seDefaults'
+  -> App [Question [] Text]   -- ^ Decoded question data
 seRequest resource optMods = do
   baseOpts <- appDefaults
   let opts = foldr (.) id optMods baseOpts
       url  = seApiUrl <> resource
   r <- liftIO $ W.getWith opts url
   let decoded = eitherDecode (r ^. W.responseBody) >>= parseEither questionsParser
-  return $ case decoded of
-    Left e -> Left . JSONError $ T.pack e
-    Right [] -> Left NoResultsError
-    Right qs -> Right qs
+  case decoded of
+    Left e   -> throwM $ JSONError $ T.pack e
+    Right [] -> throwM NoResultsError
+    Right qs -> pure qs
 
 -- | SE API URL
 seApiUrl :: String
@@ -121,6 +118,8 @@ seKey :: Text
 seKey = "8o9g7WcfwnwbB*Qp4VsGsw(("
 
 -- | Transform to custom error types
-toError :: H.HttpException -> Maybe Error
-toError (H.HttpExceptionRequest _ (H.ConnectionFailure _)) = Just ConnectionFailure
-toError e = Just . UnknownError . T.pack . show $ e
+httpToError :: MonadCatch m => m a -> m a
+httpToError = handle \case
+  (H.HttpExceptionRequest _ (H.ConnectionFailure _)) -> throwM ConnectionFailure
+  e -> throwM e
+--httpToError e = Just . UnknownError . T.pack . show $ e

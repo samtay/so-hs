@@ -1,9 +1,3 @@
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE TupleSections              #-}
 module Markdown
   ( Markdown(..)
   , markdown
@@ -100,10 +94,10 @@ replaceEntities :: Text -> Text
 replaceEntities raw = fromMaybe raw $ parseMaybe parseEntities raw
   where
     parseEntities :: Parser Text
-    parseEntities = fmap fold . many $ fmap T.pack entity <|> fmap T.singleton anyChar
+    parseEntities = fmap fold . many $ fmap T.pack entity <|> fmap T.singleton anySingle
     entity :: Parser String
     entity = do
-      e <- char '&' >> someTill anyChar (char ';')
+      e <- char '&' >> someTill anySingle (char ';')
       return . fromMaybe ('&' : e ++ [';']) $ lookupEntity e
 
 parseMarkdown :: Parser Markdown
@@ -134,7 +128,7 @@ parseSegmentExcluding exclusions =
   <|> tryPure (SItalic <$> ( (enclosedByNoInnerSpace "*")
                          <|> (unlessExcluding Underscores >> enclosedByNoInnerSpace'' "_")
                            ))
-  <|> do plain <- some (noneOf delims) <|> ((:[]) <$> anyChar)
+  <|> do plain <- some (noneOf delims) <|> ((:[]) <$> anySingle)
          let c = last plain
              nextExclusion = if (isPunctuation c || isSeparator c) && c /= '_'
                                 then mempty
@@ -152,11 +146,11 @@ parseCode = parseCodeInline <|> fmap T.pack parseCodeBlock
     parseCodeInline = asum $ enclosedBy <$> ["```", "``", "`"]
     parseCodeBlock = unlines <$> do
       void eol <|> bof
-      some $ string "    " *> someTill anyChar (void eol <|> eof)
+      some $ string "    " *> someTill anySingle (void eol <|> eof)
 
 parseKbd :: Parser Text
 parseKbd = fmap T.pack $
-  string "<kbd>" >> someTill anyChar (string "</kbd>")
+  string "<kbd>" >> someTill anySingle (string "</kbd>")
 
 -- | If I decide this is useful I'll implement it
 parseQuote :: Parser Text
@@ -171,7 +165,7 @@ enclosedByNoInnerSpace d = T.concat <$> do
   _ <- string d
   notFollowedBy spaceChar
   someTill
-    (try (T.cons <$> spaceChar <*> string d) <|> T.singleton <$> anyChar) $ do
+    (try (T.cons <$> spaceChar <*> string d) <|> T.singleton <$> anySingle) $ do
       notFollowedBy spaceChar
       string d
 
@@ -202,9 +196,9 @@ enclosedByNoInnerSpace'' d = do
 -- | Match any text enclosed by a delimiter
 enclosedBy :: Text -> Parser Text
 enclosedBy d = fmap T.pack $
-  string d >> someTill anyChar (string d)
+  string d >> someTill anySingle (string d)
 
 -- | Match beginning of file
 bof :: Parser ()
-bof = getPosition >>= \(SourcePos _ l c) ->
+bof = getSourcePos >>= \(SourcePos _ l c) ->
   unless (l == c && unPos c == 1) empty

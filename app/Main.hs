@@ -7,63 +7,59 @@ module Main where
 import           Control.Monad          (void, when)
 import           Control.Monad.IO.Class (liftIO)
 import           Data.List              (sortOn)
-import           Data.Maybe             (listToMaybe)
 import           Data.Semigroup         ((<>))
 import           System.Exit            (exitSuccess)
 
 --------------------------------------------------------------------------------
 -- Library imports:
+import           Control.Monad.Catch    (catch)
 import           Control.Monad.State    (gets)
 import qualified Data.Text              as T
+import qualified Data.Yaml              as Yaml
 import           Lens.Micro
 
 --------------------------------------------------------------------------------
 -- Local imports:
 import           Cli                    (Cli (..), runCli)
-import           Config                 (getConfigE, getConfigFile)
-import           Interface.Brick        (execBrick)
+import           Config                 (getConfig, getConfigFile)
+import           Interface.Common       (exitOnError)
 import           Interface.Prompt       (execPrompt, putMdLn)
 import           Markdown               (Markdown)
 import           StackOverflow          (query, queryLucky)
 import           Types
-import           Utils                  (code, err, exitOnError, exitWithError,
-                                         promptChar)
+import           Utils                  (code, err, exitWithError, promptChar)
 
 main :: IO ()
-main = getConfigE >>= \case
-  Left e -> exitConfigError e
-  Right cfg -> do
-    Cli opts q <- runCli cfg
-    void . evalAppT cfg (AppState opts q) $ app
+main = do
+  catch getConfig exitConfigError
+    >>= \cfg -> runCli cfg
+    >>= \(Cli opts q) -> void . exitOnError . evalAppT cfg (AppState opts q) $ app
 
 app :: App ()
 app = do
-  (Options _ lucky _ _ ui _) <- gets (_sOptions)
+  (Options _ lucky _ _ _ _) <- gets (_sOptions)
   -- Start fetching questions asynchronously
   aQuestions <- appAsync query
   -- If @--lucky@, show single answer prompt
-  when lucky $ queryLucky >>= liftIO . exitOnError runLuckyPrompt
-  -- Execute chosen interface
-  case ui of
-    Brick  -> execBrick aQuestions
-    Prompt -> execPrompt aQuestions
+  when lucky $ queryLucky >>= liftIO . runLuckyPrompt
+  -- Only interface available is currently Prompt
+  execPrompt aQuestions
 
 -- | Show single answer, returns when user elects to continue from prompt,
 -- otherwise exits.
 runLuckyPrompt :: Question [] Markdown -> IO ()
 runLuckyPrompt question = do
   let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
-      mAnswer       = listToMaybe sortedAnswers
-  case mAnswer of
-    Nothing     -> exitWithError "No answers found. Try a different question."
-    Just answer -> do
+  case sortedAnswers of
+    []         -> exitWithError "No answers found. Try a different question."
+    (answer:_) -> do
       putMdLn (answer ^. aBody)
       c <- promptChar "Press [SPACE] to see more results, or any other key to exit."
       case c of
         ' ' -> return ()
         _   -> exitSuccess
 
-exitConfigError :: String -> IO a
+exitConfigError :: Yaml.ParseException -> IO a
 exitConfigError e = do
   f <- T.pack <$> getConfigFile
   exitWithError . T.concat
@@ -75,4 +71,5 @@ exitConfigError e = do
       , "to reset to defaults. "
       , "For reference, the yaml parsing error was:"
       , "\n\n"
-      , err (T.pack e) ]
+      , err . T.pack $ Yaml.prettyPrintParseException e
+      ]

@@ -1,8 +1,3 @@
-{-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TupleSections         #-}
 module Interface.Prompt
   ( execPrompt
   , putMd
@@ -12,6 +7,7 @@ module Interface.Prompt
 --------------------------------------------------------------------------------
 -- Base imports:
 import           Control.Concurrent       (forkIO, killThread, threadDelay)
+import           Control.Exception        (bracket)
 import           Control.Monad            (forM_, void)
 import           Data.List                (elemIndex)
 import           Data.Maybe               (listToMaybe)
@@ -35,6 +31,7 @@ import           System.Console.Byline
 
 --------------------------------------------------------------------------------
 -- Local imports:
+import           Interface.Common
 import           Markdown
 import           Types
 import           Utils
@@ -82,25 +79,18 @@ instance Default PromptMenu where
 -- Main execution
 
 -- | Run prompt with questions
-execPrompt :: Async (Either Error [Question [] Markdown]) -> App ()
-execPrompt aQuestions = liftIO $
-  waitWithLoading aQuestions
-    >>= exitOnError runner
-  where
-    runner qs =
-      if null qs
-        then exitWithError "No results found. Try a different question."
-        else void $ runStateT (runByline runPrompt) (initPromptState qs)
+execPrompt :: Async [Question [] Markdown] -> App ()
+execPrompt aQuestions = liftIO . exitOnError $
+  waitWithLoading aQuestions >>= \case
+    [] -> exitWithError "No results found. Try a different question."
+    qs -> void $ runStateT (runByline runPrompt) (initPromptState qs)
 
 waitWithLoading :: Async a -> IO a
-waitWithLoading a = do
-  loadingThreadId <- forkIO showLoadingAnimation
-  res             <- wait a
-  killThread loadingThreadId
-  A.clearLine
-  A.setCursorColumn 0
-  A.showCursor
-  return res
+waitWithLoading a =
+  bracket
+    (forkIO showLoadingAnimation)
+    (\tid -> killThread tid >> A.clearLine >> A.setCursorColumn 0 >> A.showCursor)
+    (const $ wait a)
 
 showLoadingAnimation :: IO ()
 showLoadingAnimation =

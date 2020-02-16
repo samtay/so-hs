@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
 module Config where
 
 --------------------------------------------------------------------------------
@@ -10,7 +8,7 @@ import           Control.Monad     (unless)
 -- Library imports:
 import           Data.ByteString   (ByteString)
 import qualified Data.ByteString   as BS
-import           Data.Yaml         (decode, decodeEither)
+import           Data.Yaml         (decodeFileThrow)
 import qualified System.Directory  as D
 import           System.FilePath   ((</>))
 import           Text.RawString.QQ
@@ -19,19 +17,12 @@ import           Text.RawString.QQ
 -- Local imports:
 import           Types
 
-getConfigWith :: Monad m => (ByteString -> m AppConfig) -> IO (m AppConfig)
-getConfigWith decoder = do
+getConfig :: IO AppConfig
+getConfig = do
   f <- getConfigFile
   exists <- D.doesFileExist f
   unless exists resetConfig
-  yml <- BS.readFile f
-  return $ decoder yml
-
-getConfigM :: IO (Maybe AppConfig)
-getConfigM = getConfigWith decode
-
-getConfigE :: IO (Either String AppConfig)
-getConfigE = getConfigWith decodeEither
+  decodeFileThrow f
 
 resetConfig :: IO ()
 resetConfig = do
@@ -89,9 +80,9 @@ sites:
 
 # default CLI options (see `so --help` for info)
 defaultOptions:
-  google: yes
+  google: no # deprecated, future support undecided
   lucky: yes
   textDisplay: pretty # options: raw, entities (just decode html entities), pretty
-  ui: prompt # options: brick, prompt
+  ui: prompt # brick deprecated, reflex interface in the future
   site: *defaultSite
 |]
