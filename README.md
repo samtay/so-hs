@@ -9,8 +9,18 @@ A terminal interface for Stack Overflow
 
 ![terminal-gif](./doc/example.gif)
 
-### install
-First [get stack](https://docs.haskellstack.org/en/stable/README/#how-to-install). Then
+## install
+
+#### Arch Linux
+However you typically install from the
+[AUR](https://aur.archlinux.org/packages/so-git/), e.g.
+```bash
+yay -S so-git # or yaourt -S so-git
+```
+
+#### source
+Others can install from source. First [get
+stack](https://docs.haskellstack.org/en/stable/README/#how-to-install). Then
 ```bash
 git clone https://github.com/samtay/so.git
 cd so
