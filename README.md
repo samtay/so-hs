@@ -10,6 +10,17 @@ A terminal interface for Stack Overflow
 ![terminal-gif](./doc/example.gif)
 
 ## install
+Installation on MacOS and Arch Linux is simple, just follow the instructions
+below. Other Linux distros can try the [github release
+binary](https://github.com/samtay/so/releases/download/0.1.0/so-debian-x86_64),
+but no guarantees. Otherwise you can install from
+[source](#install-from-source).
+
+#### MacOS
+Installation on a Mac is simple with Homebrew:
+```bash
+brew install samtay/tui/so
+```
 
 #### Arch Linux
 However you typically install from the
@@ -18,8 +29,8 @@ However you typically install from the
 yay -S so-git # or yaourt -S so-git
 ```
 
-#### source
-Others can install from source. First [get
+#### install from source
+First [get
 stack](https://docs.haskellstack.org/en/stable/README/#how-to-install). Then
 ```bash
 git clone https://github.com/samtay/so.git
