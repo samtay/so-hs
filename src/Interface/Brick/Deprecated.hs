@@ -8,6 +8,8 @@ module Interface.Brick.Deprecated
 import           Control.Concurrent       (forkIO, threadDelay)
 import           Control.Exception
 import           Control.Monad            (forever, void)
+import           Data.List.NonEmpty       (NonEmpty(..))
+import qualified Data.List.NonEmpty       as NE
 import           Data.Maybe               (fromMaybe)
 import           Data.Monoid              ((<>))
 
@@ -47,7 +49,7 @@ import           Utils
 
 -- | Events that we pipe to the event handler asynchronously
 data BEvent
-  = NewQueryResult [Question (GenericList Name Vector) Markdown]
+  = NewQueryResult (NonEmpty (Question (GenericList Name Vector) Markdown))
   | NewQueryError Error
   | TimeTick
 
@@ -94,7 +96,7 @@ makeLenses ''BState
 --------------------------------------------------------------------------------
 -- Execution
 
-execBrick :: Async [Question [] Markdown] -> App ()
+execBrick :: Async (NonEmpty (Question NonEmpty Markdown)) -> App ()
 execBrick aQuestions = do
   state <- get
   conf  <- ask
@@ -146,12 +148,15 @@ fetch (Fetcher chan) config state = do
   passToChannel aQuestions chan
 
 -- | Fork a process that will wait for async result and pass to BChan
-passToChannel :: Async ([Question [] Markdown]) -> BChan BEvent -> IO ()
+passToChannel :: Async (NonEmpty (Question NonEmpty Markdown)) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
   writeBChan chan =<< catch (mkRes <$> wait aQuestions)
+    -- TODO this is bad
     \(e :: Error) -> pure $ NewQueryError e
   where
-    mkRes = NewQueryResult . fmap (qAnswers %~ (\as -> list AnswerList (fromList as) 1))
+    mkRes =
+        NewQueryResult
+      . fmap (qAnswers %~ (\as -> list AnswerList (fromList $ NE.toList as) 1))
 
 --------------------------------------------------------------------------------
 -- Event Handling
@@ -204,10 +209,9 @@ handleEvent bs = \case
     fetched :: BState -> BState
     fetched = (bLoading .~ Nothing) . (bShowSplash .~ False)
 
-    replaceQAs :: [Question (GenericList Name Vector) Markdown] -> BState
-    replaceQAs [] = bs & bError .~ Just NoResults
+    replaceQAs :: NonEmpty (Question (GenericList Name Vector) Markdown) -> BState
     replaceQAs qs = bs & bError .~ Nothing
-                       & bQuestions %~ listReplace (fromList qs) (Just 0)
+                       & bQuestions %~ listReplace (fromList $ NE.toList qs) (Just 0)
 
     -- TODO see if resize w,h is helpful here
     -- TODO implement

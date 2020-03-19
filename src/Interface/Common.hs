@@ -1,5 +1,5 @@
 module Interface.Common
-  ( exitOnError
+  ( gracefully
   ) where
 
 --------------------------------------------------------------------------------
@@ -14,8 +14,8 @@ import           Utils
 --------------------------------------------------------------------------------
 -- Types
 
-exitOnError :: IO a -> IO a
-exitOnError = flip catches
+gracefully :: IO a -> IO a
+gracefully = flip catches
   [ Handler \case
       NoResultsError ->
         exitWithError $ "No results found. Try a different question."

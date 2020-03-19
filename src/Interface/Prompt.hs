@@ -9,10 +9,14 @@ module Interface.Prompt
 import           Control.Concurrent       (forkIO, killThread, threadDelay)
 import           Control.Exception        (bracket)
 import           Control.Monad            (forM_, void)
-import           Data.List                (elemIndex)
+import           Data.Foldable            (Foldable(..))
+import qualified Data.List                as List
+import           Data.List.NonEmpty       (NonEmpty(..), (!!))
+import qualified Data.List.NonEmpty       as NE
 import           Data.Maybe               (listToMaybe)
 import           System.Exit              (exitSuccess)
 import           System.IO                (stdout)
+import           Prelude                  hiding ((!!))
 
 --------------------------------------------------------------------------------
 -- Library imports:
@@ -40,8 +44,8 @@ import           Utils
 -- Types
 
 data PromptState = PromptState
-  { _pQuestions :: [Question [] Markdown]
-  , _pCurrQ     :: Maybe (Int, Question [] Markdown) -- TODO remove (Int,) indices, just have inc/dec funcs
+  { _pQuestions :: (NonEmpty (Question NonEmpty Markdown))
+  , _pCurrQ     :: Maybe (Int, Question NonEmpty Markdown) -- TODO remove (Int,) indices, just have inc/dec funcs
   , _pCurrA     :: Maybe (Int, Answer Markdown)
   , _pMenu      :: PromptMenu
   }
@@ -79,11 +83,10 @@ instance Default PromptMenu where
 -- Main execution
 
 -- | Run prompt with questions
-execPrompt :: Async [Question [] Markdown] -> App ()
-execPrompt aQuestions = liftIO . exitOnError $
-  waitWithLoading aQuestions >>= \case
-    [] -> exitWithError "No results found. Try a different question."
-    qs -> void $ runStateT (runByline runPrompt) (initPromptState qs)
+execPrompt :: Async (NonEmpty (Question NonEmpty Markdown)) -> App ()
+execPrompt aQuestions = liftIO . gracefully $
+  waitWithLoading aQuestions >>=
+    void . runStateT (runByline runPrompt) . initPromptState
 
 waitWithLoading :: Async a -> IO a
 waitWithLoading a =
@@ -116,7 +119,7 @@ showLoadingAnimation =
 --------------------------------------------------------------------------------
 -- Prompt functions
 
-initPromptState :: [Question [] Markdown] -> PromptState
+initPromptState :: (NonEmpty (Question NonEmpty Markdown)) -> PromptState
 initPromptState qs = PromptState qs Nothing Nothing def
 
 runPrompt :: Byline PromptApp ()
@@ -126,14 +129,14 @@ runPrompt =
     (PromptState _ (Just (_,q)) Nothing _) -> answersPrompt q
     (PromptState _ _ (Just (_,a)) _)       -> answerPrompt a
 
-questionsPrompt :: [Question [] Markdown] -> Byline PromptApp ()
+questionsPrompt :: (NonEmpty (Question NonEmpty Markdown)) -> Byline PromptApp ()
 questionsPrompt qs = do
   lift $ modify (pMenu . mPromptText .~  "Enter n° of question to view")
   runMenu
     (questionsMenu qs)
     (\q -> lift $ modify (pCurrQ .~ ((, q) <$> elemIndex q qs)))
 
-answersPrompt :: Question [] Markdown -> Byline PromptApp ()
+answersPrompt :: Question NonEmpty Markdown -> Byline PromptApp ()
 answersPrompt q = do
   liftIO $ do
     putStrLn ""
@@ -203,12 +206,12 @@ runCommandPrompt = do
 findOpByKey :: Text -> [Command] -> Maybe Op
 findOpByKey k = fmap _cOp . listToMaybe . filter ((==k) . T.singleton . _cKey)
 
-questionsMenu :: [Question [] a] -> Menu (Question [] a)
+questionsMenu :: (NonEmpty (Question NonEmpty a)) -> Menu (Question NonEmpty a)
 questionsMenu = mkMenu styleQ
   where
     styleQ q = score (q ^. qScore) <> " " <> text (q ^. qTitle)
 
-answersMenu :: [Answer Markdown] -> Menu (Answer Markdown)
+answersMenu :: NonEmpty (Answer Markdown) -> Menu (Answer Markdown)
 answersMenu = mkMenu styleA
   where
     styleA a =
@@ -216,10 +219,10 @@ answersMenu = mkMenu styleA
       <> (if a ^. aAccepted then check else " ")
       <> answerTitle a
 
-mkMenu :: (a -> Stylized) -> [a] -> Menu a
+mkMenu :: Foldable t => (a -> Stylized) -> t a -> Menu a
 mkMenu stylizer xs =
   suffix " " $
-  menu xs stylizer
+  menu (toList xs) stylizer
 
 check :: Stylized
 check = fg green <> " ✔ "
@@ -287,7 +290,7 @@ move :: (Int -> Int -> Int) -> Op
 move (+/-) ps = return $
   case (ps ^. pCurrQ) of
     Nothing ->
-      ps & pCurrQ .~ Just (0, ps ^. pQuestions ^. to head)
+      ps & pCurrQ .~ Just (0, ps ^. pQuestions ^. to NE.head)
     Just (qIx, currQ) ->
       case (ps ^. pCurrA) of
         Nothing ->
@@ -297,7 +300,7 @@ move (+/-) ps = return $
           let ix = nextAIx currQ aIx
           in ps & pCurrA .~ Just (ix, (currQ ^. qAnswers) !! ix)
   where
-    nextAIx :: Question [] a -> Int -> Int
+    nextAIx :: Question NonEmpty a -> Int -> Int
     nextAIx q currIx = (currIx +/- 1) `mod` length (q ^. qAnswers)
 
     nextQIx :: Int -> Int
@@ -357,3 +360,6 @@ putMd (Markdown segments) = forM_ segments $ \case
 
 withSGR :: [A.SGR] -> IO a -> IO a
 withSGR mods a = A.setSGR mods *> a <* A.setSGR []
+
+elemIndex :: Eq a => a -> NonEmpty a -> Maybe Int
+elemIndex a = List.elemIndex a . NE.toList

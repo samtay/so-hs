@@ -1,7 +1,6 @@
 # todo
 
 ### bugs
-1. relatedly, handle UserInterrupt / ctrl c properly
 2. Fix --google flag & parser, way out of date now..
 
 ### features

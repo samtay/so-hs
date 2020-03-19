@@ -7,7 +7,9 @@ module StackOverflow
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Data.List            (elemIndex, intercalate, sortOn)
+import           Data.List            (elemIndex, intercalate)
+import           Data.List.NonEmpty   (NonEmpty(..))
+import qualified Data.List.NonEmpty   as NE
 import           Data.Maybe           (fromMaybe)
 import           Data.Semigroup       ((<>))
 
@@ -32,7 +34,7 @@ import           Types
 import           Utils
 
 -- | Get question results
-query :: App [Question [] Markdown]
+query :: App (NonEmpty (Question NonEmpty Markdown))
 query = do
   useG <- gets (_oGoogle . _sOptions)
   display <- gets (_oTextDisplay . _sOptions)
@@ -40,21 +42,18 @@ query = do
   return $ markdown display <$$> qs
 
 -- | Get a single question result (hopefully decent performance boost)
-queryLucky :: App (Question [] Markdown)
+queryLucky :: App (Question NonEmpty Markdown)
 queryLucky = do
   initialState <- get
-  res <- bracket_
+  NE.head <$> bracket_
     (modify $ sOptions . oLimit .~ 1)
     (put initialState)
     query
-  case res of
-    []    -> throwM NoResultsError
-    (q:_) -> pure q
 
 -- | Query stack exchange by first scraping Google for relevant question links
 --
 -- Maybe in the future either propogate Left error or add to debug log, etc.
-queryG :: App [Question [] Text]
+queryG :: App (NonEmpty (Question NonEmpty Text))
 queryG = do
   mIds <- Deprecated.google
   case mIds of
@@ -64,11 +63,11 @@ queryG = do
   where
     mkQString     = intercalate ";" . map show
     position      = fromMaybe maxBound .*. elemIndex
-    sortByIds ids = sortOn (flip position ids . _qId)
+    sortByIds ids = NE.sortWith (flip position ids . _qId)
 
 
 -- | Query stack exchange via advanced search API
-querySE :: App [Question [] Text]
+querySE :: App (NonEmpty (Question NonEmpty Text))
 querySE = do
   q   <- gets _sQuery
   lim <- gets $ _oLimit . _sOptions
@@ -96,7 +95,7 @@ appDefaults = do
 seRequest
   :: String                   -- ^ API resource to append to base URL
   -> [W.Options -> W.Options] -- ^ Options in addition to 'seDefaults'
-  -> App [Question [] Text]   -- ^ Decoded question data
+  -> App (NonEmpty (Question NonEmpty Text))   -- ^ Decoded question data
 seRequest resource optMods = do
   baseOpts <- appDefaults
   let opts = foldr (.) id optMods baseOpts
@@ -106,7 +105,7 @@ seRequest resource optMods = do
   case decoded of
     Left e   -> throwM $ JSONError $ T.pack e
     Right [] -> throwM NoResultsError
-    Right qs -> pure qs
+    Right (q:qs) -> pure $ q :| qs
 
 -- | SE API URL
 seApiUrl :: String

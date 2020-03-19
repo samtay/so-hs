@@ -6,7 +6,8 @@ module Main where
 -- Base imports:
 import           Control.Monad          (void, when)
 import           Control.Monad.IO.Class (liftIO)
-import           Data.List              (sortOn)
+import           Data.List.NonEmpty     (NonEmpty(..))
+import qualified Data.List.NonEmpty     as NE
 import           Data.Semigroup         ((<>))
 import           System.Exit            (exitSuccess)
 
@@ -22,7 +23,7 @@ import           Lens.Micro
 -- Local imports:
 import           Cli                    (Cli (..), runCli)
 import           Config                 (getConfig, getConfigFile)
-import           Interface.Common       (exitOnError)
+import           Interface.Common       (gracefully)
 import           Interface.Prompt       (execPrompt, putMdLn)
 import           Markdown               (Markdown)
 import           StackOverflow          (query, queryLucky)
@@ -33,7 +34,7 @@ main :: IO ()
 main = do
   catch getConfig exitConfigError
     >>= \cfg -> runCli cfg
-    >>= \(Cli opts q) -> void . exitOnError . evalAppT cfg (AppState opts q) $ app
+    >>= \(Cli opts q) -> void . gracefully . evalAppT cfg (AppState opts q) $ app
 
 app :: App ()
 app = do
@@ -47,17 +48,14 @@ app = do
 
 -- | Show single answer, returns when user elects to continue from prompt,
 -- otherwise exits.
-runLuckyPrompt :: Question [] Markdown -> IO ()
+runLuckyPrompt :: Question NonEmpty Markdown -> IO ()
 runLuckyPrompt question = do
-  let sortedAnswers = sortOn (negate . _aScore) (question ^. qAnswers)
-  case sortedAnswers of
-    []         -> exitWithError "No answers found. Try a different question."
-    (answer:_) -> do
-      putMdLn (answer ^. aBody)
-      c <- promptChar "Press [SPACE] to see more results, or any other key to exit."
-      case c of
-        ' ' -> return ()
-        _   -> exitSuccess
+  let answer = NE.head $ NE.sortWith (negate . _aScore) (question ^. qAnswers)
+  putMdLn (answer ^. aBody)
+  c <- promptChar "Press [SPACE] to see more results, or any other key to exit."
+  case c of
+    ' ' -> return ()
+    _   -> exitSuccess
 
 exitConfigError :: Yaml.ParseException -> IO a
 exitConfigError e = do

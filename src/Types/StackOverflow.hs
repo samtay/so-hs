@@ -1,12 +1,17 @@
 module Types.StackOverflow where
 
 --------------------------------------------------------------------------------
+-- Base imports:
+import           Data.Maybe           (mapMaybe)
+import           Data.List.NonEmpty   (NonEmpty(..))
+import qualified Data.List.NonEmpty   as NE
+--------------------------------------------------------------------------------
 -- Library imports:
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
 import           Data.Default
 import           Data.Text        (Text)
-import           Lens.Micro       ((^.))
+import           Lens.Micro       ((^.), (&), (.~))
 import           Lens.Micro.TH    (makeLenses)
 
 --------------------------------------------------------------------------------
@@ -78,7 +83,9 @@ instance Default Site where
 
 -- TODO handle API errors; maybe data ApiResponse = Error | [Question]
 --    which works if Parser is instance of Alternative
-questionsParser :: Value -> Parser [Question [] Text]
-questionsParser = filter answered <$$> withObject "questions" (.: "items")
+questionsParser :: Value -> Parser [Question NonEmpty Text]
+questionsParser = mapMaybe answered <$$> withObject "questions" (.: "items")
   where
-    answered q = not . null $ q ^. qAnswers
+    answered q = do
+      ans <- NE.nonEmpty $ q ^. qAnswers
+      pure $ q & qAnswers .~ ans
