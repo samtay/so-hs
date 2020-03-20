@@ -42,7 +42,7 @@ makeLenses ''Question
 makeLenses ''Answer
 makeLenses ''Site
 
-deriving instance (Show a) => Show (Question [] a)
+deriving instance (Show a) => Show (Question NonEmpty a)
 
 instance Eq (Question t a) where
   q1 == q2

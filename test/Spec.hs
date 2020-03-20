@@ -6,6 +6,8 @@ import qualified Data.Aeson.Types as AT
 import           Data.Bifunctor (first)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NE
 import           Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -137,10 +139,10 @@ main = hspec $ do
                                     \_*asterisk* *_underscore_ and"
                             ]
 
-allAnswerIds :: [Question [] Text] -> [Int]
-allAnswerIds = concatMap ((fmap _aId) . _qAnswers)
+allAnswerIds :: [Question NonEmpty Text] -> [Int]
+allAnswerIds = concatMap ((fmap _aId) . NE.toList . _qAnswers)
 
-decodeQFromFile :: FilePath -> IO (Either String [Question [] Text])
+decodeQFromFile :: FilePath -> IO (Either String [Question NonEmpty Text])
 decodeQFromFile f = do
   b <- BSL.readFile f
   return $ A.eitherDecode b >>= AT.parseEither questionsParser

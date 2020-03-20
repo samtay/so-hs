@@ -151,7 +151,7 @@ fetch (Fetcher chan) config state = do
 passToChannel :: Async (NonEmpty (Question NonEmpty Markdown)) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
   -- TODO this is bad
-  writeBChan chan =<< catch (mkRes <$> wait aQuestions) pure . NewQueryError
+  writeBChan chan =<< catch (mkRes <$> wait aQuestions) (pure . NewQueryError)
   where
     mkRes =
         NewQueryResult
