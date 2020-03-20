@@ -8,7 +8,6 @@ module Cli
 import Data.Function (on)
 import Data.List (sortBy)
 import Data.Maybe (listToMaybe)
-import Data.Semigroup ((<>))
 
 --------------------------------------------------------------------------------
 -- Library imports:

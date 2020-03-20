@@ -8,7 +8,6 @@ import           Control.Monad (void, when)
 import           Control.Monad.IO.Class (liftIO)
 import           Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
-import           Data.Semigroup ((<>))
 import           System.Exit (exitSuccess)
 
 --------------------------------------------------------------------------------

@@ -9,12 +9,10 @@ module Markdown
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import Control.Applicative (empty)
 import Control.Monad (guard, unless, void)
 import Data.Char (isPunctuation, isSeparator)
 import Data.Foldable (asum, fold)
 import Data.Maybe (fromMaybe, isJust, isNothing)
-import Data.Monoid ((<>))
 import Data.String (IsString (..))
 import Data.Void (Void)
 

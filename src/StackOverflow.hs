@@ -11,7 +11,6 @@ import           Data.List (elemIndex, intercalate)
 import           Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import           Data.Maybe (fromMaybe)
-import           Data.Semigroup ((<>))
 
 --------------------------------------------------------------------------------
 -- Library imports:
