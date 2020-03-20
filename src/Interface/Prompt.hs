@@ -44,8 +44,8 @@ import Utils
 -- Types
 
 data PromptState = PromptState
-  { _pQuestions :: (NonEmpty (Question NonEmpty Markdown))
-  , _pCurrQ     :: Maybe (Int, Question NonEmpty Markdown) -- TODO remove (Int,) indices, just have inc/dec funcs
+  { _pQuestions :: (NonEmpty (Question Markdown))
+  , _pCurrQ     :: Maybe (Int, Question Markdown) -- TODO remove (Int,) indices, just have inc/dec funcs
   , _pCurrA     :: Maybe (Int, Answer Markdown)
   , _pMenu      :: PromptMenu
   }
@@ -83,7 +83,7 @@ instance Default PromptMenu where
 -- Main execution
 
 -- | Run prompt with questions
-execPrompt :: Async (NonEmpty (Question NonEmpty Markdown)) -> App ()
+execPrompt :: Async (NonEmpty (Question Markdown)) -> App ()
 execPrompt aQuestions = liftIO . gracefully $
   waitWithLoading aQuestions >>=
     void . runStateT (runByline runPrompt) . initPromptState
@@ -119,7 +119,7 @@ showLoadingAnimation =
 --------------------------------------------------------------------------------
 -- Prompt functions
 
-initPromptState :: (NonEmpty (Question NonEmpty Markdown)) -> PromptState
+initPromptState :: (NonEmpty (Question Markdown)) -> PromptState
 initPromptState qs = PromptState qs Nothing Nothing def
 
 runPrompt :: Byline PromptApp ()
@@ -129,14 +129,14 @@ runPrompt =
     (PromptState _ (Just (_,q)) Nothing _) -> answersPrompt q
     (PromptState _ _ (Just (_,a)) _)       -> answerPrompt a
 
-questionsPrompt :: (NonEmpty (Question NonEmpty Markdown)) -> Byline PromptApp ()
+questionsPrompt :: (NonEmpty (Question Markdown)) -> Byline PromptApp ()
 questionsPrompt qs = do
   lift $ modify (pMenu . mPromptText .~  "Enter n° of question to view")
   runMenu
     (questionsMenu qs)
     (\q -> lift $ modify (pCurrQ .~ ((, q) <$> elemIndex q qs)))
 
-answersPrompt :: Question NonEmpty Markdown -> Byline PromptApp ()
+answersPrompt :: Question Markdown -> Byline PromptApp ()
 answersPrompt q = do
   liftIO $ do
     putStrLn ""
@@ -206,7 +206,7 @@ runCommandPrompt = do
 findOpByKey :: Text -> [Command] -> Maybe Op
 findOpByKey k = fmap _cOp . listToMaybe . filter ((==k) . T.singleton . _cKey)
 
-questionsMenu :: (NonEmpty (Question NonEmpty a)) -> Menu (Question NonEmpty a)
+questionsMenu :: (NonEmpty (Question a)) -> Menu (Question a)
 questionsMenu = mkMenu styleQ
   where
     styleQ q = score (q ^. qScore) <> " " <> text (q ^. qTitle)
@@ -300,7 +300,7 @@ move (+/-) ps = return $
           let ix = nextAIx currQ aIx
           in ps & pCurrA .~ Just (ix, (currQ ^. qAnswers) !! ix)
   where
-    nextAIx :: Question NonEmpty a -> Int -> Int
+    nextAIx :: Question a -> Int -> Int
     nextAIx q currIx = (currIx +/- 1) `mod` length (q ^. qAnswers)
 
     nextQIx :: Int -> Int

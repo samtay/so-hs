@@ -6,7 +6,6 @@ module Main where
 -- Base imports:
 import           Control.Monad (void, when)
 import           Control.Monad.IO.Class (liftIO)
-import           Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as NE
 import           System.Exit (exitSuccess)
 
@@ -47,7 +46,7 @@ app = do
 
 -- | Show single answer, returns when user elects to continue from prompt,
 -- otherwise exits.
-runLuckyPrompt :: Question NonEmpty Markdown -> IO ()
+runLuckyPrompt :: Question Markdown -> IO ()
 runLuckyPrompt question = do
   let answer = NE.head $ NE.sortWith (negate . _aScore) (question ^. qAnswers)
   putMdLn (answer ^. aBody)

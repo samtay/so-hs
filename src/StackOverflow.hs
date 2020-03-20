@@ -33,7 +33,7 @@ import           Types
 import           Utils
 
 -- | Get question results
-query :: App (NonEmpty (Question NonEmpty Markdown))
+query :: App (NonEmpty (Question Markdown))
 query = do
   useG <- gets (_oGoogle . _sOptions)
   display <- gets (_oTextDisplay . _sOptions)
@@ -41,7 +41,7 @@ query = do
   return $ markdown display <$$> qs
 
 -- | Get a single question result (hopefully decent performance boost)
-queryLucky :: App (Question NonEmpty Markdown)
+queryLucky :: App (Question Markdown)
 queryLucky = do
   initialState <- get
   NE.head <$> bracket_
@@ -52,7 +52,7 @@ queryLucky = do
 -- | Query stack exchange by first scraping Google for relevant question links
 --
 -- Maybe in the future either propogate Left error or add to debug log, etc.
-queryG :: App (NonEmpty (Question NonEmpty Text))
+queryG :: App (NonEmpty (Question Text))
 queryG = do
   mIds <- Deprecated.google
   case mIds of
@@ -66,7 +66,7 @@ queryG = do
 
 
 -- | Query stack exchange via advanced search API
-querySE :: App (NonEmpty (Question NonEmpty Text))
+querySE :: App (NonEmpty (Question Text))
 querySE = do
   q   <- gets _sQuery
   lim <- gets $ _oLimit . _sOptions
@@ -94,7 +94,7 @@ appDefaults = do
 seRequest
   :: String                   -- ^ API resource to append to base URL
   -> [W.Options -> W.Options] -- ^ Options in addition to 'seDefaults'
-  -> App (NonEmpty (Question NonEmpty Text))   -- ^ Decoded question data
+  -> App (NonEmpty (Question Text))   -- ^ Decoded question data
 seRequest resource optMods = do
   baseOpts <- appDefaults
   let opts = foldr (.) id optMods baseOpts

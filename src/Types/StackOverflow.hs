@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 module Types.StackOverflow where
 
 --------------------------------------------------------------------------------
@@ -18,7 +19,9 @@ import Lens.Micro.TH (makeLenses)
 -- Local imports:
 import Utils
 
-data Question t a = Question
+type Question = Question' NonEmpty
+
+data Question' t a = Question
   { _qId      :: Int
   , _qScore   :: Int
   , _qAnswers :: t (Answer a)
@@ -38,13 +41,13 @@ data Site = Site
   , _sApiParam :: Text
   } deriving (Eq, Show)
 
-makeLenses ''Question
+makeLenses ''Question'
 makeLenses ''Answer
 makeLenses ''Site
 
-deriving instance (Show a) => Show (Question NonEmpty a)
+deriving instance (Show a, Show (t (Answer a))) => Show (Question' t a)
 
-instance Eq (Question t a) where
+instance Eq (Question' t a) where
   q1 == q2
     = q1 ^. qId == q2 ^. qId
 
@@ -52,7 +55,7 @@ instance Eq (Answer a) where
   a1 == a2
     = a1 ^. aId == a2 ^. aId
 
-instance FromJSON (Question [] Text) where
+instance FromJSON (Question' [] Text) where
   parseJSON = withObject "question" $ \o -> do
     _qId      <- o .: "question_id"
     _qScore   <- o .: "score"
@@ -83,7 +86,7 @@ instance Default Site where
 
 -- TODO handle API errors; maybe data ApiResponse = Error | [Question]
 --    which works if Parser is instance of Alternative
-questionsParser :: Value -> Parser [Question NonEmpty Text]
+questionsParser :: Value -> Parser [Question Text]
 questionsParser = mapMaybe answered <$$> withObject "questions" (.: "items")
   where
     answered q = do

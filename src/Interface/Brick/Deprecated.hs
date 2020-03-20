@@ -46,9 +46,11 @@ import Utils
 --------------------------------------------------------------------------------
 -- Types
 
+type BQuestion = Question' (GenericList Name Vector) Markdown
+
 -- | Events that we pipe to the event handler asynchronously
 data BEvent
-  = NewQueryResult (NonEmpty (Question (GenericList Name Vector) Markdown))
+  = NewQueryResult (NonEmpty BQuestion)
   | NewQueryError Error
   | TimeTick
 
@@ -80,7 +82,7 @@ data Direction
 -- Remember I might need turtle to pipe stuff to copy-paste command
 -- Also possibly add to util backup defaults, check if pbcopy, xclip, etc. is in PATH.
 data BState = BState
-  { _bQuestions  :: GenericList Name Vector (Question (GenericList Name Vector) Markdown)
+  { _bQuestions  :: GenericList Name Vector (BQuestion)
   , _bFocusRing  :: FocusRing Name
   , _bError      :: Maybe BError
   , _bLoading    :: Maybe Int
@@ -95,7 +97,7 @@ makeLenses ''BState
 --------------------------------------------------------------------------------
 -- Execution
 
-execBrick :: Async (NonEmpty (Question NonEmpty Markdown)) -> App ()
+execBrick :: Async (NonEmpty (Question Markdown)) -> App ()
 execBrick aQuestions = do
   state <- get
   conf  <- ask
@@ -147,7 +149,7 @@ fetch (Fetcher chan) config state = do
   passToChannel aQuestions chan
 
 -- | Fork a process that will wait for async result and pass to BChan
-passToChannel :: Async (NonEmpty (Question NonEmpty Markdown)) -> BChan BEvent -> IO ()
+passToChannel :: Async (NonEmpty (Question Markdown)) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
   -- TODO this is bad
   writeBChan chan =<< catch (mkRes <$> wait aQuestions) (pure . NewQueryError)
@@ -207,7 +209,7 @@ handleEvent bs = \case
     fetched :: BState -> BState
     fetched = (bLoading .~ Nothing) . (bShowSplash .~ False)
 
-    replaceQAs :: NonEmpty (Question (GenericList Name Vector) Markdown) -> BState
+    replaceQAs :: NonEmpty (BQuestion) -> BState
     replaceQAs qs = bs & bError .~ Nothing
                        & bQuestions %~ listReplace (fromList $ NE.toList qs) (Just 0)
 
@@ -319,7 +321,7 @@ splashWidget = padAll 1 . txt $ [r|
 |]
 
 drawQAPanes
-  :: List Name (Question (GenericList Name Vector) Markdown)
+  :: List Name (BQuestion)
   -> FocusRing Name
   -> Widget Name
 drawQAPanes qList ring = do
@@ -349,7 +351,7 @@ drawQAPanes qList ring = do
                          else id
     isFocused name = maybe False (== name) (focusGetCurrent ring)
 
-drawQList :: Bool -> List Name (Question (GenericList Name Vector) Markdown) -> Widget Name
+drawQList :: Bool -> List Name (BQuestion) -> Widget Name
 drawQList b l = padRight Max $ L.renderList renderQ b l
   where
     renderQ s q = drawScore s (q ^. qScore) <+> txt (q ^. qTitle)
@@ -363,7 +365,7 @@ drawAList b ml = padRight Max $ maybe emptyWidget (L.renderList renderA b) ml
 
 -- TODO report extent and set h/vlimits equal to extent - why no easy function to do this?
 -- TODO once markdownWrap is implemented, only allow vertical scrolling
-drawQ :: Maybe (Question t Markdown) -> Widget Name
+drawQ :: Maybe (Question' t Markdown) -> Widget Name
 drawQ = viewport QuestionView Both . maybe emptyWidget (drawMarkdown . _qBody)
 
 -- TODO once markdownWrap is implemented, only allow vertical scrolling
