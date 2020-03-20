@@ -1,21 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import qualified Data.Aeson           as A
-import qualified Data.Aeson.Types     as AT
-import           Data.Bifunctor       (first)
-import qualified Data.ByteString      as BS
+import qualified Data.Aeson as A
+import qualified Data.Aeson.Types as AT
+import           Data.Bifunctor (first)
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
-import           Data.Text            (Text)
-import qualified Data.Text            as T
-import qualified Data.Text.IO         as TIO
-import qualified Data.Yaml            as Y
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import qualified Data.Yaml as Y
 import           Test.Hspec
 
-import           Markdown
-import           StackOverflow.Google.Deprecated
-import           Types
-import           Utils
+import Markdown
+import StackOverflow.Google.Deprecated
+import Types
+import Utils
 
 main :: IO ()
 main = hspec $ do

@@ -2,17 +2,17 @@ module Types.StackOverflow where
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Data.Maybe           (mapMaybe)
-import           Data.List.NonEmpty   (NonEmpty(..))
-import qualified Data.List.NonEmpty   as NE
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import           Data.Maybe (mapMaybe)
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Data.Aeson
-import           Data.Aeson.Types (Parser)
-import           Data.Default
-import           Data.Text        (Text)
-import           Lens.Micro       ((^.), (&), (.~))
-import           Lens.Micro.TH    (makeLenses)
+import Data.Aeson
+import Data.Aeson.Types (Parser)
+import Data.Default
+import Data.Text (Text)
+import Lens.Micro ((&), (.~), (^.))
+import Lens.Micro.TH (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:

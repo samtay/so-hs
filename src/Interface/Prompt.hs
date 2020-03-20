@@ -6,39 +6,39 @@ module Interface.Prompt
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Concurrent       (forkIO, killThread, threadDelay)
-import           Control.Exception        (bracket)
-import           Control.Monad            (forM_, void)
-import           Data.Foldable            (Foldable(..))
-import qualified Data.List                as List
-import           Data.List.NonEmpty       (NonEmpty(..), (!!))
-import qualified Data.List.NonEmpty       as NE
-import           Data.Maybe               (listToMaybe)
-import           System.Exit              (exitSuccess)
-import           System.IO                (stdout)
-import           Prelude                  hiding ((!!))
+import           Control.Concurrent (forkIO, killThread, threadDelay)
+import           Control.Exception (bracket)
+import           Control.Monad (forM_, void)
+import           Data.Foldable (Foldable (..))
+import qualified Data.List as List
+import           Data.List.NonEmpty (NonEmpty (..), (!!))
+import qualified Data.List.NonEmpty as NE
+import           Data.Maybe (listToMaybe)
+import           Prelude hiding ((!!))
+import           System.Exit (exitSuccess)
+import           System.IO (stdout)
 
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Control.Concurrent.Async (Async, wait)
-import           Control.Monad.State      (MonadState, StateT, get, gets,
-                                           modify, put, runStateT)
-import           Control.Monad.Trans      (MonadIO, lift, liftIO)
+import           Control.Monad.State
+                 (MonadState, StateT, get, gets, modify, put, runStateT)
+import           Control.Monad.Trans (MonadIO, lift, liftIO)
 import           Data.Default
-import           Data.Text                (Text)
-import qualified Data.Text                as T
-import qualified Data.Text.IO             as TIO
-import           Lens.Micro               (to, (&), (.~), (^.))
-import           Lens.Micro.TH            (makeLenses)
-import qualified System.Console.ANSI      as A
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import           Lens.Micro (to, (&), (.~), (^.))
+import           Lens.Micro.TH (makeLenses)
+import qualified System.Console.ANSI as A
 import           System.Console.Byline
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Interface.Common
-import           Markdown
-import           Types
-import           Utils
+import Interface.Common
+import Markdown
+import Types
+import Utils
 
 --------------------------------------------------------------------------------
 -- Types

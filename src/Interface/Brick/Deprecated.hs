@@ -5,44 +5,44 @@ module Interface.Brick.Deprecated
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Concurrent       (forkIO, threadDelay)
+import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Exception
-import           Control.Monad            (forever, void)
-import           Data.List.NonEmpty       (NonEmpty(..))
-import qualified Data.List.NonEmpty       as NE
-import           Data.Maybe               (fromMaybe)
-import           Data.Monoid              ((<>))
+import           Control.Monad (forever, void)
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import           Data.Maybe (fromMaybe)
+import           Data.Monoid ((<>))
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Brick                    hiding (App, Direction)
+import           Brick hiding (App, Direction)
 import qualified Brick
-import           Brick.BChan              (BChan, newBChan, writeBChan)
+import           Brick.BChan (BChan, newBChan, writeBChan)
 import           Brick.Focus
 import           Brick.Markup
-import qualified Brick.Widgets.Border     as B
-import qualified Brick.Widgets.Center     as C
+import qualified Brick.Widgets.Border as B
+import qualified Brick.Widgets.Center as C
 import           Brick.Widgets.List
-import qualified Brick.Widgets.List       as L
+import qualified Brick.Widgets.List as L
 import           Control.Concurrent.Async (Async, async, wait)
-import           Control.Monad.Reader     (ask)
-import           Control.Monad.State      (get)
-import           Control.Monad.Trans      (liftIO)
-import           Data.CircularList        (CList)
-import qualified Data.CircularList        as CL
-import qualified Data.Text                as T
-import           Data.Vector              (Vector, fromList)
-import qualified Graphics.Vty             as V
-import           Lens.Micro               (to, (%~), (&), (.~), (^.))
-import           Lens.Micro.TH            (makeLenses)
-import           Text.RawString.QQ        (r)
+import           Control.Monad.Reader (ask)
+import           Control.Monad.State (get)
+import           Control.Monad.Trans (liftIO)
+import           Data.CircularList (CList)
+import qualified Data.CircularList as CL
+import qualified Data.Text as T
+import           Data.Vector (Vector, fromList)
+import qualified Graphics.Vty as V
+import           Lens.Micro (to, (%~), (&), (.~), (^.))
+import           Lens.Micro.TH (makeLenses)
+import           Text.RawString.QQ (r)
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Markdown
-import           StackOverflow
-import           Types
-import           Utils
+import Markdown
+import StackOverflow
+import Types
+import Utils
 
 --------------------------------------------------------------------------------
 -- Types
@@ -150,9 +150,8 @@ fetch (Fetcher chan) config state = do
 -- | Fork a process that will wait for async result and pass to BChan
 passToChannel :: Async (NonEmpty (Question NonEmpty Markdown)) -> BChan BEvent -> IO ()
 passToChannel aQuestions chan = void . forkIO $ do
-  writeBChan chan =<< catch (mkRes <$> wait aQuestions)
-    -- TODO this is bad
-    \(e :: Error) -> pure $ NewQueryError e
+  -- TODO this is bad
+  writeBChan chan =<< catch (mkRes <$> wait aQuestions) pure . NewQueryError
   where
     mkRes =
         NewQueryResult

@@ -5,29 +5,29 @@ module Types
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Monad.IO.Class   (MonadIO, liftIO)
-import           Data.Maybe               (fromMaybe)
-import           Text.Read                (readMaybe)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
 
 --------------------------------------------------------------------------------
 -- Library imports:
 import           Control.Concurrent.Async (Async, async)
-import           Control.Monad.Catch      (Exception, MonadCatch, MonadMask, MonadThrow)
-import           Control.Monad.Reader     (MonadReader, ReaderT, ask,
-                                           runReaderT)
-import           Control.Monad.State      (MonadState, StateT, evalStateT,
-                                           execStateT, get, runStateT)
+import           Control.Monad.Catch
+                 (Exception, MonadCatch, MonadMask, MonadThrow)
+import           Control.Monad.Reader (MonadReader, ReaderT, ask, runReaderT)
+import           Control.Monad.State
+                 (MonadState, StateT, evalStateT, execStateT, get, runStateT)
 import           Data.Default
-import           Data.Text                (Text)
-import qualified Data.Text                as T
+import           Data.Text (Text)
+import qualified Data.Text as T
 import           Data.Yaml
-import           Lens.Micro               ((^.))
-import           Lens.Micro.TH            (makeLenses)
+import           Lens.Micro ((^.))
+import           Lens.Micro.TH (makeLenses)
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Types.StackOverflow
-import           Utils
+import Types.StackOverflow
+import Utils
 
 --------------------------------------------------------------------------------
 -- App

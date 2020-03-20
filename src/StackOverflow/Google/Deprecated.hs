@@ -6,29 +6,28 @@ module StackOverflow.Google.Deprecated
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Monad.IO.Class     (liftIO)
-import           Data.Maybe                 (catMaybes)
-import           Data.String                (fromString)
+import Control.Monad.IO.Class (liftIO)
+import Data.Maybe (catMaybes)
+import Data.String (fromString)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Monad.Catch        (tryJust)
-import           Control.Monad.State        (gets, (<=<))
-import           Data.ByteString.Lazy       (ByteString)
+import           Control.Monad.Catch (tryJust)
+import           Control.Monad.State (gets, (<=<))
+import           Data.ByteString.Lazy (ByteString)
 import           Data.ByteString.Lazy.Char8 (readInt)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T
-import           Lens.Micro                 ((&), (.~), (^.))
-import qualified Network.HTTP.Client        as H
-import qualified Network.Wreq               as W
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Lens.Micro ((&), (.~), (^.))
+import qualified Network.HTTP.Client as H
+import qualified Network.Wreq as W
 import           Text.HTML.Scalpel.Core
-import           Text.Regex.TDFA            (Regex, getAllTextSubmatches,
-                                             makeRegex, (=~))
+import           Text.Regex.TDFA (Regex, getAllTextSubmatches, makeRegex, (=~))
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Types
-import           Utils
+import Types
+import Utils
 
 -- | Scrape google for a list of question IDs
 google :: App (Either Error [Int])

@@ -4,19 +4,19 @@ module Interface.Common
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Exception (Handler(..), catches)
+import Control.Exception (Handler (..), catches)
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Types
-import           Utils
+import Types
+import Utils
 
 --------------------------------------------------------------------------------
 -- Types
 
 gracefully :: IO a -> IO a
 gracefully = flip catches
-  [ Handler \case
+  [ Handler $ \case
       NoResultsError ->
         exitWithError $ "No results found. Try a different question."
       ConnectionFailure ->

@@ -23,19 +23,19 @@ module Utils
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Data.Char           (toLower, toUpper)
-import           Data.Semigroup      (Semigroup, (<>))
-import           Data.String         (IsString, fromString)
-import           System.Exit         (exitFailure)
-import           System.IO           (BufferMode (..), Handle, hGetBuffering,
-                                      hSetBuffering, stderr, stdin)
+import Data.Char (toLower, toUpper)
+import Data.Semigroup (Semigroup, (<>))
+import Data.String (IsString, fromString)
+import System.Exit (exitFailure)
+import System.IO
+       (BufferMode (..), Handle, hGetBuffering, hSetBuffering, stderr, stdin)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Data.Text           (Text)
-import qualified Data.Text           as T
-import qualified Data.Text.IO        as TIO
-import           Lens.Micro          (ix, (^?))
+import           Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import           Lens.Micro (ix, (^?))
 import qualified System.Console.ANSI as A
 
 

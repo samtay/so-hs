@@ -1,34 +1,34 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Control.Monad          (void, when)
+import           Control.Monad (void, when)
 import           Control.Monad.IO.Class (liftIO)
-import           Data.List.NonEmpty     (NonEmpty(..))
-import qualified Data.List.NonEmpty     as NE
-import           Data.Semigroup         ((<>))
-import           System.Exit            (exitSuccess)
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import           Data.Semigroup ((<>))
+import           System.Exit (exitSuccess)
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Monad.Catch    (catch)
-import           Control.Monad.State    (gets)
-import qualified Data.Text              as T
-import qualified Data.Yaml              as Yaml
+import           Control.Monad.Catch (catch)
+import           Control.Monad.State (gets)
+import qualified Data.Text as T
+import qualified Data.Yaml as Yaml
 import           Lens.Micro
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Cli                    (Cli (..), runCli)
-import           Config                 (getConfig, getConfigFile)
-import           Interface.Common       (gracefully)
-import           Interface.Prompt       (execPrompt, putMdLn)
-import           Markdown               (Markdown)
-import           StackOverflow          (query, queryLucky)
-import           Types
-import           Utils                  (code, err, exitWithError, promptChar)
+import Cli (Cli (..), runCli)
+import Config (getConfig, getConfigFile)
+import Interface.Common (gracefully)
+import Interface.Prompt (execPrompt, putMdLn)
+import Markdown (Markdown)
+import StackOverflow (query, queryLucky)
+import Types
+import Utils (code, err, exitWithError, promptChar)
 
 main :: IO ()
 main = do

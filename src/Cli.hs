@@ -5,24 +5,24 @@ module Cli
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Data.Function         (on)
-import           Data.List             (sortBy)
-import           Data.Maybe            (listToMaybe)
-import           Data.Semigroup        ((<>))
+import Data.Function (on)
+import Data.List (sortBy)
+import Data.Maybe (listToMaybe)
+import Data.Semigroup ((<>))
 
 --------------------------------------------------------------------------------
 -- Library imports:
 import qualified Data.ByteString.Char8 as BS
-import           Data.Text             (Text)
-import qualified Data.Text             as T
-import           Data.Yaml             (decodeEither')
-import           Lens.Micro            ((^.))
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Data.Yaml (decodeEither')
+import           Lens.Micro ((^.))
 import           Options.Applicative
 
 --------------------------------------------------------------------------------
 -- Local imports:
-import           Types
-import           Utils                 hiding (info)
+import Types
+import Utils hiding (info)
 
 data Cli = Cli
   { cOptions :: Options

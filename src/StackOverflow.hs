@@ -7,24 +7,24 @@ module StackOverflow
 
 --------------------------------------------------------------------------------
 -- Base imports:
-import           Data.List            (elemIndex, intercalate)
-import           Data.List.NonEmpty   (NonEmpty(..))
-import qualified Data.List.NonEmpty   as NE
-import           Data.Maybe           (fromMaybe)
-import           Data.Semigroup       ((<>))
+import           Data.List (elemIndex, intercalate)
+import           Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
+import           Data.Maybe (fromMaybe)
+import           Data.Semigroup ((<>))
 
 --------------------------------------------------------------------------------
 -- Library imports:
-import           Control.Monad.Catch  (MonadCatch, bracket_, throwM, handle)
+import           Control.Monad.Catch (MonadCatch, bracket_, handle, throwM)
 import           Control.Monad.Reader (asks)
-import           Control.Monad.State  (get, gets, liftIO, put, modify)
-import           Data.Aeson           (eitherDecode)
-import           Data.Aeson.Types     (parseEither)
-import           Data.Text            (Text)
-import qualified Data.Text            as T
-import           Lens.Micro           ((&), (.~), (^.))
-import qualified Network.HTTP.Client  as H
-import qualified Network.Wreq         as W
+import           Control.Monad.State (get, gets, liftIO, modify, put)
+import           Data.Aeson (eitherDecode)
+import           Data.Aeson.Types (parseEither)
+import           Data.Text (Text)
+import qualified Data.Text as T
+import           Lens.Micro ((&), (.~), (^.))
+import qualified Network.HTTP.Client as H
+import qualified Network.Wreq as W
 
 --------------------------------------------------------------------------------
 -- Local imports:
@@ -122,6 +122,6 @@ seKey = "8o9g7WcfwnwbB*Qp4VsGsw(("
 
 -- | Transform to custom error types
 httpToError :: MonadCatch m => m a -> m a
-httpToError = handle \case
+httpToError = handle $ \case
   (H.HttpExceptionRequest _ (H.ConnectionFailure _)) -> throwM ConnectionFailure
   e -> throwM e
