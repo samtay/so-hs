@@ -16,12 +16,9 @@
 
 ### refactor for the love of god
 0. Make a hasKey instance
-0. Change `Question [] Text` to `Question t Text`s where possible (maybe even
-   `Question t a` for those that really don't concern themsleves with Text.
-   Reader AppState instances)
-3. Why is NoResultError not being used in the general sense, and handled differently in each interface? Oi. What was I thinking? Use NonEmpty over [] and throw NoResultErrors when appropriate.
 0. Consider removing the [-no] prefixed cli opts in favor of True/False with yaml boolean parser
-3. Consider using container other than `[]` for questions/answers. I.e. map with key? NonEmpty?
+1. Explore if the "SomeQuestion" pattern would alleviate noise in functions
+   that don't care whether answers consist of text or markdown.
 
 ### interface
 1. Make a reflex-vty interface? Or commit to Brick..
