@@ -1,25 +1,24 @@
-# so [![Build Status](https://travis-ci.org/samtay/so.svg?branch=master)](https://travis-ci.org/samtay/so)
+# so-hs [![Build Status](https://travis-ci.org/samtay/so-hs.svg?branch=master)](https://travis-ci.org/samtay/so-hs)
 
-**Note: this is under active development.** The prompt interface is fully
-functional, but the more tui-esque sophisticated interface is not finished. The
-google parser is out-of-date, so all searches currently use the StackOverflow
-API which.. leaves much to be desired.
-
-A terminal interface for Stack Overflow
+**Note:** I've since decided to rewrite this project in Rust
+[here](https://github.com/samtay/so). The rewrite has way more features and is
+more portable.
 
 ![terminal-gif](./doc/example.gif)
 
+This implementation uses a basic prompt interface. The biggest drawback is that
+the google parser is out-of-date, so all searches currently use the
+StackOverflow API, which leaves much to be desired.
+
 ## install
 Installation on MacOS and Arch Linux is simple, just follow the instructions
-below. Other Linux distros can try the [github release
-binary](https://github.com/samtay/so/releases/download/0.1.0/so-debian-x86_64),
-but no guarantees. Otherwise you can install from
+below. Otherwise you can install from
 [source](#install-from-source).
 
 #### MacOS
 Installation on a Mac is simple with Homebrew:
 ```bash
-brew install samtay/tui/so
+brew install samtay/tui/so-hs
 ```
 
 #### Arch Linux
@@ -33,7 +32,7 @@ yay -S so-git # or yaourt -S so-git
 First [get
 stack](https://docs.haskellstack.org/en/stable/README/#how-to-install). Then
 ```bash
-git clone https://github.com/samtay/so.git
-cd so
+git clone https://github.com/samtay/so-hs.git
+cd so-hs
 stack install so
 ```
