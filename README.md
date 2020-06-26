@@ -11,24 +11,6 @@ the google parser is out-of-date, so all searches currently use the
 StackOverflow API, which leaves much to be desired.
 
 ## install
-Installation on MacOS and Arch Linux is simple, just follow the instructions
-below. Otherwise you can install from
-[source](#install-from-source).
-
-#### MacOS
-Installation on a Mac is simple with Homebrew:
-```bash
-brew install samtay/tui/so-hs
-```
-
-#### Arch Linux
-However you typically install from the
-[AUR](https://aur.archlinux.org/packages/so-git/), e.g.
-```bash
-yay -S so-git # or yaourt -S so-git
-```
-
-#### install from source
 First [get
 stack](https://docs.haskellstack.org/en/stable/README/#how-to-install). Then
 ```bash
